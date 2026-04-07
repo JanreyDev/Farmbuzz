@@ -9,4 +9,5 @@ class AppRoutes {
   static const newsFeed = '/news-feed';
   static const explore = '/explore';
   static const marketplace = '/marketplace';
+  static const profile = '/profile';
 }

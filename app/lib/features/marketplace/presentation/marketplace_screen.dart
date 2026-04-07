@@ -49,6 +49,8 @@ class MarketplaceScreen extends StatelessWidget {
       Navigator.of(context).pushReplacementNamed(AppRoutes.newsFeed);
     } else if (item == AppBottomNavItem.explore) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.explore);
+    } else if (item == AppBottomNavItem.profile) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
     } else if (item == AppBottomNavItem.create) {
       // Keep plus action in Marketplace as no-op for now.
       return;

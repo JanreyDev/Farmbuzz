@@ -50,6 +50,8 @@ class ExploreScreen extends StatelessWidget {
     } else if (item == AppBottomNavItem.create ||
         item == AppBottomNavItem.market) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.marketplace);
+    } else if (item == AppBottomNavItem.profile) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
     }
   }
 }
