@@ -30,6 +30,7 @@ class ExploreScreen extends StatelessWidget {
                     const _TopFarmsSection(),
                     _InsetBar(),
                     _GroupsClubsSection(),
+                    _CockpitDirectorySection(),
                     _InsetBar(),
                     const _UpcomingEventsSection(),
                   ],
@@ -292,6 +293,61 @@ class _UpcomingEventsSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CockpitDirectorySection extends StatelessWidget {
+  const _CockpitDirectorySection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        _kExploreInset,
+        12,
+        _kExploreInset,
+        12,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Navigator.of(context).pushNamed(AppRoutes.cockpitDirectory),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          decoration: BoxDecoration(
+            color: _kExploreSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E6EB)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.sports_mma_outlined, color: kGoldAccent, size: 22),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cockpit Directory',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1F2230),
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Nationwide map & info',
+                      style: TextStyle(fontSize: 12, color: _kExploreMutedText),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Color(0xFF9AA1AA)),
+            ],
+          ),
+        ),
       ),
     );
   }

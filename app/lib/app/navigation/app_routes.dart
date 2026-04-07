@@ -12,4 +12,5 @@ class AppRoutes {
   static const profile = '/profile';
   static const messaging = '/messaging';
   static const groups = '/groups';
+  static const cockpitDirectory = '/cockpit-directory';
 }
