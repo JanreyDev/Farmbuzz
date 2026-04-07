@@ -11,4 +11,5 @@ class AppRoutes {
   static const marketplace = '/marketplace';
   static const profile = '/profile';
   static const messaging = '/messaging';
+  static const groups = '/groups';
 }
