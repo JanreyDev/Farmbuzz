@@ -28,6 +28,8 @@ class ProfileScreen extends StatelessWidget {
                   _AchievementsSection(),
                   _InsetBar(),
                   _FarmManagementSection(),
+                  _InsetBar(),
+                  _BreedingHealthSection(),
                 ],
               ),
             ),
@@ -461,6 +463,152 @@ class _FarmManagementItem {
   final String title;
   final String subtitle;
   final IconData icon;
+  final String? route;
+}
+
+class _BreedingHealthSection extends StatelessWidget {
+  const _BreedingHealthSection();
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      _BreedingHealthItem(
+        title: 'Health Records',
+        subtitle: 'Vaccines, meds, and treatment logs',
+        icon: Icons.favorite_border,
+        iconColor: Color(0xFFE14E6B),
+        iconBg: Color(0xFFFFEFF4),
+        cardBg: Color(0xFFFFFCFD),
+        route: AppRoutes.healthRecords,
+      ),
+      _BreedingHealthItem(
+        title: 'Weight Tracker',
+        subtitle: 'Weekly growth and conditioning trends',
+        icon: Icons.monitor_weight_outlined,
+        iconColor: Color(0xFF2D78FF),
+        iconBg: Color(0xFFEDF4FF),
+        cardBg: Color(0xFFFCFDFF),
+        route: AppRoutes.weightTracker,
+      ),
+      _BreedingHealthItem(
+        title: 'Breeding Planner',
+        subtitle: 'Pairing plans and hatch schedules',
+        icon: Icons.event_note_outlined,
+        iconColor: Color(0xFF2EA54A),
+        iconBg: Color(0xFFECF8F0),
+        cardBg: Color(0xFFFBFFFC),
+        route: AppRoutes.breedingPlanner,
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_kProfileInset, 10, _kProfileInset, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.health_and_safety_outlined, size: 16, color: Color(0xFFB68512)),
+              SizedBox(width: 4),
+              Text(
+                'Breeding & Health',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2230),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  if (item.route != null) {
+                    Navigator.of(context).pushNamed(item.route!);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  decoration: BoxDecoration(
+                    color: item.cardBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E6EB)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: item.iconBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(item.icon, size: 20, color: item.iconColor),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.title,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF1F2230),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item.subtitle,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: _kProfileMuted,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFF9AA1AA),
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BreedingHealthItem {
+  const _BreedingHealthItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.iconColor,
+    required this.iconBg,
+    required this.cardBg,
+    this.route,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBg;
+  final Color cardBg;
   final String? route;
 }
 

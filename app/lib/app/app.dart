@@ -11,6 +11,9 @@ import 'package:app/features/cockpit/presentation/cockpit_directory_screen.dart'
 import 'package:app/features/farm/presentation/farm_dashboard_screen.dart';
 import 'package:app/features/bloodline/presentation/bloodline_registry_screen.dart';
 import 'package:app/features/qr/presentation/qr_leg_bands_screen.dart';
+import 'package:app/features/health/presentation/health_records_screen.dart';
+import 'package:app/features/weight/presentation/weight_tracker_screen.dart';
+import 'package:app/features/breeding/presentation/breeding_planner_screen.dart';
 import 'package:app/features/learn/presentation/learn_hub_screen.dart';
 import 'package:app/features/profile/presentation/profile_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
@@ -45,6 +48,9 @@ class FarmBuzzApp extends StatelessWidget {
         AppRoutes.farmDashboard: (_) => const FarmDashboardScreen(),
         AppRoutes.bloodlineRegistry: (_) => const BloodlineRegistryScreen(),
         AppRoutes.qrLegBands: (_) => const QrLegBandsScreen(),
+        AppRoutes.healthRecords: (_) => const HealthRecordsScreen(),
+        AppRoutes.weightTracker: (_) => const WeightTrackerScreen(),
+        AppRoutes.breedingPlanner: (_) => const BreedingPlannerScreen(),
       },
     );
   }

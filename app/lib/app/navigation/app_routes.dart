@@ -17,4 +17,7 @@ class AppRoutes {
   static const farmDashboard = '/farm-dashboard';
   static const bloodlineRegistry = '/bloodline-registry';
   static const qrLegBands = '/qr-leg-bands';
+  static const healthRecords = '/health-records';
+  static const weightTracker = '/weight-tracker';
+  static const breedingPlanner = '/breeding-planner';
 }
