@@ -310,17 +310,18 @@ class _FarmManagementSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      (
+      _FarmManagementItem(
         title: 'Farm Dashboard',
         subtitle: 'Daily status, schedules, and farm activity',
         icon: Icons.dashboard_outlined,
+        route: AppRoutes.farmDashboard,
       ),
-      (
+      _FarmManagementItem(
         title: 'Bloodline Registry',
         subtitle: 'Track pairings, hatch history, and lines',
         icon: Icons.account_tree_outlined,
       ),
-      (
+      _FarmManagementItem(
         title: 'QR Leg Bands',
         subtitle: 'Scan and identify birds instantly',
         icon: Icons.qr_code_scanner_rounded,
@@ -373,7 +374,11 @@ class _FarmManagementSection extends StatelessWidget {
                             ? const Radius.circular(12)
                             : Radius.zero,
                       ),
-                      onTap: () {},
+                      onTap: () {
+                        if (item.route != null) {
+                          Navigator.of(context).pushNamed(item.route!);
+                        }
+                      },
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
                         child: Row(
@@ -441,6 +446,20 @@ class _FarmManagementSection extends StatelessWidget {
       ),
     );
   }
+}
+
+class _FarmManagementItem {
+  const _FarmManagementItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.route,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String? route;
 }
 
 class _InsetBar extends StatelessWidget {

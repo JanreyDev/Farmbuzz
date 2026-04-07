@@ -8,6 +8,7 @@ import 'package:app/features/marketplace/presentation/marketplace_screen.dart';
 import 'package:app/features/messaging/presentation/messaging_screen.dart';
 import 'package:app/features/groups/presentation/groups_screen.dart';
 import 'package:app/features/cockpit/presentation/cockpit_directory_screen.dart';
+import 'package:app/features/farm/presentation/farm_dashboard_screen.dart';
 import 'package:app/features/learn/presentation/learn_hub_screen.dart';
 import 'package:app/features/profile/presentation/profile_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
@@ -39,6 +40,7 @@ class FarmBuzzApp extends StatelessWidget {
         AppRoutes.groups: (_) => const GroupsScreen(),
         AppRoutes.cockpitDirectory: (_) => const CockpitDirectoryScreen(),
         AppRoutes.learnHub: (_) => const LearnHubScreen(),
+        AppRoutes.farmDashboard: (_) => const FarmDashboardScreen(),
       },
     );
   }

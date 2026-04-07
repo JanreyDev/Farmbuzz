@@ -14,4 +14,5 @@ class AppRoutes {
   static const groups = '/groups';
   static const cockpitDirectory = '/cockpit-directory';
   static const learnHub = '/learn-hub';
+  static const farmDashboard = '/farm-dashboard';
 }
