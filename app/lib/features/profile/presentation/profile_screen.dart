@@ -27,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
                   _InsetBar(),
                   _AchievementsSection(),
                   _InsetBar(),
-                  _RoosterPortfolioSection(),
+                  _FarmManagementSection(),
                 ],
               ),
             ),
@@ -304,33 +304,137 @@ class _AchievementCard extends StatelessWidget {
   }
 }
 
-class _RoosterPortfolioSection extends StatelessWidget {
-  const _RoosterPortfolioSection();
+class _FarmManagementSection extends StatelessWidget {
+  const _FarmManagementSection();
 
   @override
   Widget build(BuildContext context) {
+    const items = [
+      (
+        title: 'Farm Dashboard',
+        subtitle: 'Daily status, schedules, and farm activity',
+        icon: Icons.dashboard_outlined,
+      ),
+      (
+        title: 'Bloodline Registry',
+        subtitle: 'Track pairings, hatch history, and lines',
+        icon: Icons.account_tree_outlined,
+      ),
+      (
+        title: 'QR Leg Bands',
+        subtitle: 'Scan and identify birds instantly',
+        icon: Icons.qr_code_scanner_rounded,
+      ),
+    ];
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_kProfileInset, 10, _kProfileInset, 8),
-      child: Row(
-        children: const [
-          Icon(Icons.shield_outlined, size: 16, color: Color(0xFFB68512)),
-          SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              'Rooster Portfolio',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1F2230),
+      padding: const EdgeInsets.fromLTRB(_kProfileInset, 10, _kProfileInset, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.agriculture_outlined, size: 16, color: Color(0xFFB68512)),
+              SizedBox(width: 4),
+              Text(
+                'Farm Management',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2230),
+                ),
               ),
-            ),
+            ],
           ),
-          Text(
-            'See All',
-            style: TextStyle(
-              fontSize: 12,
-              color: kGoldAccent,
-              fontWeight: FontWeight.w700,
+          const SizedBox(height: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E6EB)),
+            ),
+            child: Column(
+              children: List.generate(items.length, (index) {
+                final item = items[index];
+                return Column(
+                  children: [
+                    InkWell(
+                      borderRadius: BorderRadius.only(
+                        topLeft: index == 0
+                            ? const Radius.circular(12)
+                            : Radius.zero,
+                        topRight: index == 0
+                            ? const Radius.circular(12)
+                            : Radius.zero,
+                        bottomLeft: index == items.length - 1
+                            ? const Radius.circular(12)
+                            : Radius.zero,
+                        bottomRight: index == items.length - 1
+                            ? const Radius.circular(12)
+                            : Radius.zero,
+                      ),
+                      onTap: () {},
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFBF4E3),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                item.icon,
+                                size: 19,
+                                color: const Color(0xFFB68512),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.title,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF1F2230),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    item.subtitle,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: _kProfileMuted,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: Color(0xFF9AA1AA),
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (index != items.length - 1)
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFE9EDF1),
+                      ),
+                  ],
+                );
+              }),
             ),
           ),
         ],

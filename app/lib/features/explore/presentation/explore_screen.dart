@@ -30,7 +30,9 @@ class ExploreScreen extends StatelessWidget {
                     const _TopFarmsSection(),
                     _InsetBar(),
                     _GroupsClubsSection(),
+                    const SizedBox(height: 12),
                     _CockpitDirectorySection(),
+                    const SizedBox(height: 12),
                     _LearnHubSection(),
                     _InsetBar(),
                     const _UpcomingEventsSection(),
@@ -194,12 +196,7 @@ class _GroupsClubsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        _kExploreInset,
-        12,
-        _kExploreInset,
-        12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: _kExploreInset),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Navigator.of(context).pushNamed(AppRoutes.groups),
@@ -305,12 +302,7 @@ class _CockpitDirectorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        _kExploreInset,
-        12,
-        _kExploreInset,
-        12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: _kExploreInset),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Navigator.of(context).pushNamed(AppRoutes.cockpitDirectory),
@@ -360,12 +352,7 @@ class _LearnHubSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        _kExploreInset,
-        0,
-        _kExploreInset,
-        12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: _kExploreInset),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Navigator.of(context).pushNamed(AppRoutes.learnHub),
