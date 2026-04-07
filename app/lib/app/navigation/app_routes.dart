@@ -16,4 +16,5 @@ class AppRoutes {
   static const learnHub = '/learn-hub';
   static const farmDashboard = '/farm-dashboard';
   static const bloodlineRegistry = '/bloodline-registry';
+  static const qrLegBands = '/qr-leg-bands';
 }

@@ -326,6 +326,7 @@ class _FarmManagementSection extends StatelessWidget {
         title: 'QR Leg Bands',
         subtitle: 'Scan and identify birds instantly',
         icon: Icons.qr_code_scanner_rounded,
+        route: AppRoutes.qrLegBands,
       ),
     ];
 
