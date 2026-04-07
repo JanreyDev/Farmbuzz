@@ -2,6 +2,7 @@ import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/login_screen.dart';
 import 'package:app/features/auth/presentation/signup_screen.dart';
+import 'package:app/features/explore/presentation/explore_screen.dart';
 import 'package:app/features/home/presentation/home_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
 import 'package:app/features/news_feed/presentation/news_feed_screen.dart';
@@ -25,6 +26,7 @@ class FarmBuzzApp extends StatelessWidget {
         AppRoutes.signup: (_) => const SignUpScreen(),
         AppRoutes.subscription: (_) => const SubscriptionScreen(),
         AppRoutes.newsFeed: (_) => const NewsFeedScreen(),
+        AppRoutes.explore: (_) => const ExploreScreen(),
       },
     );
   }

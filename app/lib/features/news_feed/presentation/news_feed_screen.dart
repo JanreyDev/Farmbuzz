@@ -1,4 +1,6 @@
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
+import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';
 
 const double _kHorizontalInset = 14;
@@ -613,34 +615,13 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE3E6EA))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const Icon(Icons.home_outlined, color: kGoldAccent, size: 22),
-          const Icon(
-            Icons.explore_outlined,
-            color: Color(0xFF8A9098),
-            size: 22,
-          ),
-          Container(
-            width: 50,
-            height: 50,
-            decoration: const BoxDecoration(
-              color: kGoldAccent,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.add, color: Colors.white, size: 28),
-          ),
-          const Icon(Icons.inbox_outlined, color: Color(0xFF8A9098), size: 22),
-          const Icon(Icons.person_outline, color: Color(0xFF8A9098), size: 22),
-        ],
-      ),
+    return AppBottomNav(
+      activeItem: AppBottomNavItem.home,
+      onItemTap: (item) {
+        if (item == AppBottomNavItem.explore) {
+          Navigator.of(context).pushReplacementNamed(AppRoutes.explore);
+        }
+      },
     );
   }
 }

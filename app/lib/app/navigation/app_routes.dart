@@ -7,4 +7,5 @@ class AppRoutes {
   static const signup = '/signup';
   static const subscription = '/subscription';
   static const newsFeed = '/news-feed';
+  static const explore = '/explore';
 }
