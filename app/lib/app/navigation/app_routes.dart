@@ -6,4 +6,5 @@ class AppRoutes {
   static const login = '/login';
   static const signup = '/signup';
   static const subscription = '/subscription';
+  static const newsFeed = '/news-feed';
 }

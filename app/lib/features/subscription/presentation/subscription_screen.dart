@@ -1,3 +1,4 @@
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -171,7 +172,8 @@ class _TrialPlanCard extends StatelessWidget {
           const _PlanFeature(text: 'No credit card required'),
           const SizedBox(height: 12),
           ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () =>
+                Navigator.of(context).pushNamed(AppRoutes.newsFeed),
             style: ElevatedButton.styleFrom(
               backgroundColor: kGoldAccent,
               foregroundColor: Colors.white,
