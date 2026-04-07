@@ -1,7 +1,7 @@
 import 'package:app/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
-enum AppBottomNavItem { home, explore, create, inbox, profile }
+enum AppBottomNavItem { home, explore, create, market, profile }
 
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
@@ -48,9 +48,9 @@ class AppBottomNav extends StatelessWidget {
             ),
           ),
           _NavIconButton(
-            icon: Icons.inbox_outlined,
-            isActive: activeItem == AppBottomNavItem.inbox,
-            onTap: () => onItemTap(AppBottomNavItem.inbox),
+            icon: Icons.storefront_outlined,
+            isActive: activeItem == AppBottomNavItem.market,
+            onTap: () => onItemTap(AppBottomNavItem.market),
           ),
           _NavIconButton(
             icon: Icons.person_outline,

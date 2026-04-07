@@ -620,6 +620,9 @@ class _BottomNavBar extends StatelessWidget {
       onItemTap: (item) {
         if (item == AppBottomNavItem.explore) {
           Navigator.of(context).pushReplacementNamed(AppRoutes.explore);
+        } else if (item == AppBottomNavItem.create ||
+            item == AppBottomNavItem.market) {
+          Navigator.of(context).pushReplacementNamed(AppRoutes.marketplace);
         }
       },
     );

@@ -47,6 +47,9 @@ class ExploreScreen extends StatelessWidget {
   void _handleNav(BuildContext context, AppBottomNavItem item) {
     if (item == AppBottomNavItem.home) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.newsFeed);
+    } else if (item == AppBottomNavItem.create ||
+        item == AppBottomNavItem.market) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.marketplace);
     }
   }
 }
@@ -57,12 +60,7 @@ class _SearchSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        _kExploreInset,
-        12,
-        _kExploreInset,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(_kExploreInset, 12, _kExploreInset, 8),
       child: Container(
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -120,10 +118,8 @@ class _TrendingBloodlinesSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               itemCount: items.length,
               separatorBuilder: (_, index) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _TagChip(
-                label: items[index],
-                selected: index == 0,
-              ),
+              itemBuilder: (_, index) =>
+                  _TagChip(label: items[index], selected: index == 0),
             ),
           ),
         ],
