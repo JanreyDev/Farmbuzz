@@ -1,3 +1,4 @@
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _continue() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
+    Navigator.of(context).pushNamed(AppRoutes.subscription);
   }
 
   @override

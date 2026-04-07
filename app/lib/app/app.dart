@@ -4,6 +4,7 @@ import 'package:app/features/auth/presentation/login_screen.dart';
 import 'package:app/features/auth/presentation/signup_screen.dart';
 import 'package:app/features/home/presentation/home_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
+import 'package:app/features/subscription/presentation/subscription_screen.dart';
 import 'package:flutter/material.dart';
 
 class FarmBuzzApp extends StatelessWidget {
@@ -21,6 +22,7 @@ class FarmBuzzApp extends StatelessWidget {
         AppRoutes.home: (_) => const HomeScreen(),
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.signup: (_) => const SignUpScreen(),
+        AppRoutes.subscription: (_) => const SubscriptionScreen(),
       },
     );
   }
