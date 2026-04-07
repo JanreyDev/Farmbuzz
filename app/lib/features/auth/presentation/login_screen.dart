@@ -26,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
+    Navigator.of(context).pushReplacementNamed(AppRoutes.newsFeed);
   }
 
   @override

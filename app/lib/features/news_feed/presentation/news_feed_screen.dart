@@ -1,6 +1,11 @@
 import 'package:app/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
+const double _kHorizontalInset = 14;
+const EdgeInsets _kHorizontalInsetPadding = EdgeInsets.symmetric(
+  horizontal: _kHorizontalInset,
+);
+
 class NewsFeedScreen extends StatelessWidget {
   const NewsFeedScreen({super.key});
 
@@ -26,7 +31,7 @@ class _HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return ColoredBox(
       color: Colors.white,
       child: const Column(
         children: [_TopBrandRow(), _ComposerRow(), _StoriesRow()],
@@ -41,7 +46,12 @@ class _TopBrandRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 10),
+      padding: const EdgeInsets.fromLTRB(
+        _kHorizontalInset,
+        16,
+        _kHorizontalInset,
+        10,
+      ),
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EA), width: 1)),
       ),
@@ -91,7 +101,12 @@ class _ComposerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      padding: const EdgeInsets.fromLTRB(
+        _kHorizontalInset,
+        10,
+        _kHorizontalInset,
+        10,
+      ),
       child: Row(
         children: [
           Container(
@@ -155,15 +170,15 @@ class _StoriesRow extends StatelessWidget {
       children: [
         const _InsetGraySeparator(verticalPadding: 0),
         Padding(
-          padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-          child: SizedBox(
-            height: 90,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: stories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemBuilder: (_, index) => stories[index],
-            ),
+          padding: const EdgeInsets.fromLTRB(
+            _kHorizontalInset,
+            10,
+            _kHorizontalInset,
+            10,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: stories,
           ),
         ),
         const _InsetGraySeparator(verticalPadding: 0),
@@ -185,61 +200,65 @@ class _StoryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5EEDB),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isOwnStory ? const Color(0xFFE4E4E4) : kGoldAccent,
-                  width: 1.7,
+    return SizedBox(
+      width: 58,
+      child: Column(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5EEDB),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isOwnStory ? const Color(0xFFE4E4E4) : kGoldAccent,
+                    width: 1.5,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    fontSize: 27,
-                    color: Color(0xFFAB7E14),
-                    fontWeight: FontWeight.w700,
-                    height: 1,
+                child: Center(
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFFAB7E14),
+                      fontWeight: FontWeight.w700,
+                      height: 1,
+                    ),
                   ),
                 ),
               ),
-            ),
-            if (isOwnStory)
-              Positioned(
-                right: -1,
-                bottom: -1,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: kGoldAccent,
-                    shape: BoxShape.circle,
+              if (isOwnStory)
+                Positioned(
+                  right: -1,
+                  bottom: -1,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: kGoldAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 11),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 13),
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          name,
-          style: const TextStyle(
-            fontSize: 15,
-            color: Color(0xFF787D85),
-            fontWeight: FontWeight.w500,
-            height: 1,
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 3),
+          Text(
+            name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF787D85),
+              fontWeight: FontWeight.w500,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -249,14 +268,14 @@ class _FeedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return ColoredBox(
       color: Colors.white,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
         children: const [
           SizedBox(height: 6),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
+            padding: _kHorizontalInsetPadding,
             child: _PostCard(
               authorInitials: 'MD',
               authorName: 'Mario Dela Cruz',
@@ -265,14 +284,14 @@ class _FeedList extends StatelessWidget {
               tagBackground: Color(0xFFD6E9FF),
               tagTextColor: Color(0xFF3D6C95),
               content:
-                  'Just finished 3rd week conditioning on my Kelso cross. Weight at 2.1kg, looking solid. Sparring session tomorrow morning. ??',
+                  'Just finished 3rd week conditioning on my Kelso cross. Weight at 2.1kg, looking solid. Sparring session tomorrow morning.',
               reactions: '247',
               metrics: '38 comments . 12 shares',
             ),
           ),
           _InsetGraySeparator(),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
+            padding: _kHorizontalInsetPadding,
             child: _PostCard(
               authorInitials: 'JR',
               authorName: 'Jun Reyes',
@@ -299,7 +318,10 @@ class _InsetGraySeparator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: verticalPadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: _kHorizontalInset,
+        vertical: verticalPadding,
+      ),
       child: Container(height: 7, color: const Color(0xFFE6E9ED)),
     );
   }
@@ -332,13 +354,13 @@ class _PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(color: Colors.white),
+    return ColoredBox(
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+            padding: EdgeInsets.only(top: 10, bottom: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -438,39 +460,64 @@ class _PostCard extends StatelessWidget {
                 ),
                 if (showImagePlaceholder) ...[
                   const SizedBox(height: 10),
-                  Container(height: 92, color: const Color(0xFFE9ECF0)),
+                  SizedBox(
+                    height: 190,
+                    width: double.infinity,
+                    child: Image.asset(
+                      'assets/images/splash.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ],
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Text('?? ?? ??', style: TextStyle(fontSize: 11)),
-                    const SizedBox(width: 6),
-                    Text(
-                      reactions ?? '',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF7E848D),
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      metrics ?? '',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF7E848D),
-                      ),
-                    ),
-                  ],
-                ),
+                if (reactions != null || metrics != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (reactions != null) ...[
+                        const Icon(
+                          Icons.local_fire_department,
+                          size: 12,
+                          color: Color(0xFFFF7043),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(
+                          Icons.emoji_events,
+                          size: 12,
+                          color: Color(0xFFC19A3A),
+                        ),
+                        const SizedBox(width: 2),
+                        const Icon(
+                          Icons.favorite,
+                          size: 12,
+                          color: Color(0xFFE57373),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          reactions!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF7E848D),
+                          ),
+                        ),
+                      ],
+                      const Spacer(),
+                      if (metrics != null)
+                        Text(
+                          metrics!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF7E848D),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
+          const Divider(height: 1, color: Color(0xFFE5E8EC)),
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Divider(height: 1, color: Color(0xFFE5E8EC)),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(10, 8, 10, 8),
+            padding: EdgeInsets.symmetric(vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
