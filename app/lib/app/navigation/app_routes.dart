@@ -15,4 +15,5 @@ class AppRoutes {
   static const cockpitDirectory = '/cockpit-directory';
   static const learnHub = '/learn-hub';
   static const farmDashboard = '/farm-dashboard';
+  static const bloodlineRegistry = '/bloodline-registry';
 }

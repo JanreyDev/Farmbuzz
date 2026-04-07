@@ -320,6 +320,7 @@ class _FarmManagementSection extends StatelessWidget {
         title: 'Bloodline Registry',
         subtitle: 'Track pairings, hatch history, and lines',
         icon: Icons.account_tree_outlined,
+        route: AppRoutes.bloodlineRegistry,
       ),
       _FarmManagementItem(
         title: 'QR Leg Bands',
