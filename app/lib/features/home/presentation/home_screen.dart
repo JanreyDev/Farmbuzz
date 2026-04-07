@@ -1,10 +1,9 @@
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  static const routeName = '/home';
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +142,7 @@ class _LandingContent extends StatelessWidget {
         ),
         const Spacer(),
         ElevatedButton.icon(
-          onPressed: () {},
+          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.signup),
           style: ElevatedButton.styleFrom(
             backgroundColor: kGoldAccent,
             foregroundColor: Colors.white,
@@ -163,14 +162,11 @@ class _LandingContent extends StatelessWidget {
         const Text(
           'Full access. No credit card needed.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFF9C9C9C),
-            fontSize: 13.5,
-          ),
+          style: TextStyle(color: Color(0xFF9C9C9C), fontSize: 13.5),
         ),
         const SizedBox(height: 10),
         OutlinedButton(
-          onPressed: () {},
+          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.login),
           style: OutlinedButton.styleFrom(
             foregroundColor: kGoldAccent,
             side: const BorderSide(color: kGoldAccent, width: 1.3),

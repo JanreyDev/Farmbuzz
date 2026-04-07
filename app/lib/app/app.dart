@@ -1,4 +1,7 @@
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
+import 'package:app/features/auth/presentation/login_screen.dart';
+import 'package:app/features/auth/presentation/signup_screen.dart';
 import 'package:app/features/home/presentation/home_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -12,10 +15,12 @@ class FarmBuzzApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'FarmBuzz',
       theme: AppTheme.light(),
-      initialRoute: SplashScreen.routeName,
+      initialRoute: AppRoutes.splash,
       routes: {
-        SplashScreen.routeName: (_) => const SplashScreen(),
-        HomeScreen.routeName: (_) => const HomeScreen(),
+        AppRoutes.splash: (_) => const SplashScreen(),
+        AppRoutes.home: (_) => const HomeScreen(),
+        AppRoutes.login: (_) => const LoginScreen(),
+        AppRoutes.signup: (_) => const SignUpScreen(),
       },
     );
   }

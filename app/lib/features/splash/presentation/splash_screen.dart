@@ -1,13 +1,11 @@
 import 'dart:async';
 
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
-import 'package:app/features/home/presentation/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-
-  static const routeName = '/';
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -27,22 +25,21 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: _entranceDuration,
-    )..forward();
+    _controller = AnimationController(vsync: this, duration: _entranceDuration)
+      ..forward();
 
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
-    _scale = Tween<double>(begin: 0.92, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scale = Tween<double>(
+      begin: 0.92,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _navigationTimer = Timer(_splashDuration, _goToHome);
   }
 
   void _goToHome() {
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(HomeScreen.routeName);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
   }
 
   @override
@@ -213,13 +210,7 @@ class _GlowBlob extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color,
-        boxShadow: [
-          BoxShadow(
-            color: color,
-            blurRadius: 80,
-            spreadRadius: 18,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: color, blurRadius: 80, spreadRadius: 18)],
       ),
     );
   }
