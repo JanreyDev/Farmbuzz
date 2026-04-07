@@ -14,7 +14,7 @@ class NewsFeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F1F1),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: const Column(
           children: [
@@ -58,10 +58,10 @@ class _TopBrandRow extends StatelessWidget {
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EA), width: 1)),
       ),
       child: Row(
-        children: const [
-          _BrandLogo(),
-          SizedBox(width: 8),
-          Text(
+        children: [
+          const _BrandLogo(),
+          const SizedBox(width: 8),
+          const Text(
             'FarmBuzz',
             style: TextStyle(
               color: Color(0xFFB38511),
@@ -70,9 +70,9 @@ class _TopBrandRow extends StatelessWidget {
               height: 1,
             ),
           ),
-          Spacer(),
-          _IconBadge(icon: Icons.notifications_none),
-          SizedBox(width: 8),
+          const Spacer(),
+          const _IconBadge(icon: Icons.notifications_none),
+          const SizedBox(width: 8),
           _IconBadge(icon: Icons.chat_bubble_outline, count: 3),
         ],
       ),
@@ -571,41 +571,49 @@ class _IconBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 29,
-          height: 29,
-          decoration: const BoxDecoration(
-            color: Color(0xFFF2F3F5),
-            shape: BoxShape.circle,
+    final isMessageIcon = icon == Icons.chat_bubble_outline;
+
+    return InkResponse(
+      onTap: isMessageIcon
+          ? () => Navigator.of(context).pushNamed(AppRoutes.messaging)
+          : null,
+      radius: 18,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 29,
+            height: 29,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF2F3F5),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 19, color: const Color(0xFF6E747D)),
           ),
-          child: Icon(icon, size: 19, color: const Color(0xFF6E747D)),
-        ),
-        if (count != null)
-          Positioned(
-            right: -2,
-            top: -2,
-            child: Container(
-              width: 15,
-              height: 15,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE44747),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '$count',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
+          if (count != null)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                width: 15,
+                height: 15,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE44747),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
