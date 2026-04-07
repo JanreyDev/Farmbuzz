@@ -13,4 +13,5 @@ class AppRoutes {
   static const messaging = '/messaging';
   static const groups = '/groups';
   static const cockpitDirectory = '/cockpit-directory';
+  static const learnHub = '/learn-hub';
 }

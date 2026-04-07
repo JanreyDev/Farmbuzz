@@ -31,6 +31,7 @@ class ExploreScreen extends StatelessWidget {
                     _InsetBar(),
                     _GroupsClubsSection(),
                     _CockpitDirectorySection(),
+                    _LearnHubSection(),
                     _InsetBar(),
                     const _UpcomingEventsSection(),
                   ],
@@ -339,6 +340,61 @@ class _CockpitDirectorySection extends StatelessWidget {
                     SizedBox(height: 2),
                     Text(
                       'Nationwide map & info',
+                      style: TextStyle(fontSize: 12, color: _kExploreMutedText),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: Color(0xFF9AA1AA)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LearnHubSection extends StatelessWidget {
+  const _LearnHubSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        _kExploreInset,
+        0,
+        _kExploreInset,
+        12,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => Navigator.of(context).pushNamed(AppRoutes.learnHub),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          decoration: BoxDecoration(
+            color: _kExploreSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E6EB)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.menu_book_outlined, color: kGoldAccent, size: 22),
+              SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Learn Hub',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1F2230),
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '6 topic categories',
                       style: TextStyle(fontSize: 12, color: _kExploreMutedText),
                     ),
                   ],
