@@ -65,13 +65,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 18),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: _ProgressHeader(),
             ),
             const SizedBox(height: 14),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -173,7 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: Color(0xFFE3E3E3))),
               ),
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
               child: ElevatedButton(
                 onPressed: _continue,
                 style: ElevatedButton.styleFrom(

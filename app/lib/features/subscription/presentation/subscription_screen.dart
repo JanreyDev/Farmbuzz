@@ -140,7 +140,7 @@ class SubscriptionScreen extends StatelessWidget {
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: () => Navigator.of(context).pushReplacementNamed(
-                  AppRoutes.newsFeed,
+                  AppRoutes.login,
                 ),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(54),

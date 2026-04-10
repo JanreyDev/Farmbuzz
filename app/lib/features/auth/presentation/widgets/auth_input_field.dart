@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AuthInputField extends StatelessWidget {
   const AuthInputField({
@@ -13,6 +14,9 @@ class AuthInputField extends StatelessWidget {
     this.onSuffixTap,
     this.keyboardType,
     this.obscureText = false,
+    this.prefixText,
+    this.inputFormatters,
+    this.maxLength,
   });
 
   final String label;
@@ -25,6 +29,9 @@ class AuthInputField extends StatelessWidget {
   final VoidCallback? onSuffixTap;
   final TextInputType? keyboardType;
   final bool obscureText;
+  final String? prefixText;
+  final List<TextInputFormatter>? inputFormatters;
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
@@ -44,13 +51,17 @@ class AuthInputField extends StatelessWidget {
           controller: controller,
           validator: validator,
           keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          maxLength: maxLength,
           textInputAction: textInputAction,
           obscureText: obscureText,
           decoration: InputDecoration(
+            counterText: '',
             hintText: hintText,
             hintStyle: const TextStyle(color: Color(0xFF9B9B9B)),
             filled: true,
             fillColor: const Color(0xFFE9EBEF),
+            prefixText: prefixText,
             prefixIcon: Icon(
               prefixIcon,
               size: 19,

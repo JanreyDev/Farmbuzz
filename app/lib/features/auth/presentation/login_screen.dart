@@ -2,6 +2,7 @@ import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,13 +13,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailOrPhoneController = TextEditingController();
+  final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailOrPhoneController.dispose();
+    _mobileController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -44,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
           child: Form(
             key: _formKey,
             child: Column(
@@ -82,12 +83,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 AuthInputField(
-                  label: 'Email or Phone',
-                  hintText: 'you@example.com',
-                  prefixIcon: Icons.mail_outline,
-                  controller: _emailOrPhoneController,
+                  label: 'Mobile Number',
+                  hintText: '9XX XXX XXXX',
+                  prefixText: '+63 ',
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  maxLength: 10,
+                  controller: _mobileController,
                   textInputAction: TextInputAction.next,
-                  validator: _requiredField,
+                  validator: _mobileValidator,
                 ),
                 const SizedBox(height: 14),
                 AuthInputField(
@@ -136,14 +141,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: const Text('Log In'),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 const Row(
                   children: [
                     Expanded(child: Divider(color: Color(0xFFDBDBDB))),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      padding: EdgeInsets.symmetric(horizontal: 10),
                       child: Text(
-                        'OR CONTINUE WITH',
+                        'OR',
                         style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF9A9A9A),
@@ -154,32 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(child: Divider(color: Color(0xFFDBDBDB))),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.facebook,
-                          color: Color(0xFF4267B2),
-                        ),
-                        label: const Text('Facebook'),
-                        style: _socialButtonStyle(),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.phone_android_outlined),
-                        label: const Text('Phone'),
-                        style: _socialButtonStyle(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -208,20 +188,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  ButtonStyle _socialButtonStyle() {
-    return OutlinedButton.styleFrom(
-      minimumSize: const Size.fromHeight(52),
-      side: const BorderSide(color: Color(0xFFD7D7D7)),
-      foregroundColor: const Color(0xFF333333),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      backgroundColor: const Color(0xFFF1F2F4),
-      textStyle: const TextStyle(fontWeight: FontWeight.w600),
-    );
-  }
-
   String? _requiredField(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'This field is required';
+    }
+    return null;
+  }
+
+  String? _mobileValidator(String? value) {
+    final input = (value ?? '').trim();
+    if (input.isEmpty) return 'Mobile number is required';
+    if (!RegExp(r'^9\d{9}$').hasMatch(input)) {
+      return 'Enter a valid mobile number';
     }
     return null;
   }
