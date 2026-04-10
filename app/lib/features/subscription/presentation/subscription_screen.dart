@@ -1,5 +1,4 @@
 import 'package:app/app/navigation/app_routes.dart';
-import 'package:app/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class SubscriptionScreen extends StatelessWidget {
@@ -7,294 +6,196 @@ class SubscriptionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF0F2F5),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF242424)),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: const Text(
-          'Choose Your Plan',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1F2230),
-            fontSize: 20,
-          ),
-        ),
+        title: const Text('Start Your Trial'),
+        centerTitle: true,
       ),
       body: SafeArea(
-        top: false,
         child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: const [
-              _TopIntroBar(),
-              Padding(
-                padding: EdgeInsets.fromLTRB(14, 12, 14, 18),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.25),
+                  ),
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _TrialPlanCard(),
-                    SizedBox(height: 16),
-                    Text(
-                      'After Your Free Trial',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Color(0xFF2A2A2A),
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        Icons.calendar_month_rounded,
+                        color: colorScheme.onPrimary,
                       ),
                     ),
-                    SizedBox(height: 12),
-                    _PaidPlanCard(
-                      name: 'Manok Plan',
-                      amount: '29',
-                      period: '/month',
-                      features: [
-                        'Unlimited posts & stories',
-                        'News feed access',
-                        'Private messaging',
-                        'Marketplace browsing',
-                        'Event calendar',
-                      ],
+                    const SizedBox(height: 14),
+                    Text(
+                      '30-Day Free Trial',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                    SizedBox(height: 12),
-                    _PaidPlanCard(
-                      name: 'Panabong Plan',
-                      amount: '79',
-                      period: '/month',
-                      features: [
-                        'Everything in Manok Plan',
-                        'Bloodline registry tools',
-                        'Breeding journal',
-                        'Performance tracking',
-                        'Priority listing in marketplace',
-                      ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Enjoy full FarmBuzz access for 30 days. Continue anytime after trial.',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        height: 1.35,
+                        color: colorScheme.onSurface.withValues(alpha: 0.75),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TopIntroBar extends StatelessWidget {
-  const _TopIntroBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF0F2F5),
-      ),
-      child: const Text(
-        'Start with 2 months free. Experience everything FarmBuzz has to offer.',
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 13,
-          color: Color(0xFF6F7378),
-          height: 1.35,
-        ),
-      ),
-    );
-  }
-}
-
-class _TrialPlanCard extends StatelessWidget {
-  const _TrialPlanCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: kGoldAccent, width: 1.6),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+              const SizedBox(height: 18),
               Container(
-                width: 46,
-                height: 46,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF6EFE0),
-                  shape: BoxShape.circle,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: colorScheme.onSurface.withValues(alpha: 0.10),
+                  ),
                 ),
-                child: const Icon(Icons.card_giftcard, color: kGoldAccent, size: 24),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '60-Day Free Trial',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFFB38206),
+                      'Included in your trial',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 12),
+                    const _BenefitRow(text: 'Farm records and activity tracking'),
+                    const _BenefitRow(text: 'Community posts, groups, and messaging'),
+                    const _BenefitRow(text: 'Marketplace access and updates'),
+                    const _BenefitRow(text: 'Profile tools and progress insights'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: colorScheme.primary, width: 1.3),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Try everything free for 60 days. No credit card needed.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6E6E6E),
-                        height: 1.3,
+                      'FarmBuzz Plan',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    RichText(
+                      text: TextSpan(
+                        style: theme.textTheme.bodyMedium,
+                        children: [
+                          TextSpan(
+                            text: '\u20B139.99',
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' / month',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurface.withValues(alpha: 0.72),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Starts after your 30-day free trial.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.72),
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pushReplacementNamed(
+                  AppRoutes.newsFeed,
+                ),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(54),
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text('Start 30-Day Free Trial'),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'After trial, your plan is \u20B139.99/month. Cancel anytime.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.62),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          const _PlanFeature(text: 'Full access to ALL features for 60 days'),
-          const _PlanFeature(text: 'Unlimited birds, posts & stories'),
-          const _PlanFeature(text: 'Bloodline registry & training journal'),
-          const _PlanFeature(text: 'Health tracker & conditioning programs'),
-          const _PlanFeature(text: 'Marketplace, messaging & groups'),
-          const _PlanFeature(text: 'Financial tracker & export reports'),
-          const _PlanFeature(text: 'No credit card required'),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: () =>
-                Navigator.of(context).pushNamed(AppRoutes.newsFeed),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kGoldAccent,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(46),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(9),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            icon: const Icon(Icons.bolt_rounded, size: 18),
-            label: const Text('Start Free Trial'),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'No payment required. Cancel anytime.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF999999), fontSize: 11.5),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _PaidPlanCard extends StatelessWidget {
-  const _PaidPlanCard({
-    required this.name,
-    required this.amount,
-    required this.period,
-    required this.features,
-  });
-
-  final String name;
-  final String amount;
-  final String period;
-  final List<String> features;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E4E8)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1F2230),
-            ),
-          ),
-          const SizedBox(height: 2),
-          RichText(
-            text: TextSpan(
-              children: [
-                const TextSpan(
-                  text: '\u20B1',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: kGoldAccent,
-                  ),
-                ),
-                TextSpan(
-                  text: amount,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF1F2230),
-                  ),
-                ),
-                TextSpan(
-                  text: period,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6E6E6E),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...features.map((feature) => _PlanFeature(text: feature)),
-        ],
-      ),
-    );
-  }
-}
-
-class _PlanFeature extends StatelessWidget {
-  const _PlanFeature({required this.text});
+class _BenefitRow extends StatelessWidget {
+  const _BenefitRow({required this.text});
 
   final String text;
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1.5),
-            child: Icon(Icons.check, size: 14, color: Color(0xFF5CB85C)),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.check_circle_rounded,
+              size: 18,
+              color: colorScheme.primary,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF3E3E3E),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
                 height: 1.25,
               ),
             ),

@@ -19,7 +19,6 @@ import 'package:app/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
 import 'package:app/features/news_feed/presentation/news_feed_screen.dart';
 import 'package:app/features/subscription/presentation/subscription_screen.dart';
-import 'package:app/features/trial/presentation/trial_screen.dart';
 import 'package:flutter/material.dart';
 
 class FarmBuzzApp extends StatelessWidget {
@@ -46,7 +45,6 @@ class FarmBuzzApp extends StatelessWidget {
       routes: {
         AppRoutes.splash: (_) => const SplashScreen(),
         AppRoutes.onboarding: (_) => const OnboardingScreen(),
-        AppRoutes.trial: (_) => const TrialScreen(),
         AppRoutes.home: (_) => const HomeScreen(),
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.signup: (_) => const SignUpScreen(),

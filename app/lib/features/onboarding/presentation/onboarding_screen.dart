@@ -55,7 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _goToTrial() {
-    Navigator.of(context).pushReplacementNamed(AppRoutes.trial);
+    Navigator.of(context).pushReplacementNamed(AppRoutes.subscription);
   }
 
   Future<void> _handleNext() async {
