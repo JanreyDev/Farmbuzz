@@ -1,4 +1,4 @@
-import 'package:app/app/navigation/app_routes.dart';
+﻿import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +14,8 @@ class LearnHubScreen extends StatelessWidget {
     const topics = [
       _TopicData(
         title: 'Bloodline Encyclopedia',
-        subtitle: '18 bloodline profiles with traits, history, and cross recommendations',
+        subtitle:
+            '18 bloodline profiles with traits, history, and cross recommendations',
         articleCount: 18,
         icon: Icons.hub_outlined,
         iconColor: Color(0xFFC49A27),
@@ -30,7 +31,8 @@ class LearnHubScreen extends StatelessWidget {
       ),
       _TopicData(
         title: 'Disease Library',
-        subtitle: 'Common diseases: symptoms, prevention, treatment with photos',
+        subtitle:
+            'Common diseases: symptoms, prevention, treatment with photos',
         articleCount: 24,
         icon: Icons.coronavirus_outlined,
         iconColor: Color(0xFFC44A4A),
@@ -108,89 +110,92 @@ class LearnHubScreen extends StatelessWidget {
                       child: ListView(
                         padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
                         children: [
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Master gamefowl breeding with guides from champion breeders. All content in Taglish.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _kLearnMutedText,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: kGoldAccent, width: 1.2),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 52,
-                            height: 52,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFFBF4E3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.menu_book_outlined,
-                              color: kGoldAccent,
-                              size: 28,
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Master gamefowl breeding with guides from champion breeders. All content in Taglish.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _kLearnMutedText,
+                              height: 1.4,
                             ),
                           ),
                           const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: kGoldAccent,
+                                width: 1.2,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFBF4E3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.menu_book_outlined,
+                                    color: kGoldAccent,
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  "Beginner's Guide to Sabong Breeding",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 23,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1F2230),
+                                    height: 1.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Everything you need to know to start your first gamefarm. From choosing bloodlines to your first derby.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: _kLearnMutedText,
+                                    height: 1.35,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Start Reading',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: kGoldAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 18),
                           const Text(
-                            "Beginner's Guide to Sabong Breeding",
-                            textAlign: TextAlign.center,
+                            'Topics',
                             style: TextStyle(
-                              fontSize: 23,
+                              fontSize: 19,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF1F2230),
-                              height: 1.1,
+                              height: 1,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Everything you need to know to start your first gamefarm. From choosing bloodlines to your first derby.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _kLearnMutedText,
-                              height: 1.35,
+                          const SizedBox(height: 10),
+                          ...topics.map(
+                            (topic) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _TopicCard(topic: topic),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'Start Reading',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: kGoldAccent,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'Topics',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1F2230),
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ...topics.map(
-                      (topic) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _TopicCard(topic: topic),
-                      ),
-                    ),
                         ],
                       ),
                     ),
@@ -202,14 +207,21 @@ class LearnHubScreen extends StatelessWidget {
               activeItem: AppBottomNavItem.explore,
               onItemTap: (item) {
                 if (item == AppBottomNavItem.home) {
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.newsFeed);
+                  Navigator.of(
+                    context,
+                  ).pushReplacementNamed(AppRoutes.home);
                 } else if (item == AppBottomNavItem.explore) {
-                  Navigator.of(context).pushReplacementNamed(AppRoutes.explore);
-                } else if (item == AppBottomNavItem.create ||
-                    item == AppBottomNavItem.market) {
-                  Navigator.of(context).pushReplacementNamed(
-                    AppRoutes.marketplace,
-                  );
+                  Navigator.of(
+                    context,
+                  ).pushReplacementNamed(AppRoutes.farmDashboard);
+                } else if (item == AppBottomNavItem.market) {
+                  Navigator.of(
+                    context,
+                  ).pushReplacementNamed(AppRoutes.marketplace);
+                } else if (item == AppBottomNavItem.create) {
+                  Navigator.of(
+                    context,
+                  ).pushReplacementNamed(AppRoutes.groups);
                 } else if (item == AppBottomNavItem.profile) {
                   Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
                 }
@@ -320,3 +332,5 @@ class _TopicData {
   final Color iconColor;
   final Color iconBackground;
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:app/app/navigation/app_routes.dart';
+﻿import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -52,10 +52,13 @@ class ExploreScreen extends StatelessWidget {
 
   void _handleNav(BuildContext context, AppBottomNavItem item) {
     if (item == AppBottomNavItem.home) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.newsFeed);
-    } else if (item == AppBottomNavItem.create ||
-        item == AppBottomNavItem.market) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    } else if (item == AppBottomNavItem.explore) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.farmDashboard);
+    } else if (item == AppBottomNavItem.market) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.marketplace);
+    } else if (item == AppBottomNavItem.create) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.groups);
     } else if (item == AppBottomNavItem.profile) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
     }
@@ -755,3 +758,5 @@ class _EventData {
   final String format;
   final String slots;
 }
+
+

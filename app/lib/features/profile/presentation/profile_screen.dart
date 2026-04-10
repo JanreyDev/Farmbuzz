@@ -1,4 +1,4 @@
-import 'package:app/app/navigation/app_routes.dart';
+﻿import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';
@@ -45,12 +45,13 @@ class ProfileScreen extends StatelessWidget {
 
   void _handleNav(BuildContext context, AppBottomNavItem item) {
     if (item == AppBottomNavItem.home) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.newsFeed);
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
     } else if (item == AppBottomNavItem.explore) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.explore);
-    } else if (item == AppBottomNavItem.market ||
-        item == AppBottomNavItem.create) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.farmDashboard);
+    } else if (item == AppBottomNavItem.market) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.marketplace);
+    } else if (item == AppBottomNavItem.create) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.groups);
     }
   }
 }
@@ -117,7 +118,12 @@ class _ProfileBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_kProfileInset, 60, _kProfileInset, 10),
+      padding: const EdgeInsets.fromLTRB(
+        _kProfileInset,
+        60,
+        _kProfileInset,
+        10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -196,7 +202,9 @@ class _ProfileBody extends StatelessWidget {
               side: const BorderSide(color: kGoldAccent, width: 1.1),
               minimumSize: const Size.fromHeight(44),
               foregroundColor: kGoldAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             icon: const Icon(Icons.edit_outlined, size: 16),
             label: const Text(
@@ -228,7 +236,11 @@ class _AchievementsSection extends StatelessWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.emoji_events_outlined, size: 16, color: Color(0xFFB68512)),
+              Icon(
+                Icons.emoji_events_outlined,
+                size: 16,
+                color: Color(0xFFB68512),
+              ),
               SizedBox(width: 4),
               Text(
                 'Achievements',
@@ -247,7 +259,7 @@ class _AchievementsSection extends StatelessWidget {
               const visibleCards = 2.5;
               final cardWidth =
                   (constraints.maxWidth - (spacing * (visibleCards - 1))) /
-                      visibleCards;
+                  visibleCards;
 
               return SizedBox(
                 height: 92,
@@ -256,8 +268,10 @@ class _AchievementsSection extends StatelessWidget {
                   itemCount: achievements.length,
                   separatorBuilder: (_, index) =>
                       const SizedBox(width: spacing),
-                  itemBuilder: (_, index) =>
-                      _AchievementCard(text: achievements[index], width: cardWidth),
+                  itemBuilder: (_, index) => _AchievementCard(
+                    text: achievements[index],
+                    width: cardWidth,
+                  ),
                 ),
               );
             },
@@ -288,7 +302,11 @@ class _AchievementCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Icon(Icons.emoji_events_outlined, size: 16, color: Color(0xFFB68512)),
+          const Icon(
+            Icons.emoji_events_outlined,
+            size: 16,
+            color: Color(0xFFB68512),
+          ),
           const SizedBox(height: 6),
           Text(
             text,
@@ -333,13 +351,22 @@ class _FarmManagementSection extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_kProfileInset, 10, _kProfileInset, 14),
+      padding: const EdgeInsets.fromLTRB(
+        _kProfileInset,
+        10,
+        _kProfileInset,
+        14,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.agriculture_outlined, size: 16, color: Color(0xFFB68512)),
+              Icon(
+                Icons.agriculture_outlined,
+                size: 16,
+                color: Color(0xFFB68512),
+              ),
               SizedBox(width: 4),
               Text(
                 'Farm Management',
@@ -502,13 +529,22 @@ class _BreedingHealthSection extends StatelessWidget {
     ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_kProfileInset, 10, _kProfileInset, 16),
+      padding: const EdgeInsets.fromLTRB(
+        _kProfileInset,
+        10,
+        _kProfileInset,
+        16,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.health_and_safety_outlined, size: 16, color: Color(0xFFB68512)),
+              Icon(
+                Icons.health_and_safety_outlined,
+                size: 16,
+                color: Color(0xFFB68512),
+              ),
               SizedBox(width: 4),
               Text(
                 'Breeding & Health',
@@ -677,3 +713,5 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
+
+

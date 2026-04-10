@@ -1,7 +1,6 @@
-import 'package:app/app/theme/app_theme.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-enum AppBottomNavItem { home, explore, create, market, profile }
+enum AppBottomNavItem { home, explore, market, create, profile }
 
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
@@ -15,75 +14,89 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final selectedColor = colorScheme.primary;
+    final inactiveColor = colorScheme.onSurface.withValues(alpha: 0.55);
+
     return Container(
-      height: 72,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE3E6EA))),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        border: Border(
+          top: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.12)),
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavIconButton(
-            icon: Icons.home_outlined,
-            isActive: activeItem == AppBottomNavItem.home,
-            onTap: () => onItemTap(AppBottomNavItem.home),
+      child: BottomNavigationBar(
+        currentIndex: _indexForItem(activeItem),
+        onTap: (index) => onItemTap(_itemForIndex(index)),
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        backgroundColor: theme.cardColor,
+        selectedItemColor: selectedColor,
+        unselectedItemColor: inactiveColor,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
           ),
-          _NavIconButton(
-            icon: Icons.explore_outlined,
-            isActive: activeItem == AppBottomNavItem.explore,
-            onTap: () => onItemTap(AppBottomNavItem.explore),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.agriculture_outlined),
+            activeIcon: Icon(Icons.agriculture),
+            label: 'Farm',
           ),
-          InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () => onItemTap(AppBottomNavItem.create),
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: const BoxDecoration(
-                color: kGoldAccent,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.storefront_outlined),
+            activeIcon: Icon(Icons.storefront),
+            label: 'Store',
           ),
-          _NavIconButton(
-            icon: Icons.storefront_outlined,
-            isActive: activeItem == AppBottomNavItem.market,
-            onTap: () => onItemTap(AppBottomNavItem.market),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.groups_outlined),
+            activeIcon: Icon(Icons.groups),
+            label: 'Community',
           ),
-          _NavIconButton(
-            icon: Icons.person_outline,
-            isActive: activeItem == AppBottomNavItem.profile,
-            onTap: () => onItemTap(AppBottomNavItem.profile),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),
     );
   }
-}
 
-class _NavIconButton extends StatelessWidget {
-  const _NavIconButton({
-    required this.icon,
-    required this.isActive,
-    required this.onTap,
-  });
+  int _indexForItem(AppBottomNavItem item) {
+    switch (item) {
+      case AppBottomNavItem.home:
+        return 0;
+      case AppBottomNavItem.explore:
+        return 1;
+      case AppBottomNavItem.market:
+        return 2;
+      case AppBottomNavItem.create:
+        return 3;
+      case AppBottomNavItem.profile:
+        return 4;
+    }
+  }
 
-  final IconData icon;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkResponse(
-      radius: 22,
-      onTap: onTap,
-      child: Icon(
-        icon,
-        color: isActive ? kGoldAccent : const Color(0xFF8A9098),
-        size: 22,
-      ),
-    );
+  AppBottomNavItem _itemForIndex(int index) {
+    switch (index) {
+      case 0:
+        return AppBottomNavItem.home;
+      case 1:
+        return AppBottomNavItem.explore;
+      case 2:
+        return AppBottomNavItem.market;
+      case 3:
+        return AppBottomNavItem.create;
+      case 4:
+      default:
+        return AppBottomNavItem.profile;
+    }
   }
 }
