@@ -2,6 +2,7 @@ import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -32,7 +33,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _continue() {
+  void _joinNow() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
     Navigator.of(context).pushNamed(AppRoutes.subscription);
@@ -50,155 +51,162 @@ class _SignUpScreenState extends State<SignUpScreen> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
-          'Step 1 of 4',
+          'Create Account',
           style: TextStyle(
             color: Color(0xFF4B4B4B),
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
           ),
         ),
         centerTitle: true,
       ),
       body: SafeArea(
         top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: _ProgressHeader(),
-            ),
-            const SizedBox(height: 14),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Personal Information',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1F2230),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Tell us who you are',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF767676),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      AuthInputField(
-                        label: 'First Name',
-                        hintText: 'Juan',
-                        prefixIcon: Icons.person_outline,
-                        controller: _firstNameController,
-                        textInputAction: TextInputAction.next,
-                        validator: _requiredField,
-                      ),
-                      const SizedBox(height: 12),
-                      AuthInputField(
-                        label: 'Middle Name',
-                        hintText: 'Dela',
-                        prefixIcon: Icons.person_outline,
-                        controller: _middleNameController,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      const SizedBox(height: 12),
-                      AuthInputField(
-                        label: 'Last Name',
-                        hintText: 'Cruz',
-                        prefixIcon: Icons.person_outline,
-                        controller: _lastNameController,
-                        textInputAction: TextInputAction.next,
-                        validator: _requiredField,
-                      ),
-                      const SizedBox(height: 12),
-                      AuthInputField(
-                        label: 'Email',
-                        hintText: 'you@example.com',
-                        prefixIcon: Icons.mail_outline,
-                        controller: _emailController,
-                        textInputAction: TextInputAction.next,
-                        validator: _emailValidator,
-                      ),
-                      const SizedBox(height: 12),
-                      AuthInputField(
-                        label: 'Mobile Number',
-                        hintText: '+63 9XX XXX XXXX',
-                        prefixIcon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        controller: _mobileController,
-                        textInputAction: TextInputAction.next,
-                        validator: _requiredField,
-                      ),
-                      const SizedBox(height: 12),
-                      AuthInputField(
-                        label: 'Password',
-                        hintText: 'Min. 8 characters',
-                        prefixIcon: Icons.lock_outline,
-                        suffixIcon: _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        obscureText: _obscurePassword,
-                        controller: _passwordController,
-                        textInputAction: TextInputAction.done,
-                        validator: _passwordValidator,
-                        onSuffixTap: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'At least 8 characters with a number',
-                        style: TextStyle(
-                          color: Color(0xFF8B8B8B),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Join FarmBuzz',
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1F2230),
                   ),
                 ),
-              ),
-            ),
-            Container(
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFE3E3E3))),
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
-              child: ElevatedButton(
-                onPressed: _continue,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kGoldAccent,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(54),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(height: 4),
+                const Text(
+                  'Create your account and start your farm journey',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF767676),
                   ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                const SizedBox(height: 18),
+                AuthInputField(
+                  label: 'First Name',
+                  hintText: 'Juan',
+                  prefixIcon: Icons.person_outline,
+                  controller: _firstNameController,
+                  textInputAction: TextInputAction.next,
+                  validator: _requiredField,
+                ),
+                const SizedBox(height: 12),
+                AuthInputField(
+                  label: 'Middle Name',
+                  hintText: 'Dela',
+                  prefixIcon: Icons.person_outline,
+                  controller: _middleNameController,
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 12),
+                AuthInputField(
+                  label: 'Last Name',
+                  hintText: 'Cruz',
+                  prefixIcon: Icons.person_outline,
+                  controller: _lastNameController,
+                  textInputAction: TextInputAction.next,
+                  validator: _requiredField,
+                ),
+                const SizedBox(height: 12),
+                AuthInputField(
+                  label: 'Email',
+                  hintText: 'you@example.com',
+                  prefixIcon: Icons.mail_outline,
+                  controller: _emailController,
+                  textInputAction: TextInputAction.next,
+                  validator: _emailValidator,
+                ),
+                const SizedBox(height: 12),
+                _MobileNumberField(
+                  controller: _mobileController,
+                  validator: _mobileValidator,
+                ),
+                const SizedBox(height: 12),
+                AuthInputField(
+                  label: 'Password',
+                  hintText: 'Min. 8 characters',
+                  prefixIcon: Icons.lock_outline,
+                  suffixIcon: _obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  obscureText: _obscurePassword,
+                  controller: _passwordController,
+                  textInputAction: TextInputAction.done,
+                  validator: _passwordValidator,
+                  onSuffixTap: () {
+                    setState(() => _obscurePassword = !_obscurePassword);
+                  },
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'At least 8 characters with a number',
+                  style: TextStyle(
+                    color: Color(0xFF8B8B8B),
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _joinNow,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kGoldAccent,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(54),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  child: const Text('Join FarmBuzz'),
+                ),
+                const SizedBox(height: 18),
+                const Row(
                   children: [
-                    Text('Continue'),
-                    SizedBox(width: 10),
-                    Icon(Icons.arrow_forward, size: 19),
+                    Expanded(child: Divider(color: Color(0xFFDBDBDB))),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF9A9A9A),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Color(0xFFDBDBDB))),
                   ],
                 ),
-              ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Already have an account? ',
+                      style: TextStyle(color: Color(0xFF777777)),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pushNamed(AppRoutes.login),
+                      child: const Text(
+                        'Sign In',
+                        style: TextStyle(
+                          color: kGoldAccent,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -207,6 +215,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _requiredField(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'This field is required';
+    }
+    return null;
+  }
+
+  String? _mobileValidator(String? value) {
+    final input = (value ?? '').trim();
+    if (input.isEmpty) return 'Mobile number is required';
+    if (!RegExp(r'^9\d{9}$').hasMatch(input)) {
+      return 'Enter a valid mobile number';
     }
     return null;
   }
@@ -235,31 +252,78 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 }
 
-class _ProgressHeader extends StatelessWidget {
-  const _ProgressHeader();
+class _MobileNumberField extends StatelessWidget {
+  const _MobileNumberField({
+    required this.controller,
+    required this.validator,
+  });
+
+  final TextEditingController controller;
+  final String? Function(String?) validator;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Container(
-            height: 3,
-            decoration: BoxDecoration(
-              color: kGoldAccent,
-              borderRadius: BorderRadius.circular(999),
-            ),
+        const Text(
+          'Mobile Number',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF555555),
           ),
         ),
-        const SizedBox(width: 3),
-        Expanded(
-          flex: 3,
-          child: Container(
-            height: 3,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD8D8D8),
-              borderRadius: BorderRadius.circular(999),
-            ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFE9EBEF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: Icon(
+                  Icons.phone_outlined,
+                  size: 19,
+                  color: Color(0xFF9B9B9B),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                width: 1,
+                height: 20,
+                color: const Color(0xFFCBCDD2),
+              ),
+              const Text(
+                '+63',
+                style: TextStyle(
+                  color: Color(0xFF666666),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: controller,
+                  validator: validator,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: '9XX XXX XXXX',
+                    hintStyle: TextStyle(color: Color(0xFF9B9B9B)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.fromLTRB(0, 14, 12, 14),
+                    counterText: '',
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

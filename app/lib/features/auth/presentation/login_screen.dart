@@ -82,16 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(fontSize: 16, color: Color(0xFF727272)),
                 ),
                 const SizedBox(height: 24),
-                AuthInputField(
-                  label: 'Mobile Number',
-                  hintText: '9XX XXX XXXX',
-                  prefixText: '+63 ',
-                  prefixIcon: Icons.phone_outlined,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  maxLength: 10,
+                _MobileNumberField(
                   controller: _mobileController,
-                  textInputAction: TextInputAction.next,
                   validator: _mobileValidator,
                 ),
                 const SizedBox(height: 14),
@@ -202,5 +194,84 @@ class _LoginScreenState extends State<LoginScreen> {
       return 'Enter a valid mobile number';
     }
     return null;
+  }
+}
+
+class _MobileNumberField extends StatelessWidget {
+  const _MobileNumberField({
+    required this.controller,
+    required this.validator,
+  });
+
+  final TextEditingController controller;
+  final String? Function(String?) validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Mobile Number',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF555555),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFE9EBEF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: Icon(
+                  Icons.phone_outlined,
+                  size: 19,
+                  color: Color(0xFF9B9B9B),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                width: 1,
+                height: 20,
+                color: const Color(0xFFCBCDD2),
+              ),
+              const Text(
+                '+63',
+                style: TextStyle(
+                  color: Color(0xFF666666),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: controller,
+                  validator: validator,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  decoration: const InputDecoration(
+                    hintText: '9XX XXX XXXX',
+                    hintStyle: TextStyle(color: Color(0xFF9B9B9B)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.fromLTRB(0, 14, 12, 14),
+                    counterText: '',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
