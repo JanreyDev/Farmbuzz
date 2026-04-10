@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-const Color _kChatBackground = Color(0xFFF1F1F1);
 const Color _kChatSurface = Color(0xFFE3E5E9);
 const Color _kOutgoingBubble = Color(0xFFC9993A);
 const Color _kIncomingBubble = Color(0xFFF7F7F7);

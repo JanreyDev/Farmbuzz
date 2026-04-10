@@ -1,5 +1,4 @@
 import 'package:app/app/navigation/app_routes.dart';
-import 'package:app/app/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/login_screen.dart';
 import 'package:app/features/auth/presentation/signup_screen.dart';
 import 'package:app/features/explore/presentation/explore_screen.dart';
@@ -16,23 +15,38 @@ import 'package:app/features/weight/presentation/weight_tracker_screen.dart';
 import 'package:app/features/breeding/presentation/breeding_planner_screen.dart';
 import 'package:app/features/learn/presentation/learn_hub_screen.dart';
 import 'package:app/features/profile/presentation/profile_screen.dart';
+import 'package:app/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
 import 'package:app/features/news_feed/presentation/news_feed_screen.dart';
 import 'package:app/features/subscription/presentation/subscription_screen.dart';
+import 'package:app/features/trial/presentation/trial_screen.dart';
 import 'package:flutter/material.dart';
 
 class FarmBuzzApp extends StatelessWidget {
-  const FarmBuzzApp({super.key});
+  const FarmBuzzApp({
+    super.key,
+    required this.theme,
+    required this.darkTheme,
+    required this.themeMode,
+  });
+
+  final ThemeData theme;
+  final ThemeData darkTheme;
+  final ThemeMode themeMode;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'FarmBuzz',
-      theme: AppTheme.light(),
+      theme: theme,
+      darkTheme: darkTheme,
+      themeMode: themeMode,
       initialRoute: AppRoutes.splash,
       routes: {
         AppRoutes.splash: (_) => const SplashScreen(),
+        AppRoutes.onboarding: (_) => const OnboardingScreen(),
+        AppRoutes.trial: (_) => const TrialScreen(),
         AppRoutes.home: (_) => const HomeScreen(),
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.signup: (_) => const SignUpScreen(),
