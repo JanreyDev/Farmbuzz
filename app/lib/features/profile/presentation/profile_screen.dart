@@ -1,46 +1,66 @@
 import 'package:app/app/navigation/app_routes.dart';
-import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:app/app/widgets/app_drawer.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
 const double _kProfileInset = 14;
-const Color _kProfileBg = Color(0xFFF1F1F1);
+const Color _kProfileBg = Color(0xFFF5F5F5);
 const Color _kProfileDivider = Color(0xFFE6E9ED);
 const Color _kProfileMuted = Color(0xFF7B818A);
+const Color _kProfileBgDark = Color(0xFF1F1F1F);
+const Color _kProfileCardDark = Color(0xFF242628);
+const Color _kProfileBorderDark = Color(0xFF35383D);
+const Color _kProfileMutedDark = Color(0xFFB0B8B2);
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkGreen = Color(0xFF1B5E20);
+const Color _kLightGreen = Color(0xFF66BB6A);
+const Color _kSoftGreen = Color(0xFFE8F5E9);
+const Color _kSoftGreenBorder = Color(0xFFCFE4D1);
+const String _kProfileCoverUrl =
+    'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?auto=format&fit=crop&w=1200&q=80';
+const String _kProfileAvatarUrl =
+    'https://randomuser.me/api/portraits/men/32.jpg';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final screenBg = isDark ? _kProfileBgDark : _kProfileBg;
+
     return Scaffold(
-      backgroundColor: _kProfileBg,
+      backgroundColor: screenBg,
       appBar: const FarmBuzzHomeAppBar(),
       drawer: const FarmBuzzAppDrawer(),
       body: SafeArea(
         top: false,
+        bottom: false,
         child: Column(
           children: [
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
-                children: const [
-                  _CoverHeader(),
-                  _ProfileBody(),
-                  _InsetBar(),
-                  _AchievementsSection(),
-                  _InsetBar(),
-                  _FarmManagementSection(),
-                  _InsetBar(),
-                  _BreedingHealthSection(),
+                children: [
+                  const _CoverHeader(),
+                  const _ProfileBody(),
+                  const _InsetBar(),
+                  const _AchievementsSection(),
+                  const _InsetBar(),
+                  const _FarmManagementSection(),
+                  const _InsetBar(),
+                  const _BreedingHealthSection(),
                 ],
               ),
             ),
-            AppBottomNav(
-              activeItem: AppBottomNavItem.profile,
-              onItemTap: (item) => _handleNav(context, item),
+            Theme(
+              data: theme.copyWith(cardColor: screenBg),
+              child: AppBottomNav(
+                activeItem: AppBottomNavItem.profile,
+                onItemTap: (item) => _handleNav(context, item),
+              ),
             ),
           ],
         ),
@@ -66,15 +86,35 @@ class _CoverHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
+          width: double.infinity,
           height: 200,
           margin: const EdgeInsets.symmetric(horizontal: _kProfileInset),
           decoration: BoxDecoration(
-            color: const Color(0xFFBCBEC3),
+            color: isDark ? _kProfileCardDark : const Color(0xFFDCEFD8),
             borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.network(
+            _kProfileCoverUrl,
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const ColoredBox(
+              color: Color(0xFFDCEFD8),
+              child: Center(
+                child: Icon(
+                  Icons.image_outlined,
+                  size: 28,
+                  color: _kPrimaryGreen,
+                ),
+              ),
+            ),
           ),
         ),
         Positioned(
@@ -92,22 +132,41 @@ class _CoverHeader extends StatelessWidget {
         ),
         Positioned(
           left: 30,
-          bottom: -34,
+          bottom: -30,
           child: Container(
-            width: 72,
-            height: 72,
+            width: 88,
+            height: 88,
             decoration: BoxDecoration(
-              color: const Color(0xFFF7F0DE),
+              color: isDark ? _kProfileCardDark : Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2.4),
+              border: Border.all(color: Colors.white, width: 4),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x26000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
-            alignment: Alignment.center,
-            child: const Text(
-              'RS',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFFAA7D13),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: ClipOval(
+                child: Image.network(
+                  _kProfileAvatarUrl,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Center(
+                    child: Text(
+                      'RS',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: _kDarkGreen,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -122,29 +181,33 @@ class _ProfileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMain = isDark ? Colors.white : const Color(0xFF1F2230);
+    final muted = isDark ? _kProfileMutedDark : _kProfileMuted;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         _kProfileInset,
-        60,
+        62,
         _kProfileInset,
         10,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Text(
                 'Ricardo Santos',
                 style: TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2230),
+                  color: textMain,
                   height: 1,
                 ),
               ),
-              SizedBox(width: 4),
-              Icon(Icons.verified, size: 16, color: Color(0xFFCFA136)),
+              const SizedBox(width: 4),
+              const Icon(Icons.verified, size: 16, color: _kPrimaryGreen),
             ],
           ),
           const SizedBox(height: 4),
@@ -152,27 +215,27 @@ class _ProfileBody extends StatelessWidget {
             'Santos Gamefarm',
             style: TextStyle(
               fontSize: 16,
-              color: Color(0xFFB58512),
+              color: _kPrimaryGreen,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 3),
-          const Row(
+          Row(
             children: [
-              Icon(Icons.location_on_outlined, size: 13, color: _kProfileMuted),
-              SizedBox(width: 2),
+              Icon(Icons.location_on_outlined, size: 13, color: muted),
+              const SizedBox(width: 2),
               Text(
                 'Arayat, Pampanga',
-                style: TextStyle(fontSize: 12, color: _kProfileMuted),
+                style: TextStyle(fontSize: 12, color: muted),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             '3rd generation breeder. Champions since 1998. Pure Kelso\nand Sweater lines.',
             style: TextStyle(
               fontSize: 11.5,
-              color: Color(0xFF666C75),
+              color: isDark ? _kProfileMutedDark : const Color(0xFF666C75),
               height: 1.4,
             ),
           ),
@@ -187,7 +250,10 @@ class _ProfileBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(color: Color(0xFFE3E7EC), height: 1),
+          Divider(
+            color: isDark ? _kProfileBorderDark : const Color(0xFFE3E7EC),
+            height: 1,
+          ),
           const SizedBox(height: 12),
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -199,14 +265,17 @@ class _ProfileBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(color: Color(0xFFE3E7EC), height: 1),
+          Divider(
+            color: isDark ? _kProfileBorderDark : const Color(0xFFE3E7EC),
+            height: 1,
+          ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: kGoldAccent, width: 1.1),
+              side: const BorderSide(color: _kPrimaryGreen, width: 1.1),
               minimumSize: const Size.fromHeight(44),
-              foregroundColor: kGoldAccent,
+              foregroundColor: _kPrimaryGreen,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -228,6 +297,8 @@ class _AchievementsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     const achievements = [
       '2024 Pampanga Derby\nChampion',
       '2023 Luzon Grand\nSlam Winner',
@@ -239,20 +310,20 @@ class _AchievementsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.emoji_events_outlined,
                 size: 16,
-                color: Color(0xFFB68512),
+                color: _kPrimaryGreen,
               ),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               Text(
                 'Achievements',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2230),
+                  color: isDark ? Colors.white : _kDarkGreen,
                 ),
               ),
             ],
@@ -295,12 +366,16 @@ class _AchievementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFDF5),
+        color: isDark ? _kProfileCardDark : _kSoftGreen,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E6EB)),
+        border: Border.all(
+          color: isDark ? _kProfileBorderDark : _kSoftGreenBorder,
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: Column(
@@ -310,16 +385,16 @@ class _AchievementCard extends StatelessWidget {
           const Icon(
             Icons.emoji_events_outlined,
             size: 16,
-            color: Color(0xFFB68512),
+            color: _kPrimaryGreen,
           ),
           const SizedBox(height: 6),
           Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF2B313B),
+              color: isDark ? Colors.white : const Color(0xFF2B313B),
               height: 1.2,
             ),
           ),
@@ -334,6 +409,11 @@ class _FarmManagementSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sectionTitle = isDark ? Colors.white : _kDarkGreen;
+    final itemTitle = isDark ? Colors.white : const Color(0xFF1F2230);
+    final itemMuted = isDark ? _kProfileMutedDark : _kProfileMuted;
+
     const items = [
       _FarmManagementItem(
         title: 'Farm Dashboard',
@@ -365,20 +445,20 @@ class _FarmManagementSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.agriculture_outlined,
                 size: 16,
-                color: Color(0xFFB68512),
+                color: _kPrimaryGreen,
               ),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               Text(
                 'Farm Management',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2230),
+                  color: sectionTitle,
                 ),
               ),
             ],
@@ -386,9 +466,11 @@ class _FarmManagementSection extends StatelessWidget {
           const SizedBox(height: 10),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? _kProfileCardDark : Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E6EB)),
+              border: Border.all(
+                color: isDark ? _kProfileBorderDark : const Color(0xFFE2E6EB),
+              ),
             ),
             child: Column(
               children: List.generate(items.length, (index) {
@@ -423,13 +505,13 @@ class _FarmManagementSection extends StatelessWidget {
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFBF4E3),
+                                color: isDark ? const Color(0xFF1F3B22) : _kSoftGreen,
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Icon(
                                 item.icon,
                                 size: 19,
-                                color: const Color(0xFFB68512),
+                                color: _kPrimaryGreen,
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -439,18 +521,18 @@ class _FarmManagementSection extends StatelessWidget {
                                 children: [
                                   Text(
                                     item.title,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFF1F2230),
+                                      color: itemTitle,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     item.subtitle,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: _kProfileMuted,
+                                      color: itemMuted,
                                       height: 1.3,
                                     ),
                                   ),
@@ -458,9 +540,11 @@ class _FarmManagementSection extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            const Icon(
+                            Icon(
                               Icons.chevron_right,
-                              color: Color(0xFF9AA1AA),
+                              color: isDark
+                                  ? _kProfileMutedDark
+                                  : const Color(0xFF9AA1AA),
                               size: 20,
                             ),
                           ],
@@ -468,10 +552,12 @@ class _FarmManagementSection extends StatelessWidget {
                       ),
                     ),
                     if (index != items.length - 1)
-                      const Divider(
+                      Divider(
                         height: 1,
                         thickness: 1,
-                        color: Color(0xFFE9EDF1),
+                        color: isDark
+                            ? _kProfileBorderDark
+                            : const Color(0xFFE9EDF1),
                       ),
                   ],
                 );
@@ -503,32 +589,37 @@ class _BreedingHealthSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sectionTitle = isDark ? Colors.white : _kDarkGreen;
+    final itemTitle = isDark ? Colors.white : const Color(0xFF1F2230);
+    final itemMuted = isDark ? _kProfileMutedDark : _kProfileMuted;
+
     const items = [
       _BreedingHealthItem(
         title: 'Health Records',
         subtitle: 'Vaccines, meds, and treatment logs',
         icon: Icons.favorite_border,
-        iconColor: Color(0xFFE14E6B),
-        iconBg: Color(0xFFFFEFF4),
-        cardBg: Color(0xFFFFFCFD),
+        iconColor: _kPrimaryGreen,
+        iconBg: _kSoftGreen,
+        cardBg: Color(0xFFF2FAF3),
         route: AppRoutes.healthRecords,
       ),
       _BreedingHealthItem(
         title: 'Weight Tracker',
         subtitle: 'Weekly growth and conditioning trends',
         icon: Icons.monitor_weight_outlined,
-        iconColor: Color(0xFF2D78FF),
-        iconBg: Color(0xFFEDF4FF),
-        cardBg: Color(0xFFFCFDFF),
+        iconColor: _kDarkGreen,
+        iconBg: _kSoftGreen,
+        cardBg: Color(0xFFF2FAF3),
         route: AppRoutes.weightTracker,
       ),
       _BreedingHealthItem(
         title: 'Breeding Planner',
         subtitle: 'Pairing plans and hatch schedules',
         icon: Icons.event_note_outlined,
-        iconColor: Color(0xFF2EA54A),
-        iconBg: Color(0xFFECF8F0),
-        cardBg: Color(0xFFFBFFFC),
+        iconColor: _kLightGreen,
+        iconBg: _kSoftGreen,
+        cardBg: Color(0xFFF2FAF3),
         route: AppRoutes.breedingPlanner,
       ),
     ];
@@ -543,20 +634,20 @@ class _BreedingHealthSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.health_and_safety_outlined,
                 size: 16,
-                color: Color(0xFFB68512),
+                color: _kPrimaryGreen,
               ),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               Text(
                 'Breeding & Health',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2230),
+                  color: sectionTitle,
                 ),
               ),
             ],
@@ -575,9 +666,11 @@ class _BreedingHealthSection extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                   decoration: BoxDecoration(
-                    color: item.cardBg,
+                    color: isDark ? _kProfileCardDark : item.cardBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E6EB)),
+                    border: Border.all(
+                      color: isDark ? _kProfileBorderDark : const Color(0xFFE2E6EB),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -585,10 +678,14 @@ class _BreedingHealthSection extends StatelessWidget {
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: item.iconBg,
+                          color: isDark ? const Color(0xFF1F3B22) : item.iconBg,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(item.icon, size: 20, color: item.iconColor),
+                        child: Icon(
+                          item.icon,
+                          size: 20,
+                          color: isDark ? _kLightGreen : item.iconColor,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -597,18 +694,18 @@ class _BreedingHealthSection extends StatelessWidget {
                           children: [
                             Text(
                               item.title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF1F2230),
+                                color: itemTitle,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               item.subtitle,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
-                                color: _kProfileMuted,
+                                color: itemMuted,
                                 height: 1.3,
                               ),
                             ),
@@ -616,9 +713,9 @@ class _BreedingHealthSection extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right,
-                        color: Color(0xFF9AA1AA),
+                        color: isDark ? _kProfileMutedDark : const Color(0xFF9AA1AA),
                         size: 20,
                       ),
                     ],
@@ -658,9 +755,14 @@ class _InsetBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: _kProfileInset),
-      child: Divider(height: 8, thickness: 7, color: _kProfileDivider),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _kProfileInset),
+      child: Divider(
+        height: 8,
+        thickness: 7,
+        color: isDark ? _kProfileBorderDark : _kProfileDivider,
+      ),
     );
   }
 }
@@ -672,18 +774,19 @@ class _Tag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF2DE),
+        color: isDark ? const Color(0xFF1F3B22) : _kSoftGreen,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,
-          color: Color(0xFFB68512),
+          color: isDark ? _kLightGreen : _kDarkGreen,
         ),
       ),
     );
@@ -698,21 +801,25 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF1F2230),
+            color: isDark ? Colors.white : const Color(0xFF1F2230),
             height: 1,
           ),
         ),
         const SizedBox(height: 3),
         Text(
           label,
-          style: const TextStyle(fontSize: 10.5, color: Color(0xFF727881)),
+          style: TextStyle(
+            fontSize: 10.5,
+            color: isDark ? _kProfileMutedDark : const Color(0xFF727881),
+          ),
         ),
       ],
     );
