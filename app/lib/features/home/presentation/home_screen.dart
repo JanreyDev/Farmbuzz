@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kHomeBgLight = Color(0xFFF5F5F5);
 const Color _kHomeBgDark = Color(0xFF1F1F1F);
+const Color _kHomeCardDark = Color(0xFF242628);
+const Color _kHomeCardLight = Colors.white;
 const double _kStoryCardWidth = 114;
 const double _kStoryCardGap = 8;
 
@@ -94,6 +96,7 @@ class _ComposerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
@@ -107,6 +110,7 @@ class _ComposerRow extends StatelessWidget {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
+                color: isDark ? _kHomeCardDark : _kHomeCardLight,
                 borderRadius: BorderRadius.circular(22),
                 border: Border.all(
                   color: colorScheme.onSurface.withValues(alpha: 0.18),
@@ -170,6 +174,7 @@ class _CreateStoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -180,7 +185,7 @@ class _CreateStoryCard extends StatelessWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
+                color: isDark ? _kHomeCardDark : _kHomeCardLight,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: colorScheme.onSurface.withValues(alpha: 0.12),
@@ -327,119 +332,132 @@ class _PostCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final sectionBg = isDark ? _kHomeBgDark : _kHomeBgLight;
+    final cardBg = isDark ? _kHomeCardDark : _kHomeCardLight;
 
     return Container(
       color: sectionBg,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _Avatar(size: 42, imageUrl: avatarUrl),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            author,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const _BreederBadge(),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(0, 28),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            foregroundColor: _kPrimaryGreen,
-                            textStyle: theme.textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          child: const Text('Follow'),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '$timeAgo - Public',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withValues(alpha: 0.62),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.more_horiz,
-                color: colorScheme.onSurface.withValues(alpha: 0.65),
-              ),
-              const SizedBox(width: 2),
-              Icon(
-                Icons.close,
-                color: colorScheme.onSurface.withValues(alpha: 0.65),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            text,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              height: 1.35,
-              fontWeight: FontWeight.w400,
-              color: isDark
-                  ? Colors.white
-                  : colorScheme.onSurface.withValues(alpha: 0.92),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: _NetworkFeedImage(imageUrl: imageUrl, fit: BoxFit.cover),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.thumb_up, color: _kPrimaryGreen, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                likes,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.68),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Divider(
-            height: 1,
-            thickness: 1,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.22)
-                : colorScheme.onSurface.withValues(alpha: 0.10),
+                ? Colors.white.withValues(alpha: 0.10)
+                : colorScheme.onSurface.withValues(alpha: 0.08),
           ),
-          const SizedBox(height: 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
-              _PostAction(icon: Icons.thumb_up_outlined, label: 'Like'),
-              _PostAction(icon: Icons.mode_comment_outlined, label: 'Comment'),
-              _PostAction(icon: Icons.share_outlined, label: 'Share'),
-            ],
-          ),
-          const SizedBox(height: 8),
-        ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _Avatar(size: 42, imageUrl: avatarUrl),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              author,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const _BreederBadge(),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: () {},
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(0, 28),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              foregroundColor: _kPrimaryGreen,
+                              textStyle: theme.textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            child: const Text('Follow'),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '$timeAgo - Public',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.62),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.more_horiz,
+                  color: colorScheme.onSurface.withValues(alpha: 0.65),
+                ),
+                const SizedBox(width: 2),
+                Icon(
+                  Icons.close,
+                  color: colorScheme.onSurface.withValues(alpha: 0.65),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              text,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                height: 1.35,
+                fontWeight: FontWeight.w400,
+                color: isDark
+                    ? Colors.white
+                    : colorScheme.onSurface.withValues(alpha: 0.92),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: _NetworkFeedImage(imageUrl: imageUrl, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.thumb_up, color: _kPrimaryGreen, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  likes,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.68),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.22)
+                  : colorScheme.onSurface.withValues(alpha: 0.10),
+            ),
+            const SizedBox(height: 2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: const [
+                _PostAction(icon: Icons.thumb_up_outlined, label: 'Like'),
+                _PostAction(icon: Icons.mode_comment_outlined, label: 'Comment'),
+                _PostAction(icon: Icons.share_outlined, label: 'Share'),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
