@@ -18,8 +18,16 @@ const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kDarkGreen = Color(0xFF1B5E20);
 const Color _kLightGreen = Color(0xFF66BB6A);
 
-class MarketplaceScreen extends StatelessWidget {
+class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
+
+  @override
+  State<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  final Set<String> _wishlistIds = <String>{};
+  final Set<String> _cartIds = <String>{};
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +49,42 @@ class MarketplaceScreen extends StatelessWidget {
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
-                  children: const [
-                    _SearchBar(),
-                    _CategorySlider(),
-                    _FeaturedSection(),
-                    _InsetBar(),
-                    _AllListingsSection(),
+                  children: [
+                    _TopActionsBar(
+                      wishlistCount: _wishlistIds.length,
+                      cartCount: _cartIds.length,
+                      onTapSell: () => _showCollectionMessage(
+                        context,
+                        title: 'Sell listing draft',
+                        count: 0,
+                        suffix: 'feature coming soon',
+                      ),
+                      onTapWishlist: () => _showCollectionMessage(
+                        context,
+                        title: 'Wishlist',
+                        count: _wishlistIds.length,
+                      ),
+                      onTapCart: () => _showCollectionMessage(
+                        context,
+                        title: 'Cart',
+                        count: _cartIds.length,
+                      ),
+                    ),
+                    const _SearchBar(),
+                    const _CategorySlider(),
+                    _FeaturedSection(
+                      wishlistIds: _wishlistIds,
+                      cartIds: _cartIds,
+                      onToggleWishlist: _toggleWishlist,
+                      onToggleCart: _toggleCart,
+                    ),
+                    const _InsetBar(),
+                    _AllListingsSection(
+                      wishlistIds: _wishlistIds,
+                      cartIds: _cartIds,
+                      onToggleWishlist: _toggleWishlist,
+                      onToggleCart: _toggleCart,
+                    ),
                   ],
                 ),
               ),
@@ -74,6 +112,144 @@ class MarketplaceScreen extends StatelessWidget {
     } else if (item == AppBottomNavItem.create) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.groups);
     }
+  }
+
+  void _toggleWishlist(String id) {
+    setState(() {
+      if (_wishlistIds.contains(id)) {
+        _wishlistIds.remove(id);
+      } else {
+        _wishlistIds.add(id);
+      }
+    });
+  }
+
+  void _toggleCart(String id) {
+    setState(() {
+      if (_cartIds.contains(id)) {
+        _cartIds.remove(id);
+      } else {
+        _cartIds.add(id);
+      }
+    });
+  }
+
+  void _showCollectionMessage(
+    BuildContext context, {
+    required String title,
+    required int count,
+    String suffix = '',
+  }) {
+    final tail = suffix.isEmpty ? '' : ' ($suffix)';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title items: $count$tail'),
+        duration: const Duration(milliseconds: 900),
+      ),
+    );
+  }
+}
+
+class _TopActionsBar extends StatelessWidget {
+  const _TopActionsBar({
+    required this.wishlistCount,
+    required this.cartCount,
+    required this.onTapSell,
+    required this.onTapWishlist,
+    required this.onTapCart,
+  });
+
+  final int wishlistCount;
+  final int cartCount;
+  final VoidCallback onTapSell;
+  final VoidCallback onTapWishlist;
+  final VoidCallback onTapCart;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_kMarketplaceInset, 2, _kMarketplaceInset, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          OutlinedButton.icon(
+            onPressed: onTapSell,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _kPrimaryGreen,
+              side: const BorderSide(color: _kPrimaryGreen),
+              visualDensity: VisualDensity.compact,
+            ),
+            icon: const Icon(Icons.storefront_outlined, size: 16),
+            label: const Text('Sell'),
+          ),
+          const SizedBox(width: 8),
+          _CountIconButton(
+            icon: Icons.favorite_border,
+            count: wishlistCount,
+            tooltip: 'Wishlist',
+            onTap: onTapWishlist,
+          ),
+          const SizedBox(width: 8),
+          _CountIconButton(
+            icon: Icons.shopping_cart_outlined,
+            count: cartCount,
+            tooltip: 'Cart',
+            onTap: onTapCart,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CountIconButton extends StatelessWidget {
+  const _CountIconButton({
+    required this.icon,
+    required this.count,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final int count;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: isDark ? _kMarketplaceCardDark : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark ? _kMarketplaceBorderDark : _kMarketplaceCardBorder,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: _kPrimaryGreen),
+              const SizedBox(width: 6),
+              Text(
+                '$count',
+                style: const TextStyle(
+                  color: _kPrimaryGreen,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -232,7 +408,17 @@ class _CategoryItem extends StatelessWidget {
 }
 
 class _FeaturedSection extends StatelessWidget {
-  const _FeaturedSection();
+  const _FeaturedSection({
+    required this.wishlistIds,
+    required this.cartIds,
+    required this.onToggleWishlist,
+    required this.onToggleCart,
+  });
+
+  final Set<String> wishlistIds;
+  final Set<String> cartIds;
+  final ValueChanged<String> onToggleWishlist;
+  final ValueChanged<String> onToggleCart;
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +488,7 @@ class _FeaturedSection extends StatelessWidget {
                   visibleCards;
 
               return SizedBox(
-                height: 244,
+                height: 258,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: featured.length,
@@ -313,6 +499,11 @@ class _FeaturedSection extends StatelessWidget {
                     width: cardWidth,
                     emphasized: true,
                     showCategory: false,
+                    isWishlisted: wishlistIds.contains(featured[index].title),
+                    inCart: cartIds.contains(featured[index].title),
+                    onToggleWishlist: () =>
+                        onToggleWishlist(featured[index].title),
+                    onToggleCart: () => onToggleCart(featured[index].title),
                   ),
                 ),
               );
@@ -325,7 +516,17 @@ class _FeaturedSection extends StatelessWidget {
 }
 
 class _AllListingsSection extends StatelessWidget {
-  const _AllListingsSection();
+  const _AllListingsSection({
+    required this.wishlistIds,
+    required this.cartIds,
+    required this.onToggleWishlist,
+    required this.onToggleCart,
+  });
+
+  final Set<String> wishlistIds;
+  final Set<String> cartIds;
+  final ValueChanged<String> onToggleWishlist;
+  final ValueChanged<String> onToggleCart;
 
   @override
   Widget build(BuildContext context) {
@@ -390,10 +591,16 @@ class _AllListingsSection extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: 0.74,
+              childAspectRatio: 0.76,
             ),
             itemBuilder: (context, index) =>
-                _ListingCard(data: listings[index]),
+                _ListingCard(
+                  data: listings[index],
+                  isWishlisted: wishlistIds.contains(listings[index].title),
+                  inCart: cartIds.contains(listings[index].title),
+                  onToggleWishlist: () => onToggleWishlist(listings[index].title),
+                  onToggleCart: () => onToggleCart(listings[index].title),
+                ),
           ),
         ],
       ),
@@ -407,17 +614,25 @@ class _ListingCard extends StatelessWidget {
     this.width,
     this.emphasized = false,
     this.showCategory = true,
+    required this.isWishlisted,
+    required this.inCart,
+    required this.onToggleWishlist,
+    required this.onToggleCart,
   });
 
   final _ListingData data;
   final double? width;
   final bool emphasized;
   final bool showCategory;
+  final bool isWishlisted;
+  final bool inCart;
+  final VoidCallback onToggleWishlist;
+  final VoidCallback onToggleCart;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final imageHeight = emphasized ? 152.0 : 126.0;
+    final imageHeight = emphasized ? 162.0 : 136.0;
 
     return SizedBox(
       width: width,
@@ -506,6 +721,29 @@ class _ListingCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Row(
+                    children: [
+                      _ActionIconChip(
+                        icon: isWishlisted ? Icons.favorite : Icons.favorite_border,
+                        active: isWishlisted,
+                        onTap: onToggleWishlist,
+                        darkMode: isDark,
+                      ),
+                      const SizedBox(width: 6),
+                      _ActionIconChip(
+                        icon: inCart
+                            ? Icons.shopping_cart
+                            : Icons.add_shopping_cart_outlined,
+                        active: inCart,
+                        onTap: onToggleCart,
+                        darkMode: isDark,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             Padding(
@@ -585,6 +823,49 @@ class _ListingCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionIconChip extends StatelessWidget {
+  const _ActionIconChip({
+    required this.icon,
+    required this.active,
+    required this.onTap,
+    required this.darkMode,
+  });
+
+  final IconData icon;
+  final bool active;
+  final VoidCallback onTap;
+  final bool darkMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: active ? _kPrimaryGreen : Colors.black.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          size: 15,
+          color: Colors.white,
         ),
       ),
     );
