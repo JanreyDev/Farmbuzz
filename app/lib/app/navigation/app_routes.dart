@@ -12,6 +12,7 @@ class AppRoutes {
   static const marketplace = '/marketplace';
   static const profile = '/profile';
   static const messaging = '/messaging';
+  static const createStory = '/create-story';
   static const groups = '/groups';
   static const cockpitDirectory = '/cockpit-directory';
   static const learnHub = '/learn-hub';

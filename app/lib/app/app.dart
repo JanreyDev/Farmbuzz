@@ -4,6 +4,7 @@ import 'package:app/features/auth/presentation/login_screen.dart';
 import 'package:app/features/auth/presentation/signup_screen.dart';
 import 'package:app/features/explore/presentation/explore_screen.dart';
 import 'package:app/features/home/presentation/home_screen.dart';
+import 'package:app/features/home/presentation/create_story_screen.dart';
 import 'package:app/features/marketplace/presentation/marketplace_screen.dart';
 import 'package:app/features/messaging/presentation/messaging_screen.dart';
 import 'package:app/features/groups/presentation/groups_screen.dart';
@@ -72,6 +73,7 @@ class _FarmBuzzAppState extends State<FarmBuzzApp> {
           AppRoutes.splash: (_) => const SplashScreen(),
           AppRoutes.onboarding: (_) => const OnboardingScreen(),
           AppRoutes.home: (_) => const HomeScreen(),
+          AppRoutes.createStory: (_) => const CreateStoryScreen(),
           AppRoutes.login: (_) => const LoginScreen(),
           AppRoutes.signup: (_) => const SignUpScreen(),
           AppRoutes.subscription: (_) => const SubscriptionScreen(),
@@ -94,4 +96,3 @@ class _FarmBuzzAppState extends State<FarmBuzzApp> {
     );
   }
 }
-

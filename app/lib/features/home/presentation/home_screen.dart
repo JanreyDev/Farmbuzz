@@ -37,8 +37,31 @@ const _kPostAvatarOne =
 const _kPostAvatarTwo =
     'https://images.pexels.com/photos/25310981/pexels-photo-25310981.jpeg?auto=compress&cs=tinysrgb&w=300';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final List<_HomeStoryData> _stories = <_HomeStoryData>[
+    const _HomeStoryData(
+      name: 'Black Warrior',
+      imageUrl: _kStoryImageBlackWarrior,
+      avatarUrl: _kStoryAvatarBlackWarrior,
+    ),
+    const _HomeStoryData(
+      name: 'Red Kelso',
+      imageUrl: _kStoryImageRedKelso,
+      avatarUrl: _kStoryAvatarRedKelso,
+    ),
+    const _HomeStoryData(
+      name: 'Golden Hatch',
+      imageUrl: _kStoryImageGoldenHatch,
+      avatarUrl: _kStoryAvatarGoldenHatch,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -54,14 +77,17 @@ class HomeScreen extends StatelessWidget {
           Expanded(
             child: ListView(
               padding: const EdgeInsets.only(bottom: 10),
-              children: const [
-                SizedBox(height: 10),
-                _ComposerRow(),
-                SizedBox(height: 10),
-                _StoriesStrip(),
-                SizedBox(height: 10),
-                _SectionDivider(),
-                SizedBox(height: 8),
+              children: [
+                const SizedBox(height: 10),
+                const _ComposerRow(),
+                const SizedBox(height: 10),
+                _StoriesStrip(
+                  stories: _stories,
+                  onCreateStoryTap: _openCreateStory,
+                ),
+                const SizedBox(height: 10),
+                const _SectionDivider(),
+                const SizedBox(height: 8),
                 _PostCard(
                   author: 'Black Warrior Farm',
                   timeAgo: '1h',
@@ -71,7 +97,7 @@ class HomeScreen extends StatelessWidget {
                   imageUrl: _kPostImageOne,
                   avatarUrl: _kPostAvatarOne,
                 ),
-                _SectionDivider(),
+                const _SectionDivider(),
                 _PostCard(
                   author: 'Golden Hatch Breeders',
                   timeAgo: '3h',
@@ -87,6 +113,53 @@ class HomeScreen extends StatelessWidget {
           const _BottomNavBar(),
         ],
       ),
+    );
+  }
+
+  Future<void> _openCreateStory() async {
+    final result = await Navigator.of(context).pushNamed(AppRoutes.createStory);
+    if (!mounted || result is! Map<String, dynamic>) {
+      return;
+    }
+
+    final imageUrl = result['imageUrl'] as String?;
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _stories.insert(
+        0,
+        const _HomeStoryData(
+          name: 'Your Story',
+          imageUrl: _kCreateStoryImageUrl,
+          avatarUrl: _kComposerAvatarUrl,
+        ).copyWith(imageUrl: imageUrl),
+      );
+    });
+  }
+}
+
+class _HomeStoryData {
+  const _HomeStoryData({
+    required this.name,
+    required this.imageUrl,
+    required this.avatarUrl,
+  });
+
+  final String name;
+  final String imageUrl;
+  final String avatarUrl;
+
+  _HomeStoryData copyWith({
+    String? name,
+    String? imageUrl,
+    String? avatarUrl,
+  }) {
+    return _HomeStoryData(
+      name: name ?? this.name,
+      imageUrl: imageUrl ?? this.imageUrl,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }
@@ -137,7 +210,13 @@ class _ComposerRow extends StatelessWidget {
 }
 
 class _StoriesStrip extends StatelessWidget {
-  const _StoriesStrip();
+  const _StoriesStrip({
+    required this.stories,
+    required this.onCreateStoryTap,
+  });
+
+  final List<_HomeStoryData> stories;
+  final VoidCallback onCreateStoryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -146,22 +225,14 @@ class _StoriesStrip extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: const [
-          _CreateStoryCard(),
-          _StoryCard(
-            name: 'Black Warrior',
-            imageUrl: _kStoryImageBlackWarrior,
-            avatarUrl: _kStoryAvatarBlackWarrior,
-          ),
-          _StoryCard(
-            name: 'Red Kelso',
-            imageUrl: _kStoryImageRedKelso,
-            avatarUrl: _kStoryAvatarRedKelso,
-          ),
-          _StoryCard(
-            name: 'Golden Hatch',
-            imageUrl: _kStoryImageGoldenHatch,
-            avatarUrl: _kStoryAvatarGoldenHatch,
+        children: [
+          _CreateStoryCard(onTap: onCreateStoryTap),
+          ...stories.map(
+            (story) => _StoryCard(
+              name: story.name,
+              imageUrl: story.imageUrl,
+              avatarUrl: story.avatarUrl,
+            ),
           ),
         ],
       ),
@@ -170,7 +241,9 @@ class _StoriesStrip extends StatelessWidget {
 }
 
 class _CreateStoryCard extends StatelessWidget {
-  const _CreateStoryCard();
+  const _CreateStoryCard({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -180,57 +253,61 @@ class _CreateStoryCard extends StatelessWidget {
     return Container(
       width: _kStoryCardWidth,
       margin: const EdgeInsets.only(right: _kStoryCardGap),
-      child: Column(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? _kHomeCardDark : _kHomeCardLight,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: colorScheme.onSurface.withValues(alpha: 0.12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? _kHomeCardDark : _kHomeCardLight,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: colorScheme.onSurface.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(14),
+                        ),
+                        child: const _NetworkFeedImage(
+                          imageUrl: _kCreateStoryImageUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Transform.translate(
+                      offset: const Offset(0, -16),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: _kPrimaryGreen,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                        ),
+                        child: const Icon(Icons.add, color: Colors.white),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(8, 0, 8, 10),
+                      child: Text(
+                        'Create Story',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(14),
-                      ),
-                      child: const _NetworkFeedImage(
-                        imageUrl: _kCreateStoryImageUrl,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Transform.translate(
-                    offset: const Offset(0, -16),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: _kPrimaryGreen,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                      ),
-                      child: const Icon(Icons.add, color: Colors.white),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(8, 0, 8, 10),
-                    child: Text(
-                      'Create Story',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
