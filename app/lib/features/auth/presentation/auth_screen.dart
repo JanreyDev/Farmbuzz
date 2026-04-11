@@ -115,7 +115,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.asset(
-                            'assets/images/splash.png',
+                            'assets/images/Logo.png',
                             fit: BoxFit.cover,
                           ),
                         ),

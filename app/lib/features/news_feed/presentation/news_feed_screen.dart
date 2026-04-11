@@ -466,8 +466,8 @@ class _PostCard extends StatelessWidget {
                     height: 190,
                     width: double.infinity,
                     child: Image.asset(
-                      'assets/images/splash.png',
-                      fit: BoxFit.cover,
+                      'assets/images/Logo.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ],

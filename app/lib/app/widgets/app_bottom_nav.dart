@@ -26,45 +26,48 @@ class AppBottomNav extends StatelessWidget {
           top: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.12)),
         ),
       ),
-      child: BottomNavigationBar(
-        currentIndex: _indexForItem(activeItem),
-        onTap: (index) => onItemTap(_itemForIndex(index)),
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-        backgroundColor: theme.cardColor,
-        selectedItemColor: selectedColor,
-        unselectedItemColor: inactiveColor,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.agriculture_outlined),
-            activeIcon: Icon(Icons.agriculture),
-            label: 'Farm',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.storefront_outlined),
-            activeIcon: Icon(Icons.storefront),
-            label: 'Store',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.groups_outlined),
-            activeIcon: Icon(Icons.groups),
-            label: 'Community',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+      child: SafeArea(
+        top: false,
+        child: BottomNavigationBar(
+          currentIndex: _indexForItem(activeItem),
+          onTap: (index) => onItemTap(_itemForIndex(index)),
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          backgroundColor: theme.cardColor,
+          selectedItemColor: selectedColor,
+          unselectedItemColor: inactiveColor,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.agriculture_outlined),
+              activeIcon: Icon(Icons.agriculture),
+              label: 'Farm',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.storefront_outlined),
+              activeIcon: Icon(Icons.storefront),
+              label: 'Store',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.groups_outlined),
+              activeIcon: Icon(Icons.groups),
+              label: 'Community',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -13,8 +13,10 @@ class MarketplaceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _kMarketplaceBg,
       body: SafeArea(
         child: ColoredBox(
           color: _kMarketplaceBg,
@@ -33,9 +35,12 @@ class MarketplaceScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              AppBottomNav(
-                activeItem: AppBottomNavItem.market,
-                onItemTap: (item) => _handleNav(context, item),
+              Theme(
+                data: theme.copyWith(cardColor: _kMarketplaceBg),
+                child: AppBottomNav(
+                  activeItem: AppBottomNavItem.market,
+                  onItemTap: (item) => _handleNav(context, item),
+                ),
               ),
             ],
           ),
@@ -62,11 +67,29 @@ class _TopBarSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
+    return ColoredBox(
       color: Colors.white,
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 12),
-        child: _TopBar(),
+        padding: const EdgeInsets.only(top: 12),
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(
+                _kMarketplaceInset,
+                6,
+                _kMarketplaceInset,
+                6,
+              ),
+              child: _TopBar(),
+            ),
+            Container(
+              height: 1,
+              color: Theme.of(context).colorScheme.onSurface.withValues(
+                alpha: 0.08,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -77,37 +100,47 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        _kMarketplaceInset,
-        6,
-        _kMarketplaceInset,
-        6,
-      ),
-      child: Row(
+    return SizedBox(
+      height: 40,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          const Text(
-            'Marketplace',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1F2230),
-              height: 1,
+          const Center(
+            child: Text(
+              'Marketplace',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1F2230),
+                height: 1,
+              ),
             ),
           ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: kGoldAccent,
-              borderRadius: BorderRadius.circular(8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.arrow_back),
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Back',
             ),
-            child: const Text(
-              '+ Sell',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: kGoldAccent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                '+ Sell',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),

@@ -1,4 +1,6 @@
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
+import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';
 
 const double _kGroupsInset = 14;
@@ -10,6 +12,8 @@ class GroupsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     const groups = [
       _GroupData(
         title: 'Kelso Breeders PH',
@@ -44,7 +48,7 @@ class GroupsScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _kGroupsBg,
       body: SafeArea(
         child: ColoredBox(
           color: _kGroupsBg,
@@ -89,11 +93,30 @@ class GroupsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              Theme(
+                data: theme.copyWith(cardColor: _kGroupsBg),
+                child: AppBottomNav(
+                  activeItem: AppBottomNavItem.create,
+                  onItemTap: (item) => _handleNav(context, item),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  void _handleNav(BuildContext context, AppBottomNavItem item) {
+    if (item == AppBottomNavItem.home) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.home);
+    } else if (item == AppBottomNavItem.explore) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.farmDashboard);
+    } else if (item == AppBottomNavItem.market) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.marketplace);
+    } else if (item == AppBottomNavItem.profile) {
+      Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
+    }
   }
 }
 
