@@ -24,7 +24,7 @@ class GroupsScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final screenBg = isDark ? _kGroupsBgDark : _kGroupsBg;
 
-    const groups = [
+    const myGroups = [
       _GroupData(
         title: 'Kelso Breeders PH',
         subtitle:
@@ -34,6 +34,9 @@ class GroupsScreen extends StatelessWidget {
         tag: 'BLOODLINE',
         icon: Icons.emoji_events_outlined,
         headerColor: Color(0xFFDCEFD8),
+        isJoined: true,
+        isPopular: true,
+        activity: 'Active • 120 posts this week',
       ),
       _GroupData(
         title: 'Pampanga Sabongeros',
@@ -44,7 +47,12 @@ class GroupsScreen extends StatelessWidget {
         tag: 'REGIONAL',
         icon: Icons.location_on_outlined,
         headerColor: Color(0xFFE2F4E3),
+        isJoined: true,
+        activity: 'Active • 87 posts this week',
       ),
+    ];
+
+    const discoverGroups = [
       _GroupData(
         title: 'Conditioning Science PH',
         subtitle:
@@ -54,6 +62,21 @@ class GroupsScreen extends StatelessWidget {
         tag: 'GENERAL',
         icon: Icons.groups_2_outlined,
         headerColor: Color(0xFFD6EFD8),
+        isJoined: false,
+        isPopular: true,
+        activity: 'Active • 140 posts this week',
+      ),
+      _GroupData(
+        title: 'Northern Derby Circle',
+        subtitle:
+            'Training logs, derby prep, and match schedules across Northern Luzon.',
+        members: '914 members',
+        lastSeen: '9m ago',
+        tag: 'REGIONAL',
+        icon: Icons.military_tech_outlined,
+        headerColor: Color(0xFFE3F3E0),
+        isJoined: false,
+        activity: 'Active • 52 posts this week',
       ),
     ];
 
@@ -87,7 +110,7 @@ class GroupsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ...groups.map(
+                    ...myGroups.map(
                       (group) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: _GroupCard(data: group),
@@ -95,12 +118,19 @@ class GroupsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                    'Discover Groups',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : _kDarkGreen,
-                      height: 1,
+                      'Discover Groups',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : _kDarkGreen,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...discoverGroups.map(
+                      (group) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _GroupCard(data: group),
                       ),
                     ),
                   ],
@@ -304,7 +334,7 @@ class _GroupCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      data.lastSeen,
+                      'Last active ${data.lastSeen}',
                       style: TextStyle(
                         fontSize: 10,
                         color: isDark ? _kGroupsMutedDark : const Color(0xFF6E8472),
@@ -328,41 +358,80 @@ class _GroupCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (data.activity.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    data.activity,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: isDark ? _kGroupsMutedDark : const Color(0xFF5F7563),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF214327) : const Color(0xFFCFECCF),
+                        color: data.isJoined
+                            ? (isDark ? const Color(0xFF214327) : const Color(0xFFCFECCF))
+                            : (isDark ? const Color(0xFF3A3320) : const Color(0xFFF1E9CC)),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'JOINED',
+                        data.isJoined ? 'JOINED' : 'SUGGESTED',
                         style: TextStyle(
                           fontSize: 10,
-                          color: isDark ? _kLightGreen : _kDarkGreen,
+                          color: data.isJoined
+                              ? (isDark ? _kLightGreen : _kDarkGreen)
+                              : (isDark ? const Color(0xFFE3D08A) : const Color(0xFF8D6A00)),
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
+                    if (data.isPopular) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF3A2A1E) : const Color(0xFFFFEFD5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'POPULAR',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark
+                                ? const Color(0xFFFFD27D)
+                                : const Color(0xFF9A6500),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1F3B22) : const Color(0xFFE8F5E9),
+                        color: data.isJoined
+                            ? (isDark ? const Color(0xFF1F3B22) : const Color(0xFFE8F5E9))
+                            : _kPrimaryGreen,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isDark
                               ? _kGroupsBorderDark
-                              : const Color(0xFFBFDABD),
+                              : (data.isJoined ? const Color(0xFFBFDABD) : _kPrimaryGreen),
                         ),
                       ),
                       child: Text(
-                        'View Group',
+                        data.isJoined ? 'View Group' : 'Join Group',
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? _kLightGreen : _kPrimaryGreen,
+                          color: data.isJoined
+                              ? (isDark ? _kLightGreen : _kPrimaryGreen)
+                              : Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -387,6 +456,9 @@ class _GroupData {
     required this.tag,
     required this.icon,
     required this.headerColor,
+    required this.isJoined,
+    this.isPopular = false,
+    this.activity = '',
   });
 
   final String title;
@@ -396,6 +468,9 @@ class _GroupData {
   final String tag;
   final IconData icon;
   final Color headerColor;
+  final bool isJoined;
+  final bool isPopular;
+  final String activity;
 }
 
 
