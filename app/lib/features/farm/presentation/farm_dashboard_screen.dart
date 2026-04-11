@@ -8,7 +8,7 @@ const Color _kFarmBgLight = Color(0xFFF5F5F5);
 const Color _kFarmBgDark = Color(0xFF1F1F1F);
 const Color _kFarmCardDark = Color(0xFF242628);
 const Color _kFarmBorderDark = Color(0xFF35383D);
-const Color _kFarmCardLight = Color(0xFFE8F5E9);
+const Color _kFarmCardLight = Colors.white;
 const Color _kFarmPrimary = Color(0xFF2E7D32);
 const Color _kFarmDark = Color(0xFF1B5E20);
 const Color _kFarmLight = Color(0xFF66BB6A);
@@ -54,7 +54,7 @@ class FarmDashboardScreen extends StatelessWidget {
                       text: 'Thunder: Deworming due tomorrow',
                       badge: 'WARNING',
                       badgeColor: _kFarmDark,
-                      bgColor: Color(0xFFE8F5E9),
+                      bgColor: Colors.white,
                     ),
                     const SizedBox(height: 8),
                     const _AlertRow(
@@ -63,7 +63,7 @@ class FarmDashboardScreen extends StatelessWidget {
                       text: 'Inferno x Ruby: Hatch expected Apr 15',
                       badge: 'INFO',
                       badgeColor: _kFarmPrimary,
-                      bgColor: Color(0xFFEFF8F0),
+                      bgColor: Colors.white,
                     ),
                     const SizedBox(height: 8),
                     const _AlertRow(
@@ -72,7 +72,7 @@ class FarmDashboardScreen extends StatelessWidget {
                       text: '21-Day Keep: Day 20 of 21 (Thunder)',
                       badge: 'SUCCESS',
                       badgeColor: _kFarmDark,
-                      bgColor: Color(0xFFEAF6EC),
+                      bgColor: Colors.white,
                     ),
                     const SizedBox(height: 8),
                     const _AlertRow(
@@ -81,7 +81,7 @@ class FarmDashboardScreen extends StatelessWidget {
                       text: 'Pampanga Derby in 8 days',
                       badge: 'INFO',
                       badgeColor: _kFarmPrimary,
-                      bgColor: Color(0xFFEFF8F0),
+                      bgColor: Colors.white,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -97,7 +97,7 @@ class FarmDashboardScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                       decoration: BoxDecoration(
-                        color: isDark ? _kFarmCardDark : farmBg,
+                        color: isDark ? _kFarmCardDark : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isDark
@@ -344,19 +344,20 @@ class _AlertRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final cardColor = isDark
-        ? Color.alphaBlend(bgColor.withValues(alpha: 0.08), _kFarmCardDark)
-        : bgColor;
+    final cardColor = isDark ? _kFarmCardDark : bgColor;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: isDark
-            ? Border.all(color: Colors.white.withValues(alpha: 0.08))
-            : null,
+        border: Border.all(
+          color: isDark
+              ? _kFarmBorderDark
+              : colorScheme.onSurface.withValues(alpha: 0.08),
+        ),
       ),
       child: Row(
         children: [
@@ -426,7 +427,7 @@ class _QuickAction extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: isDark ? _kFarmCardDark : theme.scaffoldBackgroundColor,
+            color: isDark ? _kFarmCardDark : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark
