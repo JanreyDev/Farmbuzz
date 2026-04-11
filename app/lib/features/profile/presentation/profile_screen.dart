@@ -15,6 +15,7 @@ const Color _kProfileMutedDark = Color(0xFFB0B8B2);
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kDarkGreen = Color(0xFF1B5E20);
 const Color _kLightGreen = Color(0xFF66BB6A);
+const Color _kProfileCardLight = Colors.white;
 const Color _kSoftGreen = Color(0xFFE8F5E9);
 const Color _kSoftGreenBorder = Color(0xFFCFE4D1);
 const String _kProfileCoverUrl =
@@ -281,10 +282,10 @@ class _ProfileBody extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
             decoration: BoxDecoration(
-              color: isDark ? _kProfileCardDark : _kSoftGreen,
+              color: isDark ? _kProfileCardDark : _kProfileCardLight,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isDark ? _kProfileBorderDark : _kSoftGreenBorder,
+                color: isDark ? _kProfileBorderDark : const Color(0xFFE2E6EB),
               ),
             ),
             child: Wrap(
@@ -427,10 +428,10 @@ class _AchievementCard extends StatelessWidget {
     return Container(
       width: width,
       decoration: BoxDecoration(
-        color: isDark ? _kProfileCardDark : _kSoftGreen,
+        color: isDark ? _kProfileCardDark : _kProfileCardLight,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? _kProfileBorderDark : _kSoftGreenBorder,
+          color: isDark ? _kProfileBorderDark : const Color(0xFFE2E6EB),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -527,8 +528,8 @@ class _GalleryTabsSectionState extends State<_GalleryTabsSection>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? _kProfileCardDark : _kSoftGreen;
-    final borderColor = isDark ? _kProfileBorderDark : _kSoftGreenBorder;
+    final cardColor = isDark ? _kProfileCardDark : _kProfileCardLight;
+    final borderColor = isDark ? _kProfileBorderDark : const Color(0xFFE2E6EB);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(_kProfileInset, 10, _kProfileInset, 12),
@@ -829,7 +830,7 @@ class _BreedingHealthSection extends StatelessWidget {
         icon: Icons.favorite_border,
         iconColor: _kPrimaryGreen,
         iconBg: _kSoftGreen,
-        cardBg: Color(0xFFF2FAF3),
+        cardBg: _kProfileCardLight,
         route: AppRoutes.healthRecords,
       ),
       _BreedingHealthItem(
@@ -838,7 +839,7 @@ class _BreedingHealthSection extends StatelessWidget {
         icon: Icons.monitor_weight_outlined,
         iconColor: _kDarkGreen,
         iconBg: _kSoftGreen,
-        cardBg: Color(0xFFF2FAF3),
+        cardBg: _kProfileCardLight,
         route: AppRoutes.weightTracker,
       ),
       _BreedingHealthItem(
@@ -847,7 +848,7 @@ class _BreedingHealthSection extends StatelessWidget {
         icon: Icons.event_note_outlined,
         iconColor: _kLightGreen,
         iconBg: _kSoftGreen,
-        cardBg: Color(0xFFF2FAF3),
+        cardBg: _kProfileCardLight,
         route: AppRoutes.breedingPlanner,
       ),
     ];

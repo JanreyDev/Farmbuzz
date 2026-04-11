@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-const Color _kChatSurface = Color(0xFFF1F8F2);
+const Color _kChatBg = Color(0xFFF5F5F5);
+const Color _kChatSurface = Color(0xFFF5F5F5);
 const Color _kOutgoingBubble = Color(0xFF2E7D32);
-const Color _kIncomingBubble = Color(0xFFE8F5E9);
+const Color _kIncomingBubble = Colors.white;
+const Color _kSoftGreen = Color(0xFFE8F5E9);
 const Color _kMutedText = Color(0xFF7A8680);
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kDarkText = Color(0xFF1F2A22);
@@ -13,15 +15,13 @@ class MessagingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: const [
-            _ChatHeader(),
-            Expanded(child: _ChatBody()),
-            _Composer(),
-          ],
-        ),
+      backgroundColor: _kChatBg,
+      body: Column(
+        children: const [
+          _ChatHeader(),
+          Expanded(child: _ChatBody()),
+          _Composer(),
+        ],
       ),
     );
   }
@@ -32,68 +32,80 @@ class _ChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final topInset = MediaQuery.of(context).padding.top;
+
     return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: EdgeInsets.fromLTRB(8, topInset, 8, 0),
       decoration: const BoxDecoration(color: Colors.white),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.arrow_back, size: 20, color: _kDarkText),
-          ),
-          Container(
-            width: 30,
-            height: 30,
-            decoration: const BoxDecoration(
-              color: _kIncomingBubble,
-              shape: BoxShape.circle,
+      child: SizedBox(
+        height: 52,
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.arrow_back, size: 20, color: _kDarkText),
             ),
-            alignment: Alignment.center,
-            child: const Text(
-              'MD',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                color: _kSoftGreen,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'MD',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: _kPrimaryGreen,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mario Dela Cruz',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: _kDarkText,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Icon(Icons.circle, size: 6, color: _kPrimaryGreen),
+                    SizedBox(width: 3),
+                    Text(
+                      'Online',
+                      style: TextStyle(fontSize: 10, color: _kPrimaryGreen),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const Spacer(),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.call_outlined,
+                size: 18,
                 color: _kPrimaryGreen,
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Mario Dela Cruz',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: _kDarkText,
-                ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.more_vert,
+                size: 18,
+                color: Color(0xFF7D838C),
               ),
-              Row(
-                children: [
-                  Icon(Icons.circle, size: 6, color: _kPrimaryGreen),
-                  SizedBox(width: 3),
-                  Text(
-                    'Online',
-                    style: TextStyle(fontSize: 10, color: _kPrimaryGreen),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const Spacer(),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.call_outlined, size: 18, color: _kPrimaryGreen),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF7D838C)),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -172,7 +184,13 @@ class _MessageBubble extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
-              decoration: BoxDecoration(color: bubbleColor, borderRadius: radius),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: radius,
+                border: message.isMine
+                    ? null
+                    : Border.all(color: const Color(0xFFE2E6EB)),
+              ),
               child: Text(
                 message.text,
                 style: TextStyle(
@@ -200,47 +218,58 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
     return Container(
-      height: 54,
       decoration: const BoxDecoration(
         color: Colors.white,
       ),
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.add, color: _kPrimaryGreen, size: 20),
-          ),
-          Expanded(
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: _kIncomingBubble,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              alignment: Alignment.centerLeft,
-              child: const Text(
-                'Type a message...',
-                style: TextStyle(fontSize: 12, color: _kMutedText),
+      padding: EdgeInsets.fromLTRB(8, 8, 8, 8 + bottomInset),
+      child: SizedBox(
+        height: 38,
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.add, color: _kPrimaryGreen, size: 20),
+            ),
+            Expanded(
+              child: Container(
+                height: 36,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                    color: _kPrimaryGreen.withValues(alpha: 0.35),
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                alignment: Alignment.centerLeft,
+                child: const Text(
+                  'Type a message...',
+                  style: TextStyle(fontSize: 12, color: _kMutedText),
+                ),
               ),
             ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.camera_alt_outlined, color: _kMutedText, size: 19),
-          ),
-          Container(
-            width: 30,
-            height: 30,
-            decoration: const BoxDecoration(
-              color: _kPrimaryGreen,
-              shape: BoxShape.circle,
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.camera_alt_outlined,
+                color: _kMutedText,
+                size: 19,
+              ),
             ),
-            child: const Icon(Icons.send, size: 15, color: Colors.white),
-          ),
-        ],
+            Container(
+              width: 30,
+              height: 30,
+              decoration: const BoxDecoration(
+                color: _kPrimaryGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.send, size: 15, color: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
   }

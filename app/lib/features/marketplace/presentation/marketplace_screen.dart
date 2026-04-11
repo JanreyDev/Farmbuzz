@@ -8,8 +8,8 @@ const double _kMarketplaceInset = 14;
 const Color _kMarketplaceBg = Color(0xFFF5F5F5);
 const Color _kMarketplaceDivider = Color(0xFFE8F5E9);
 const Color _kMarketplaceMuted = Color(0xFF7B818A);
-const Color _kMarketplaceCard = Color(0xFFE8F5E9);
-const Color _kMarketplaceCardBorder = Color(0xFFCFE4D1);
+const Color _kMarketplaceCard = Colors.white;
+const Color _kMarketplaceCardBorder = Color(0xFFE2E6EB);
 const Color _kMarketplaceBgDark = Color(0xFF1F1F1F);
 const Color _kMarketplaceCardDark = Color(0xFF242628);
 const Color _kMarketplaceBorderDark = Color(0xFF35383D);
@@ -271,7 +271,7 @@ class _SearchBar extends StatelessWidget {
         height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1F22) : const Color(0xFFF0F2F5),
+          color: isDark ? const Color(0xFF1C1F22) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isDark ? _kMarketplaceBorderDark : const Color(0xFFE2E6EB),
@@ -369,7 +369,7 @@ class _CategoryItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: data.selected
                   ? _kPrimaryGreen
-                  : (isDark ? _kMarketplaceCardDark : const Color(0xFFE8F5E9)),
+                  : (isDark ? _kMarketplaceCardDark : Colors.white),
               shape: BoxShape.circle,
               border: Border.all(
                 color: data.selected

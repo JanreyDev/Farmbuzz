@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 const double _kGroupsInset = 14;
 const Color _kGroupsBg = Color(0xFFF5F5F5);
-const Color _kGroupsCardBg = Color(0xFFE8F5E9);
+const Color _kGroupsCardBg = Colors.white;
 const Color _kGroupsBgDark = Color(0xFF1F1F1F);
 const Color _kGroupsCardDark = Color(0xFF242628);
 const Color _kGroupsBorderDark = Color(0xFF35383D);
@@ -174,7 +174,7 @@ class _SearchBar extends StatelessWidget {
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1C1F22) : const Color(0xFFEFF8F0),
+        color: isDark ? const Color(0xFF1C1F22) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isDark ? _kGroupsBorderDark : const Color(0xFFCFE4D1),
@@ -224,7 +224,7 @@ class _FilterChips extends StatelessWidget {
             decoration: BoxDecoration(
               color: selected
                   ? (isDark ? const Color(0xFF1F3B22) : const Color(0xFFE8F5E9))
-                  : (isDark ? _kGroupsCardDark : const Color(0xFFDCEFD8)),
+                  : (isDark ? _kGroupsCardDark : Colors.white),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: selected
