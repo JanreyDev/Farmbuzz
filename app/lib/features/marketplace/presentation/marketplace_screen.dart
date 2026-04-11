@@ -1,14 +1,19 @@
 import 'package:app/app/navigation/app_routes.dart';
-import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:app/app/widgets/app_drawer.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
 const double _kMarketplaceInset = 14;
-const Color _kMarketplaceBg = Color(0xFFF1F1F1);
-const Color _kMarketplaceDivider = Color(0xFFE6E9ED);
+const Color _kMarketplaceBg = Color(0xFFF5F5F5);
+const Color _kMarketplaceDivider = Color(0xFFE8F5E9);
 const Color _kMarketplaceMuted = Color(0xFF7B818A);
+const Color _kMarketplaceCard = Color(0xFFE8F5E9);
+const Color _kMarketplaceCardBorder = Color(0xFFCFE4D1);
+const Color _kMarketplaceBgDark = Color(0xFF1F1F1F);
+const Color _kMarketplaceCardDark = Color(0xFF242628);
+const Color _kMarketplaceBorderDark = Color(0xFF35383D);
+const Color _kMarketplaceMutedDark = Color(0xFFB0B8B2);
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kDarkGreen = Color(0xFF1B5E20);
 const Color _kLightGreen = Color(0xFF66BB6A);
@@ -19,15 +24,18 @@ class MarketplaceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final screenBg = isDark ? _kMarketplaceBgDark : _kMarketplaceBg;
 
     return Scaffold(
-      backgroundColor: _kMarketplaceBg,
+      backgroundColor: screenBg,
       appBar: const FarmBuzzHomeAppBar(),
       drawer: const FarmBuzzAppDrawer(),
       body: SafeArea(
         top: false,
+        bottom: false,
         child: ColoredBox(
-          color: _kMarketplaceBg,
+          color: screenBg,
           child: Column(
             children: [
               Expanded(
@@ -43,7 +51,7 @@ class MarketplaceScreen extends StatelessWidget {
                 ),
               ),
               Theme(
-                data: theme.copyWith(cardColor: _kMarketplaceBg),
+                data: theme.copyWith(cardColor: screenBg),
                 child: AppBottomNav(
                   activeItem: AppBottomNavItem.market,
                   onItemTap: (item) => _handleNav(context, item),
@@ -74,6 +82,8 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         _kMarketplaceInset,
@@ -85,21 +95,32 @@ class _SearchBar extends StatelessWidget {
         height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0F2F5),
+          color: isDark ? const Color(0xFF1C1F22) : const Color(0xFFF0F2F5),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE2E6EB)),
+          border: Border.all(
+            color: isDark ? _kMarketplaceBorderDark : const Color(0xFFE2E6EB),
+          ),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.search, size: 18, color: Color(0xFF9097A0)),
-            SizedBox(width: 8),
+            Icon(
+              Icons.search,
+              size: 18,
+              color: isDark ? _kMarketplaceMutedDark : const Color(0xFF9097A0),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Search marketplace...',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9097A0)),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? _kMarketplaceMutedDark
+                      : const Color(0xFF9097A0),
+                ),
               ),
             ),
-            Icon(Icons.tune, size: 16, color: kGoldAccent),
+            const Icon(Icons.tune, size: 16, color: _kPrimaryGreen),
           ],
         ),
       ),
@@ -160,6 +181,8 @@ class _CategoryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SizedBox(
       width: width,
       child: Column(
@@ -168,16 +191,24 @@ class _CategoryItem extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: data.selected ? _kPrimaryGreen : const Color(0xFFEAF4EB),
+              color: data.selected
+                  ? _kPrimaryGreen
+                  : (isDark ? _kMarketplaceCardDark : const Color(0xFFE8F5E9)),
               shape: BoxShape.circle,
               border: Border.all(
-                color: data.selected ? _kLightGreen : const Color(0xFFCFE4D1),
+                color: data.selected
+                    ? _kLightGreen
+                    : (isDark
+                          ? _kMarketplaceBorderDark
+                          : const Color(0xFFB7DDB9)),
               ),
             ),
             child: Icon(
               data.icon,
               size: 21,
-              color: data.selected ? Colors.white : _kDarkGreen,
+              color: data.selected
+                  ? Colors.white
+                  : (isDark ? _kLightGreen : _kDarkGreen),
             ),
           ),
           const SizedBox(height: 6),
@@ -190,8 +221,8 @@ class _CategoryItem extends StatelessWidget {
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: data.selected
-                  ? _kDarkGreen
-                  : const Color(0xFF72807A),
+                  ? (isDark ? _kLightGreen : _kDarkGreen)
+                  : (isDark ? _kMarketplaceMutedDark : const Color(0xFF72807A)),
             ),
           ),
         ],
@@ -205,6 +236,8 @@ class _FeaturedSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     const featured = [
       _ListingData(
         title: 'Pure Kelso Stags (7 months)',
@@ -245,16 +278,16 @@ class _FeaturedSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.star_border, size: 19, color: Color(0xFFAA7E14)),
-              SizedBox(width: 4),
+              const Icon(Icons.star_border, size: 19, color: _kPrimaryGreen),
+              const SizedBox(width: 4),
               Text(
                 'Featured',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2230),
+                  color: isDark ? Colors.white : _kDarkGreen,
                 ),
               ),
             ],
@@ -296,6 +329,8 @@ class _AllListingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     const listings = [
       _ListingData(
         title: 'Pure Kelso Stags (7 months)',
@@ -337,12 +372,12 @@ class _AllListingsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'All Listings',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1F2230),
+              color: isDark ? Colors.white : _kDarkGreen,
               height: 1,
             ),
           ),
@@ -381,15 +416,18 @@ class _ListingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final imageHeight = emphasized ? 152.0 : 126.0;
 
     return SizedBox(
       width: width,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? _kMarketplaceCardDark : _kMarketplaceCard,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E6EB)),
+          border: Border.all(
+            color: isDark ? _kMarketplaceBorderDark : _kMarketplaceCardBorder,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,8 +447,10 @@ class _ListingCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
-                        return const ColoredBox(
-                          color: Color(0xFFE9ECF0),
+                        return ColoredBox(
+                          color: isDark
+                              ? const Color(0xFF1C1F22)
+                              : const Color(0xFFE9ECF0),
                           child: Center(
                             child: SizedBox(
                               width: 16,
@@ -423,13 +463,17 @@ class _ListingCard extends StatelessWidget {
                         );
                       },
                       errorBuilder: (context, error, stackTrace) {
-                        return const ColoredBox(
-                          color: Color(0xFFE9ECF0),
+                        return ColoredBox(
+                          color: isDark
+                              ? const Color(0xFF1C1F22)
+                              : const Color(0xFFE9ECF0),
                           child: Center(
                             child: Icon(
                               Icons.broken_image_outlined,
                               size: 20,
-                              color: Color(0xFF9DA3AC),
+                              color: isDark
+                                  ? _kMarketplaceMutedDark
+                                  : const Color(0xFF9DA3AC),
                             ),
                           ),
                         );
@@ -447,15 +491,17 @@ class _ListingCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8EFCF),
+                        color: isDark
+                            ? const Color(0xFF1F3B22)
+                            : const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         'FEATURED',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 8,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFFA67913),
+                          color: _kLightGreen,
                         ),
                       ),
                     ),
@@ -474,7 +520,7 @@ class _ListingCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: emphasized ? 12 : 11,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1F2230),
+                      color: isDark ? Colors.white : const Color(0xFF1F2230),
                       height: 1.25,
                     ),
                   ),
@@ -484,7 +530,7 @@ class _ListingCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFBB8610),
+                      color: _kPrimaryGreen,
                       height: 1,
                     ),
                   ),
@@ -496,15 +542,17 @@ class _ListingCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFAF2DE),
+                        color: isDark
+                            ? const Color(0xFF1F3B22)
+                            : const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         data.category,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFFB68512),
+                          color: isDark ? _kLightGreen : _kDarkGreen,
                         ),
                       ),
                     ),
@@ -523,9 +571,11 @@ class _ListingCard extends StatelessWidget {
                           data.location,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 9,
-                            color: _kMarketplaceMuted,
+                            color: isDark
+                                ? _kMarketplaceMutedDark
+                                : _kMarketplaceMuted,
                           ),
                         ),
                       ),
@@ -546,9 +596,14 @@ class _InsetBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: _kMarketplaceInset),
-      child: Divider(height: 8, thickness: 7, color: _kMarketplaceDivider),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _kMarketplaceInset),
+      child: Divider(
+        height: 8,
+        thickness: 7,
+        color: isDark ? const Color(0xFF2A2D31) : _kMarketplaceDivider,
+      ),
     );
   }
 }
