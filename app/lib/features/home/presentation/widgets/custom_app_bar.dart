@@ -16,53 +16,70 @@ class FarmBuzzHomeAppBar extends StatelessWidget
       scrolledUnderElevation: 0,
       backgroundColor: _kHomeBg,
       surfaceTintColor: Colors.transparent,
-      leadingWidth: 42,
-      leading: IconButton(
-        onPressed: () {},
-        icon: const Icon(Icons.menu_rounded, color: Colors.white),
-        padding: const EdgeInsets.only(left: 10, right: 4),
-        visualDensity: VisualDensity.compact,
-        tooltip: 'Menu',
+      automaticallyImplyLeading: false,
+      titleSpacing: 0,
+      title: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 6),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 132,
+              height: 34,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Image.asset(
+                  'assets/images/Logowhite.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const Spacer(),
+            _HeaderActionIcon(
+              icon: Icons.notifications_outlined,
+              tooltip: 'Notifications',
+              onPressed: () {},
+            ),
+            _HeaderActionIcon(
+              icon: Icons.chat_bubble_outline,
+              tooltip: 'Messages',
+              onPressed: () {},
+            ),
+            _HeaderActionIcon(
+              icon: Icons.menu_rounded,
+              tooltip: 'Menu',
+              onPressed: () {},
+            ),
+          ],
+        ),
       ),
-      centerTitle: false,
-      titleSpacing: 4,
-      title: Container(
-        height: 32,
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child: SizedBox(
-          height: 22,
-          child: Image.asset(
-            'assets/images/Logo.png',
-            fit: BoxFit.contain,
-            alignment: Alignment.centerLeft,
-          ),
-        ),
+    );
+  }
+}
+
+class _HeaderActionIcon extends StatelessWidget {
+  const _HeaderActionIcon({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+        iconSize: 22,
+        icon: Icon(icon, color: Colors.white),
       ),
-      actions: [
-        const SizedBox(width: 2),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-          tooltip: 'Notifications',
-        ),
-        const SizedBox(width: 2),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-          tooltip: 'Messages',
-        ),
-        const SizedBox(width: 2),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.search, color: Colors.white),
-          tooltip: 'Search',
-        ),
-        const SizedBox(width: 8),
-      ],
     );
   }
 }

@@ -1,6 +1,7 @@
-﻿import 'package:app/app/navigation/app_routes.dart';
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
+import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
 const double _kProfileInset = 14;
@@ -15,7 +16,9 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kProfileBg,
+      appBar: const FarmBuzzHomeAppBar(),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             Expanded(
@@ -713,5 +716,6 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
+
 
 

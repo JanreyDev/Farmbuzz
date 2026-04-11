@@ -1,6 +1,7 @@
-﻿import 'package:app/app/navigation/app_routes.dart';
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
+import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
 const double _kMarketplaceInset = 14;
@@ -20,16 +21,17 @@ class MarketplaceScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: _kMarketplaceBg,
+      appBar: const FarmBuzzHomeAppBar(),
       body: SafeArea(
+        top: false,
         child: ColoredBox(
           color: _kMarketplaceBg,
           child: Column(
             children: [
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
+                  padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
                   children: const [
-                    _TopBarSurface(),
                     _SearchBar(),
                     _CategorySlider(),
                     _FeaturedSection(),
@@ -62,94 +64,6 @@ class MarketplaceScreen extends StatelessWidget {
     } else if (item == AppBottomNavItem.create) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.groups);
     }
-  }
-}
-
-class _TopBarSurface extends StatelessWidget {
-  const _TopBarSurface();
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 12),
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
-                _kMarketplaceInset,
-                6,
-                _kMarketplaceInset,
-                6,
-              ),
-              child: _TopBar(),
-            ),
-            Container(
-              height: 1,
-              color: Theme.of(context).colorScheme.onSurface.withValues(
-                alpha: 0.08,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 40,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Center(
-            child: Text(
-              'Marketplace',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1F2230),
-                height: 1,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: () => Navigator.of(context).maybePop(),
-              icon: const Icon(Icons.arrow_back),
-              visualDensity: VisualDensity.compact,
-              tooltip: 'Back',
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: kGoldAccent,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                '+ Sell',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -666,5 +580,7 @@ class _ListingData {
   final String imageUrl;
   final bool featured;
 }
+
+
 
 

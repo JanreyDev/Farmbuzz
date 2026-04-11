@@ -1,6 +1,7 @@
 import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
+import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
 const double _kGroupsInset = 14;
@@ -49,12 +50,13 @@ class GroupsScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: _kGroupsBg,
+      appBar: const FarmBuzzHomeAppBar(),
       body: SafeArea(
+        top: false,
         child: ColoredBox(
           color: _kGroupsBg,
           child: Column(
             children: [
-              const _GroupsHeader(),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(_kGroupsInset, 8, _kGroupsInset, 10),
@@ -117,42 +119,6 @@ class GroupsScreen extends StatelessWidget {
     } else if (item == AppBottomNavItem.profile) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
     }
-  }
-}
-
-class _GroupsHeader extends StatelessWidget {
-  const _GroupsHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF2C3240), size: 20),
-          ),
-          const Expanded(
-            child: Text(
-              'Groups',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1F2230),
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.add, color: kGoldAccent, size: 22),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -372,3 +338,5 @@ class _GroupData {
   final IconData icon;
   final Color headerColor;
 }
+
+

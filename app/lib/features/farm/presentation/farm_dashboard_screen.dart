@@ -1,6 +1,9 @@
-﻿import 'package:app/app/navigation/app_routes.dart';
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
+import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
+
+const Color _kFarmBg = Color(0xFFF5F5F5);
 
 class FarmDashboardScreen extends StatelessWidget {
   const FarmDashboardScreen({super.key});
@@ -9,40 +12,17 @@ class FarmDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final headerSurface = theme.brightness == Brightness.light
-        ? Colors.white
-        : theme.cardColor;
 
     return Scaffold(
-      backgroundColor: theme.cardColor,
+      backgroundColor: _kFarmBg,
+      appBar: const FarmBuzzHomeAppBar(),
       body: Column(
         children: [
-          ColoredBox(
-            color: headerSurface,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
-                      child: _Header(colorScheme: colorScheme),
-                    ),
-                    Container(
-                      height: 1,
-                      color: colorScheme.onSurface.withValues(alpha: 0.08),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
           Expanded(
             child: ColoredBox(
-              color: theme.cardColor,
+              color: _kFarmBg,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -106,7 +86,7 @@ class FarmDashboardScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                       decoration: BoxDecoration(
-                        color: theme.cardColor,
+                        color: _kFarmBg,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: colorScheme.onSurface.withValues(alpha: 0.10),
@@ -167,44 +147,6 @@ class FarmDashboardScreen extends StatelessWidget {
     } else if (item == AppBottomNavItem.profile) {
       Navigator.of(context).pushReplacementNamed(AppRoutes.profile);
     }
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.colorScheme});
-
-  final ColorScheme colorScheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back),
-          visualDensity: VisualDensity.compact,
-          tooltip: 'Back',
-        ),
-        Expanded(
-          child: Text(
-            'Farm Dashboard',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1F2230),
-              height: 1,
-            ),
-          ),
-        ),
-        IconButton(
-          onPressed: () {},
-          icon: Icon(Icons.notifications_none_outlined, color: colorScheme.primary),
-          visualDensity: VisualDensity.compact,
-          tooltip: 'Notifications',
-        ),
-      ],
-    );
   }
 }
 
@@ -463,3 +405,6 @@ class _QuickAction extends StatelessWidget {
     );
   }
 }
+
+
+
