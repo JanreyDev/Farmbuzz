@@ -1,8 +1,11 @@
 import 'package:app/app/navigation/app_routes.dart';
-import 'package:app/app/theme/app_theme.dart';
 import 'package:app/features/auth/presentation/widgets/auth_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkGreen = Color(0xFF1B5E20);
+const Color _kLightGreen = Color(0xFF66BB6A);
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,12 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3),
+      backgroundColor: const Color(0xFFF5F7F2),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF3F3F3),
+        backgroundColor: const Color(0xFFF5F7F2),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF232323)),
+          icon: const Icon(Icons.arrow_back, color: _kDarkGreen),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
@@ -56,13 +59,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       width: 38,
                       height: 38,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF7F0DE),
+                      decoration: BoxDecoration(
+                        color: _kLightGreen.withValues(alpha: 0.20),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.bolt_rounded,
-                        color: kGoldAccent.withValues(alpha: 0.95),
+                        color: _kPrimaryGreen,
                       ),
                     ),
                   ],
@@ -110,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: kGoldAccent,
+                        color: _kDarkGreen,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -120,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ElevatedButton(
                   onPressed: _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kGoldAccent,
+                    backgroundColor: _kPrimaryGreen,
                     foregroundColor: Colors.white,
                     minimumSize: const Size.fromHeight(56),
                     shape: RoundedRectangleBorder(
@@ -165,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text(
                         'Sign Up',
                         style: TextStyle(
-                          color: kGoldAccent,
+                          color: _kDarkGreen,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -222,8 +225,9 @@ class _MobileNumberField extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFE9EBEF),
+            color: const Color(0xFFEEF3EE),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFD7E2D8)),
           ),
           child: Row(
             children: [
@@ -232,19 +236,19 @@ class _MobileNumberField extends StatelessWidget {
                 child: Icon(
                   Icons.phone_outlined,
                   size: 19,
-                  color: Color(0xFF9B9B9B),
+                  color: Color(0xFF7F8F82),
                 ),
               ),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                 width: 1,
                 height: 20,
-                color: const Color(0xFFCBCDD2),
+                color: const Color(0xFFCBD8CC),
               ),
               const Text(
                 '+63',
                 style: TextStyle(
-                  color: Color(0xFF666666),
+                  color: Color(0xFF556358),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -261,7 +265,7 @@ class _MobileNumberField extends StatelessWidget {
                   ],
                   decoration: const InputDecoration(
                     hintText: '9XX XXX XXXX',
-                    hintStyle: TextStyle(color: Color(0xFF9B9B9B)),
+                    hintStyle: TextStyle(color: Color(0xFF8A988D)),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.fromLTRB(0, 14, 12, 14),
                     counterText: '',

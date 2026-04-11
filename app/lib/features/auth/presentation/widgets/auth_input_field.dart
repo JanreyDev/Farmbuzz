@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+const Color _kAuthFieldBg = Color(0xFFEEF3EE);
+const Color _kAuthFieldBorder = Color(0xFFD7E2D8);
+const Color _kAuthFieldIcon = Color(0xFF7F8F82);
+const Color _kAuthFieldHint = Color(0xFF8A988D);
+
 class AuthInputField extends StatelessWidget {
   const AuthInputField({
     super.key,
@@ -58,14 +63,14 @@ class AuthInputField extends StatelessWidget {
           decoration: InputDecoration(
             counterText: '',
             hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFF9B9B9B)),
+            hintStyle: const TextStyle(color: _kAuthFieldHint),
             filled: true,
-            fillColor: const Color(0xFFE9EBEF),
+            fillColor: _kAuthFieldBg,
             prefixText: prefixText,
             prefixIcon: Icon(
               prefixIcon,
               size: 19,
-              color: const Color(0xFF9B9B9B),
+              color: _kAuthFieldIcon,
             ),
             suffixIcon: suffixIcon == null
                 ? null
@@ -74,12 +79,20 @@ class AuthInputField extends StatelessWidget {
                     icon: Icon(
                       suffixIcon,
                       size: 19,
-                      color: const Color(0xFF9B9B9B),
+                      color: _kAuthFieldIcon,
                     ),
                   ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: _kAuthFieldBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.3),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
