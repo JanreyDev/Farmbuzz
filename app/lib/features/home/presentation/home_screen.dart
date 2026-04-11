@@ -9,29 +9,29 @@ const Color _kHomeBgLight = Color(0xFFF5F5F5);
 const Color _kHomeBgDark = Color(0xFF1F1F1F);
 
 const _kComposerAvatarUrl =
-    'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=300&q=80';
+    'https://images.pexels.com/photos/18481431/pexels-photo-18481431.jpeg?auto=compress&cs=tinysrgb&w=300';
 const _kCreateStoryImageUrl =
-    'https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?auto=format&fit=crop&w=900&q=80';
+    'https://images.pexels.com/photos/19198208/pexels-photo-19198208.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kStoryImageBlackWarrior =
-    'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=900&q=80';
+    'https://images.pexels.com/photos/18846336/pexels-photo-18846336.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kStoryImageRedKelso =
-    'https://images.unsplash.com/photo-1542010589005-d1eacc3918f2?auto=format&fit=crop&w=900&q=80';
+    'https://images.pexels.com/photos/15235677/pexels-photo-15235677.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kStoryImageGoldenHatch =
-    'https://images.unsplash.com/photo-1593351415075-3bac9f45c877?auto=format&fit=crop&w=900&q=80';
+    'https://images.pexels.com/photos/13607889/pexels-photo-13607889.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kStoryAvatarBlackWarrior =
-    'https://images.unsplash.com/photo-1571752726703-5e7d1f6a98b1?auto=format&fit=crop&w=300&q=80';
+    'https://images.pexels.com/photos/2600399/pexels-photo-2600399.jpeg?auto=compress&cs=tinysrgb&w=300';
 const _kStoryAvatarRedKelso =
-    'https://images.unsplash.com/photo-1520012218364-3dbe62c99bee?auto=format&fit=crop&w=300&q=80';
+    'https://images.pexels.com/photos/13632433/pexels-photo-13632433.jpeg?auto=compress&cs=tinysrgb&w=300';
 const _kStoryAvatarGoldenHatch =
-    'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=300&q=80';
+    'https://images.pexels.com/photos/13330411/pexels-photo-13330411.jpeg?auto=compress&cs=tinysrgb&w=300';
 const _kPostImageOne =
-    'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=900&q=80';
+    'https://images.pexels.com/photos/15235677/pexels-photo-15235677.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kPostImageTwo =
-    'https://images.unsplash.com/photo-1520012218364-3dbe62c99bee?auto=format&fit=crop&w=900&q=80';
+    'https://images.pexels.com/photos/13293244/pexels-photo-13293244.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kPostAvatarOne =
-    'https://images.unsplash.com/photo-1571752726703-5e7d1f6a98b1?auto=format&fit=crop&w=300&q=80';
+    'https://images.pexels.com/photos/18699978/pexels-photo-18699978.jpeg?auto=compress&cs=tinysrgb&w=300';
 const _kPostAvatarTwo =
-    'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=300&q=80';
+    'https://images.pexels.com/photos/25310981/pexels-photo-25310981.jpeg?auto=compress&cs=tinysrgb&w=300';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
