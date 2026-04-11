@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kDarkGreen = Color(0xFF1B5E20);
-const Color _kLightGreen = Color(0xFF66BB6A);
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,145 +38,159 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: const Color(0xFFF5F7F2),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF5F7F2),
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: _kDarkGreen),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        title: const Text(
+          'Login',
+          style: TextStyle(
+            color: _kDarkGreen,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        centerTitle: true,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: const Color(0xFFDCE4DD),
+          ),
+        ),
       ),
       body: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: _kLightGreen.withValues(alpha: 0.20),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.bolt_rounded,
-                        color: _kPrimaryGreen,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 28),
+                child: Center(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 8),
                 const Text(
                   'Welcome Back',
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F2230),
+                    color: _kDarkGreen,
+                    letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Log in to your FarmBuzz account',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF727272)),
-                ),
-                const SizedBox(height: 24),
-                _MobileNumberField(
-                  controller: _mobileController,
-                  validator: _mobileValidator,
-                ),
-                const SizedBox(height: 14),
-                AuthInputField(
-                  label: 'Password',
-                  hintText: 'Enter your password',
-                  prefixIcon: Icons.lock_outline,
-                  suffixIcon: _obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
-                  controller: _passwordController,
-                  textInputAction: TextInputAction.done,
-                  obscureText: _obscurePassword,
-                  validator: _requiredField,
-                  onSuffixTap: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  },
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {},
-                    child: const Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: _kDarkGreen,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kPrimaryGreen,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  child: const Text('Log In'),
-                ),
-                const SizedBox(height: 18),
-                const Row(
-                  children: [
-                    Expanded(child: Divider(color: Color(0xFFDBDBDB))),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        'OR',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF9A9A9A),
-                          fontWeight: FontWeight.w700,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Log in to your FarmBuzz account',
+                          style: TextStyle(fontSize: 16, color: Color(0xFF727272)),
                         ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Color(0xFFDBDBDB))),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Don\'t have an account? ',
-                      style: TextStyle(color: Color(0xFF777777)),
-                    ),
-                    GestureDetector(
-                      onTap: () =>
-                          Navigator.of(context).pushNamed(AppRoutes.signup),
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          color: _kDarkGreen,
-                          fontWeight: FontWeight.w700,
+                        const SizedBox(height: 24),
+                        _MobileNumberField(
+                          controller: _mobileController,
+                          validator: _mobileValidator,
                         ),
-                      ),
+                        const SizedBox(height: 14),
+                        AuthInputField(
+                          label: 'Password',
+                          hintText: 'Enter your password',
+                          prefixIcon: Icons.lock_outline,
+                          suffixIcon: _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          controller: _passwordController,
+                          textInputAction: TextInputAction.done,
+                          obscureText: _obscurePassword,
+                          validator: _requiredField,
+                          onSuffixTap: () {
+                            setState(() => _obscurePassword = !_obscurePassword);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            child: const Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                color: _kDarkGreen,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _kPrimaryGreen,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size.fromHeight(56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          child: const Text('Log In'),
+                        ),
+                        const SizedBox(height: 18),
+                        const Row(
+                          children: [
+                            Expanded(child: Divider(color: Color(0xFFDBDBDB))),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                'OR',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF9A9A9A),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: Color(0xFFDBDBDB))),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Don\'t have an account? ',
+                              style: TextStyle(color: Color(0xFF777777)),
+                            ),
+                            GestureDetector(
+                              onTap: () =>
+                                  Navigator.of(context).pushNamed(AppRoutes.signup),
+                              child: const Text(
+                                'Sign Up',
+                                style: TextStyle(
+                                  color: _kDarkGreen,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
