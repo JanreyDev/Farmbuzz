@@ -20,9 +20,12 @@ import 'package:app/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:app/features/splash/presentation/splash_screen.dart';
 import 'package:app/features/news_feed/presentation/news_feed_screen.dart';
 import 'package:app/features/subscription/presentation/subscription_screen.dart';
+import 'package:app/app/widgets/ai_chat_button.dart';
 import 'package:flutter/material.dart';
 
 class FarmBuzzApp extends StatefulWidget {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   const FarmBuzzApp({
     super.key,
     required this.theme,
@@ -51,11 +54,20 @@ class _FarmBuzzAppState extends State<FarmBuzzApp> {
       valueListenable: ThemeModeController.mode,
       builder: (context, mode, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
+        navigatorKey: FarmBuzzApp.navigatorKey,
         title: 'FarmBuzz',
         theme: widget.theme,
         darkTheme: widget.darkTheme,
         themeMode: mode,
-        initialRoute: AppRoutes.splash,
+        builder: (context, child) {
+        return Stack(
+          children: [
+            child!,
+            AiGlobalFab(child: child),
+          ],
+        );
+      },
+      initialRoute: AppRoutes.splash,
         routes: {
           AppRoutes.splash: (_) => const SplashScreen(),
           AppRoutes.onboarding: (_) => const OnboardingScreen(),
@@ -82,3 +94,4 @@ class _FarmBuzzAppState extends State<FarmBuzzApp> {
     );
   }
 }
+
