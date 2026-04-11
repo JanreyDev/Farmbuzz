@@ -4,7 +4,14 @@ import 'package:app/app/widgets/app_drawer.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
-const Color _kFarmBg = Color(0xFFF5F5F5);
+const Color _kFarmBgLight = Color(0xFFF5F5F5);
+const Color _kFarmBgDark = Color(0xFF1F1F1F);
+const Color _kFarmCardDark = Color(0xFF242628);
+const Color _kFarmBorderDark = Color(0xFF35383D);
+const Color _kFarmCardLight = Color(0xFFE8F5E9);
+const Color _kFarmPrimary = Color(0xFF2E7D32);
+const Color _kFarmDark = Color(0xFF1B5E20);
+const Color _kFarmLight = Color(0xFF66BB6A);
 
 class FarmDashboardScreen extends StatelessWidget {
   const FarmDashboardScreen({super.key});
@@ -13,16 +20,18 @@ class FarmDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final farmBg = isDark ? _kFarmBgDark : _kFarmBgLight;
 
     return Scaffold(
-      backgroundColor: _kFarmBg,
+      backgroundColor: farmBg,
       appBar: const FarmBuzzHomeAppBar(),
       drawer: const FarmBuzzAppDrawer(),
       body: Column(
         children: [
           Expanded(
             child: ColoredBox(
-              color: _kFarmBg,
+              color: farmBg,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
                 child: Column(
@@ -41,38 +50,38 @@ class FarmDashboardScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     const _AlertRow(
                       icon: Icons.bolt_outlined,
-                      iconColor: Color(0xFFC3912E),
+                      iconColor: _kFarmDark,
                       text: 'Thunder: Deworming due tomorrow',
                       badge: 'WARNING',
-                      badgeColor: Color(0xFF8D6A24),
-                      bgColor: Color(0xFFF8EED7),
+                      badgeColor: _kFarmDark,
+                      bgColor: Color(0xFFE8F5E9),
                     ),
                     const SizedBox(height: 8),
                     const _AlertRow(
                       icon: Icons.favorite_border,
-                      iconColor: Color(0xFF3875CC),
+                      iconColor: _kFarmPrimary,
                       text: 'Inferno x Ruby: Hatch expected Apr 15',
                       badge: 'INFO',
-                      badgeColor: Color(0xFF2F6BC1),
-                      bgColor: Color(0xFFE8F1FC),
+                      badgeColor: _kFarmPrimary,
+                      bgColor: Color(0xFFEFF8F0),
                     ),
                     const SizedBox(height: 8),
                     const _AlertRow(
                       icon: Icons.check_circle_outline,
-                      iconColor: Color(0xFF389A4C),
+                      iconColor: _kFarmPrimary,
                       text: '21-Day Keep: Day 20 of 21 (Thunder)',
                       badge: 'SUCCESS',
-                      badgeColor: Color(0xFF2D8F41),
+                      badgeColor: _kFarmDark,
                       bgColor: Color(0xFFEAF6EC),
                     ),
                     const SizedBox(height: 8),
                     const _AlertRow(
                       icon: Icons.calendar_month_outlined,
-                      iconColor: Color(0xFF3875CC),
+                      iconColor: _kFarmPrimary,
                       text: 'Pampanga Derby in 8 days',
                       badge: 'INFO',
-                      badgeColor: Color(0xFF2F6BC1),
-                      bgColor: Color(0xFFE8F1FC),
+                      badgeColor: _kFarmPrimary,
+                      bgColor: Color(0xFFEFF8F0),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -88,10 +97,12 @@ class FarmDashboardScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                       decoration: BoxDecoration(
-                        color: _kFarmBg,
+                        color: isDark ? _kFarmCardDark : farmBg,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: colorScheme.onSurface.withValues(alpha: 0.10),
+                          color: isDark
+                              ? _kFarmBorderDark
+                              : colorScheme.onSurface.withValues(alpha: 0.10),
                         ),
                       ),
                       child: Row(
@@ -109,13 +120,14 @@ class FarmDashboardScreen extends StatelessWidget {
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: colorScheme.primary.withValues(alpha: 0.18),
+                              color: (isDark ? _kFarmLight : _kFarmPrimary)
+                                  .withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               '2/5',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: colorScheme.primary,
+                                color: isDark ? _kFarmLight : _kFarmPrimary,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -167,25 +179,25 @@ class _StatsGrid extends StatelessWidget {
       children: const [
         _StatTile(
           icon: Icons.shield_outlined,
-          iconColor: Color(0xFFC3912E),
+          iconColor: _kFarmDark,
           value: '24',
           label: 'Total Birds',
         ),
         _StatTile(
           icon: Icons.bolt_outlined,
-          iconColor: Color(0xFFDD5252),
+          iconColor: _kFarmPrimary,
           value: '8',
           label: 'Active Fighters',
         ),
         _StatTile(
           icon: Icons.favorite_border,
-          iconColor: Color(0xFFD85A72),
+          iconColor: _kFarmLight,
           value: '10',
           label: 'Brood Stock',
         ),
         _StatTile(
           icon: Icons.sports_mma_outlined,
-          iconColor: Color(0xFF3476D8),
+          iconColor: _kFarmDark,
           value: '6',
           label: 'Stags',
         ),
@@ -211,12 +223,17 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
+        color: isDark ? _kFarmCardDark : _kFarmCardLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.10)),
+        border: Border.all(
+          color: isDark
+              ? _kFarmBorderDark
+              : colorScheme.onSurface.withValues(alpha: 0.10),
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -250,6 +267,7 @@ class _SummaryStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     Widget summaryItem(String value, String label, Color valueColor) {
       return Expanded(
@@ -277,25 +295,29 @@ class _SummaryStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
+        color: isDark ? _kFarmCardDark : theme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.10)),
+        border: Border.all(
+          color: isDark
+              ? _kFarmBorderDark
+              : colorScheme.onSurface.withValues(alpha: 0.10),
+        ),
       ),
       child: Row(
         children: [
-          summaryItem('3', 'Recent Wins', const Color(0xFF2E9D43)),
+          summaryItem('3', 'Recent Wins', _kFarmPrimary),
           Container(
             width: 1,
             height: 28,
             color: colorScheme.onSurface.withValues(alpha: 0.10),
           ),
-          summaryItem('1', 'Recent Losses', const Color(0xFFD64545)),
+          summaryItem('1', 'Recent Losses', _kFarmLight),
           Container(
             width: 1,
             height: 28,
             color: colorScheme.onSurface.withValues(alpha: 0.10),
           ),
-          summaryItem('P13,950', 'Monthly Profit', const Color(0xFFC3912E)),
+          summaryItem('P13,950', 'Monthly Profit', _kFarmDark),
         ],
       ),
     );
@@ -322,22 +344,36 @@ class _AlertRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = isDark
+        ? Color.alphaBlend(bgColor.withValues(alpha: 0.08), _kFarmCardDark)
+        : bgColor;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
       decoration: BoxDecoration(
-        color: bgColor,
+        color: cardColor,
         borderRadius: BorderRadius.circular(10),
+        border: isDark
+            ? Border.all(color: Colors.white.withValues(alpha: 0.08))
+            : null,
       ),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: iconColor),
+          Icon(
+            icon,
+            size: 14,
+            color: isDark ? _kFarmLight : iconColor,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.94)
+                    : null,
               ),
             ),
           ),
@@ -345,7 +381,7 @@ class _AlertRow extends StatelessWidget {
           Text(
             badge,
             style: theme.textTheme.labelSmall?.copyWith(
-              color: badgeColor,
+              color: isDark ? _kFarmLight : badgeColor,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -382,6 +418,7 @@ class _QuickAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Column(
       children: [
@@ -389,11 +426,15 @@ class _QuickAction extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: theme.scaffoldBackgroundColor,
+            color: isDark ? _kFarmCardDark : theme.scaffoldBackgroundColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.10)),
+            border: Border.all(
+              color: isDark
+                  ? _kFarmBorderDark
+                  : colorScheme.onSurface.withValues(alpha: 0.10),
+            ),
           ),
-          child: Icon(icon, size: 20, color: colorScheme.primary),
+          child: Icon(icon, size: 20, color: isDark ? _kFarmLight : _kFarmPrimary),
         ),
         const SizedBox(height: 6),
         Text(
