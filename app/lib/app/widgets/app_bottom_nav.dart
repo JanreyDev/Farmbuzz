@@ -6,6 +6,10 @@ const Color _kNavBg = Color(0xFFFFFFFF);
 const Color _kNavBorder = Color(0xFFE2E2E2);
 const Color _kNavActive = Color(0xFF2E7D32);
 const Color _kNavInactive = Color(0xFF6D6D6D);
+const Color _kNavBgDark = Color(0xFF121714);
+const Color _kNavBorderDark = Color(0x33FFFFFF);
+const Color _kNavActiveDark = Color(0xFF66BB6A);
+const Color _kNavInactiveDark = Color(0xFFB0B8B2);
 
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
@@ -19,11 +23,17 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? _kNavBgDark : _kNavBg;
+    final navBorder = isDark ? _kNavBorderDark : _kNavBorder;
+    final navActive = isDark ? _kNavActiveDark : _kNavActive;
+    final navInactive = isDark ? _kNavInactiveDark : _kNavInactive;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: _kNavBg,
+      decoration: BoxDecoration(
+        color: navBg,
         border: Border(
-          top: BorderSide(color: _kNavBorder),
+          top: BorderSide(color: navBorder),
         ),
       ),
       child: SafeArea(
@@ -33,9 +43,9 @@ class AppBottomNav extends StatelessWidget {
           onTap: (index) => onItemTap(_itemForIndex(index)),
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          backgroundColor: _kNavBg,
-          selectedItemColor: _kNavActive,
-          unselectedItemColor: _kNavInactive,
+          backgroundColor: navBg,
+          selectedItemColor: navActive,
+          unselectedItemColor: navInactive,
           selectedFontSize: 12,
           unselectedFontSize: 12,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),

@@ -5,7 +5,8 @@ import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
-const Color _kHomeBg = Color(0xFFF5F5F5);
+const Color _kHomeBgLight = Color(0xFFF5F5F5);
+const Color _kHomeBgDark = Color(0xFF1F1F1F);
 
 const _kComposerAvatarUrl =
     'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=300&q=80';
@@ -37,8 +38,11 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final homeBg = isDark ? _kHomeBgDark : _kHomeBgLight;
+
     return Scaffold(
-      backgroundColor: _kHomeBg,
+      backgroundColor: homeBg,
       appBar: const FarmBuzzHomeAppBar(),
       drawer: const FarmBuzzAppDrawer(),
       body: Column(
@@ -52,10 +56,7 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(height: 10),
                 _StoriesStrip(),
                 SizedBox(height: 10),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Divider(height: 1),
-                ),
+                _SectionDivider(),
                 SizedBox(height: 8),
                 _PostCard(
                   author: 'Black Warrior Farm',
@@ -321,9 +322,11 @@ class _PostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final sectionBg = isDark ? _kHomeBgDark : _kHomeBgLight;
 
     return Container(
-      color: _kHomeBg,
+      color: sectionBg,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,7 +388,10 @@ class _PostCard extends StatelessWidget {
             text,
             style: theme.textTheme.bodyLarge?.copyWith(
               height: 1.35,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
+              color: isDark
+                  ? Colors.white
+                  : colorScheme.onSurface.withValues(alpha: 0.92),
             ),
           ),
           const SizedBox(height: 12),
@@ -410,7 +416,9 @@ class _PostCard extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 1,
-            color: colorScheme.onSurface.withValues(alpha: 0.10),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.22)
+                : colorScheme.onSurface.withValues(alpha: 0.10),
           ),
           const SizedBox(height: 2),
           Row(
@@ -498,12 +506,16 @@ class _SectionDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Divider(
         height: 14,
         thickness: 1,
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.10),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.22)
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.10),
       ),
     );
   }
