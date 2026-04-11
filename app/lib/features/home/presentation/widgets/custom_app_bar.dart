@@ -44,10 +44,12 @@ class FarmBuzzHomeAppBar extends StatelessWidget
               tooltip: 'Messages',
               onPressed: () {},
             ),
-            _HeaderActionIcon(
-              icon: Icons.menu_rounded,
-              tooltip: 'Menu',
-              onPressed: () {},
+            Builder(
+              builder: (context) => _HeaderActionIcon(
+                icon: Icons.menu_rounded,
+                tooltip: 'Menu',
+                onPressed: () => Scaffold.of(context).openDrawer(),
+              ),
             ),
           ],
         ),

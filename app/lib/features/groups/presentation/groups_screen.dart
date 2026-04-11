@@ -1,6 +1,7 @@
 import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
+import 'package:app/app/widgets/app_drawer.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -51,6 +52,7 @@ class GroupsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: _kGroupsBg,
       appBar: const FarmBuzzHomeAppBar(),
+      drawer: const FarmBuzzAppDrawer(),
       body: SafeArea(
         top: false,
         child: ColoredBox(

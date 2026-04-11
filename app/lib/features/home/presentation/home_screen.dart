@@ -1,5 +1,6 @@
 import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
+import 'package:app/app/widgets/app_drawer.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -39,6 +40,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: _kHomeBg,
       appBar: const FarmBuzzHomeAppBar(),
+      drawer: const FarmBuzzAppDrawer(),
       body: Column(
         children: [
           Expanded(
