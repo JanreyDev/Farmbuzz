@@ -7,6 +7,9 @@ const double _kMarketplaceInset = 14;
 const Color _kMarketplaceBg = Color(0xFFF1F1F1);
 const Color _kMarketplaceDivider = Color(0xFFE6E9ED);
 const Color _kMarketplaceMuted = Color(0xFF7B818A);
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkGreen = Color(0xFF1B5E20);
+const Color _kLightGreen = Color(0xFF66BB6A);
 
 class MarketplaceScreen extends StatelessWidget {
   const MarketplaceScreen({super.key});
@@ -249,16 +252,16 @@ class _CategoryItem extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: data.selected ? kGoldAccent : const Color(0xFFFFFCF5),
+              color: data.selected ? _kPrimaryGreen : const Color(0xFFEAF4EB),
               shape: BoxShape.circle,
               border: Border.all(
-                color: data.selected ? kGoldAccent : const Color(0xFFE3D7B2),
+                color: data.selected ? _kLightGreen : const Color(0xFFCFE4D1),
               ),
             ),
             child: Icon(
               data.icon,
               size: 21,
-              color: data.selected ? Colors.white : const Color(0xFFC19527),
+              color: data.selected ? Colors.white : _kDarkGreen,
             ),
           ),
           const SizedBox(height: 6),
@@ -271,8 +274,8 @@ class _CategoryItem extends StatelessWidget {
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: data.selected
-                  ? const Color(0xFFA57813)
-                  : const Color(0xFF8A9098),
+                  ? _kDarkGreen
+                  : const Color(0xFF72807A),
             ),
           ),
         ],

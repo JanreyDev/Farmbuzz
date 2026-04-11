@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkGreen = Color(0xFF1B5E20);
+
 class PageIndicator extends StatelessWidget {
   const PageIndicator({
     super.key,
@@ -12,21 +15,20 @@ class PageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(totalPages, (index) {
         final isActive = index == currentIndex;
+
         return AnimatedContainer(
           duration: const Duration(milliseconds: 280),
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: 9,
-          width: isActive ? 28 : 9,
+          height: 8,
+          width: isActive ? 26 : 8,
           decoration: BoxDecoration(
             color: isActive
-                ? colorScheme.primary
-                : colorScheme.onSurface.withValues(alpha: 0.18),
+                ? _kPrimaryGreen
+                : _kDarkGreen.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(999),
           ),
         );

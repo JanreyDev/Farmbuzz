@@ -4,6 +4,10 @@ import 'package:app/features/onboarding/presentation/widgets/onboarding_page.dar
 import 'package:app/features/onboarding/presentation/widgets/page_indicator.dart';
 import 'package:flutter/material.dart';
 
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkGreen = Color(0xFF1B5E20);
+const Color _kLightGreen = Color(0xFF66BB6A);
+
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -76,78 +80,137 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isLastPage = _currentIndex == _items.length - 1;
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
-          child: Column(
-            children: [
-              Row(
+      backgroundColor: const Color(0xFFF7FAF7),
+      body: Stack(
+        children: [
+          const _BackdropAccent(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+              child: Column(
                 children: [
-                  const Spacer(),
-                  TextButton(
-                    onPressed: _goToTrial,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(64, 40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _goToTrial,
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(64, 40),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          foregroundColor: _kDarkGreen,
+                        ),
+                        child: Text(
+                          'Skip',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: _kDarkGreen,
+                          ),
+                        ),
                       ),
+                    ],
+                  ),
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: _items.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentIndex = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final item = _items[index];
+                        return OnboardingPage(
+                          title: item.title,
+                          description: item.description,
+                          icon: item.icon,
+                          badge: item.badge,
+                          highlights: item.highlights,
+                        );
+                      },
                     ),
-                    child: Text(
-                      'Skip',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white,
+                          _kLightGreen.withValues(alpha: 0.10),
+                        ],
                       ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFD9E6DB)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _kDarkGreen.withValues(alpha: 0.08),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PageIndicator(
+                          currentIndex: _currentIndex,
+                          totalPages: _items.length,
+                        ),
+                        const SizedBox(height: 14),
+                        CustomButton(
+                          label: isLastPage ? 'Continue' : 'Next',
+                          onPressed: _handleNext,
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _items.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final item = _items[index];
-                    return OnboardingPage(
-                      title: item.title,
-                      description: item.description,
-                      icon: item.icon,
-                      badge: item.badge,
-                      highlights: item.highlights,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                decoration: BoxDecoration(
-                  color: theme.cardColor.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    PageIndicator(
-                      currentIndex: _currentIndex,
-                      totalPages: _items.length,
-                    ),
-                    const SizedBox(height: 14),
-                    CustomButton(
-                      label: isLastPage ? 'Continue' : 'Next',
-                      onPressed: _handleNext,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BackdropAccent extends StatelessWidget {
+  const _BackdropAccent();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          top: -140,
+          left: -120,
+          child: Container(
+            width: 320,
+            height: 320,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _kLightGreen.withValues(alpha: 0.16),
+            ),
           ),
         ),
-      ),
+        Positioned(
+          top: 100,
+          right: -90,
+          child: Container(
+            width: 230,
+            height: 230,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _kPrimaryGreen.withValues(alpha: 0.08),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

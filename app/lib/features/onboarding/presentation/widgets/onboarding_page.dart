@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkGreen = Color(0xFF1B5E20);
+const Color _kLightGreen = Color(0xFF66BB6A);
+
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({
     super.key,
@@ -19,7 +23,6 @@ class OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -32,28 +35,52 @@ class OnboardingPage extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: colorScheme.onSurface.withValues(alpha: 0.09),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFFFFFF), Color(0xFFF4FAF5)],
                 ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFD8E7DA)),
+                boxShadow: [
+                  BoxShadow(
+                    color: _kDarkGreen.withValues(alpha: 0.12),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      Text(
-                        badge,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              _kPrimaryGreen.withValues(alpha: 0.22),
+                              _kLightGreen.withValues(alpha: 0.20),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          badge,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: _kDarkGreen,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                       const Spacer(),
                       Icon(
                         Icons.more_horiz_rounded,
                         size: 20,
-                        color: colorScheme.onSurface.withValues(alpha: 0.45),
+                        color: _kDarkGreen.withValues(alpha: 0.42),
                       ),
                     ],
                   ),
@@ -62,11 +89,9 @@ class OnboardingPage extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
                     decoration: BoxDecoration(
-                      color: colorScheme.surface,
+                      color: const Color(0xFFEEF6EF),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: colorScheme.onSurface.withValues(alpha: 0.08),
-                      ),
+                      border: Border.all(color: const Color(0xFFD8E8DA)),
                     ),
                     child: Column(
                       children: [
@@ -76,14 +101,21 @@ class OnboardingPage extends StatelessWidget {
                               width: 58,
                               height: 58,
                               decoration: BoxDecoration(
-                                color: colorScheme.primary.withValues(alpha: 0.14),
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [_kDarkGreen, _kPrimaryGreen],
+                                ),
                                 borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _kPrimaryGreen.withValues(alpha: 0.28),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                              child: Icon(
-                                icon,
-                                size: 30,
-                                color: colorScheme.primary,
-                              ),
+                              child: Icon(icon, size: 30, color: Colors.white),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -91,11 +123,11 @@ class OnboardingPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Container(
-                                    width: 110,
+                                    width: 120,
                                     height: 9,
                                     decoration: BoxDecoration(
-                                      color: colorScheme.primary.withValues(
-                                        alpha: 0.25,
+                                      gradient: const LinearGradient(
+                                        colors: [_kDarkGreen, _kPrimaryGreen],
                                       ),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
@@ -105,9 +137,7 @@ class OnboardingPage extends StatelessWidget {
                                     width: double.infinity,
                                     height: 7,
                                     decoration: BoxDecoration(
-                                      color: colorScheme.onSurface.withValues(
-                                        alpha: 0.12,
-                                      ),
+                                      color: _kDarkGreen.withValues(alpha: 0.14),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                   ),
@@ -116,9 +146,7 @@ class OnboardingPage extends StatelessWidget {
                                     width: 140,
                                     height: 7,
                                     decoration: BoxDecoration(
-                                      color: colorScheme.onSurface.withValues(
-                                        alpha: 0.12,
-                                      ),
+                                      color: _kDarkGreen.withValues(alpha: 0.14),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                   ),
@@ -134,10 +162,18 @@ class OnboardingPage extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(
-                                  Icons.check_circle_rounded,
-                                  size: 18,
-                                  color: colorScheme.primary,
+                                Container(
+                                  width: 18,
+                                  height: 18,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _kPrimaryGreen,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_rounded,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -146,6 +182,7 @@ class OnboardingPage extends StatelessWidget {
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       height: 1.25,
+                                      color: const Color(0xFF273328),
                                     ),
                                   ),
                                 ),
@@ -166,6 +203,7 @@ class OnboardingPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w800,
+              color: const Color(0xFF152217),
             ),
           ),
           const SizedBox(height: 12),
@@ -174,8 +212,8 @@ class OnboardingPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
               height: 1.35,
-              color: colorScheme.onSurface.withValues(alpha: 0.72),
-              fontWeight: FontWeight.w400,
+              color: const Color(0xFF4C5E50),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
