@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const Color _kHomeBg = Color(0xFF2E7D32);
+
 class FarmBuzzHomeAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   const FarmBuzzHomeAppBar({super.key});
@@ -9,45 +11,54 @@ class FarmBuzzHomeAppBar extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return AppBar(
       elevation: 0,
       scrolledUnderElevation: 0,
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: _kHomeBg,
+      surfaceTintColor: Colors.transparent,
+      leadingWidth: 42,
       leading: IconButton(
         onPressed: () {},
-        icon: const Icon(Icons.menu_rounded),
+        icon: const Icon(Icons.menu_rounded, color: Colors.white),
+        padding: const EdgeInsets.only(left: 10, right: 4),
+        visualDensity: VisualDensity.compact,
         tooltip: 'Menu',
       ),
       centerTitle: false,
-      titleSpacing: 16,
-      title: Text(
-        'FarmBuzz',
-        style: theme.textTheme.headlineSmall?.copyWith(
-          color: colorScheme.primary,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -0.3,
+      titleSpacing: 4,
+      title: Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(9),
+        ),
+        child: SizedBox(
+          height: 22,
+          child: Image.asset(
+            'assets/images/Logo.png',
+            fit: BoxFit.contain,
+            alignment: Alignment.centerLeft,
+          ),
         ),
       ),
       actions: [
         const SizedBox(width: 2),
         IconButton(
           onPressed: () {},
-          icon: const Icon(Icons.notifications_outlined),
+          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
           tooltip: 'Notifications',
         ),
         const SizedBox(width: 2),
         IconButton(
           onPressed: () {},
-          icon: const Icon(Icons.chat_bubble_outline),
+          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
           tooltip: 'Messages',
         ),
         const SizedBox(width: 2),
         IconButton(
           onPressed: () {},
-          icon: const Icon(Icons.search),
+          icon: const Icon(Icons.search, color: Colors.white),
           tooltip: 'Search',
         ),
         const SizedBox(width: 8),

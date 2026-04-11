@@ -1,7 +1,10 @@
-﻿import 'package:app/app/navigation/app_routes.dart';
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
+
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kHomeBg = Color(0xFFF5F5F5);
 
 const _kComposerAvatarUrl =
     'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=300&q=80';
@@ -33,10 +36,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: _kHomeBg,
       appBar: const FarmBuzzHomeAppBar(),
       body: Column(
         children: [
@@ -199,11 +200,11 @@ class _CreateStoryCard extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: colorScheme.primary,
+                        color: _kPrimaryGreen,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 3),
                       ),
-                      child: Icon(Icons.add, color: colorScheme.onPrimary),
+                      child: const Icon(Icons.add, color: Colors.white),
                     ),
                   ),
                   const Padding(
@@ -261,7 +262,7 @@ class _StoryCard extends StatelessWidget {
               height: 30,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.primary, width: 2),
+                border: Border.all(color: _kPrimaryGreen, width: 2),
               ),
               child: CircleAvatar(backgroundImage: NetworkImage(avatarUrl)),
             ),
@@ -320,7 +321,7 @@ class _PostCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Container(
-      color: theme.scaffoldBackgroundColor,
+      color: _kHomeBg,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,7 +349,7 @@ class _PostCard extends StatelessWidget {
                             minimumSize: const Size(0, 28),
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            foregroundColor: colorScheme.primary,
+                            foregroundColor: _kPrimaryGreen,
                             textStyle: theme.textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
@@ -393,7 +394,7 @@ class _PostCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.thumb_up, color: colorScheme.primary, size: 16),
+              const Icon(Icons.thumb_up, color: _kPrimaryGreen, size: 16),
               const SizedBox(width: 4),
               Text(
                 likes,

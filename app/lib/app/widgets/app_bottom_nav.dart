@@ -1,6 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 enum AppBottomNavItem { home, explore, market, create, profile }
+
+const Color _kNavBg = Color(0xFFFFFFFF);
+const Color _kNavBorder = Color(0xFFE2E2E2);
+const Color _kNavActive = Color(0xFF2E7D32);
+const Color _kNavInactive = Color(0xFF6D6D6D);
 
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
@@ -14,16 +19,11 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final selectedColor = colorScheme.primary;
-    final inactiveColor = colorScheme.onSurface.withValues(alpha: 0.55);
-
     return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
+      decoration: const BoxDecoration(
+        color: _kNavBg,
         border: Border(
-          top: BorderSide(color: colorScheme.onSurface.withValues(alpha: 0.12)),
+          top: BorderSide(color: _kNavBorder),
         ),
       ),
       child: SafeArea(
@@ -33,9 +33,9 @@ class AppBottomNav extends StatelessWidget {
           onTap: (index) => onItemTap(_itemForIndex(index)),
           type: BottomNavigationBarType.fixed,
           elevation: 0,
-          backgroundColor: theme.cardColor,
-          selectedItemColor: selectedColor,
-          unselectedItemColor: inactiveColor,
+          backgroundColor: _kNavBg,
+          selectedItemColor: _kNavActive,
+          unselectedItemColor: _kNavInactive,
           selectedFontSize: 12,
           unselectedFontSize: 12,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
