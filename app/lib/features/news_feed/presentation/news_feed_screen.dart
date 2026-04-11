@@ -1,4 +1,4 @@
-﻿import 'package:app/app/navigation/app_routes.dart';
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';

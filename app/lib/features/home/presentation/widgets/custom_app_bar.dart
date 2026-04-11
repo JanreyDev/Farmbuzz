@@ -1,3 +1,4 @@
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
 
 const Color _kHomeBg = Color(0xFF2E7D32);
@@ -42,7 +43,8 @@ class FarmBuzzHomeAppBar extends StatelessWidget
             _HeaderActionIcon(
               icon: Icons.chat_bubble_outline,
               tooltip: 'Messages',
-              onPressed: () {},
+              onPressed: () =>
+                  Navigator.of(context).pushNamed(AppRoutes.messaging),
             ),
             Builder(
               builder: (context) => _HeaderActionIcon(

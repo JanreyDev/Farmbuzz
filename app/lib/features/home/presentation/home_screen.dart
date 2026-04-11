@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kHomeBgLight = Color(0xFFF5F5F5);
 const Color _kHomeBgDark = Color(0xFF1F1F1F);
+const double _kStoryCardWidth = 114;
+const double _kStoryCardGap = 8;
 
 const _kComposerAvatarUrl =
     'https://images.pexels.com/photos/18481431/pexels-photo-18481431.jpeg?auto=compress&cs=tinysrgb&w=300';
@@ -171,8 +173,8 @@ class _CreateStoryCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: 114,
-      margin: const EdgeInsets.only(right: 8),
+      width: _kStoryCardWidth,
+      margin: const EdgeInsets.only(right: _kStoryCardGap),
       child: Column(
         children: [
           Expanded(
@@ -185,6 +187,7 @@ class _CreateStoryCard extends StatelessWidget {
                 ),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                     child: ClipRRect(
@@ -244,8 +247,8 @@ class _StoryCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: 114,
-      margin: const EdgeInsets.only(right: 8),
+      width: _kStoryCardWidth,
+      margin: const EdgeInsets.only(right: _kStoryCardGap),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
@@ -341,12 +344,18 @@ class _PostCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          author,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
+                        Flexible(
+                          child: Text(
+                            author,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        const _BreederBadge(),
                         const SizedBox(width: 8),
                         TextButton(
                           onPressed: () {},
@@ -455,6 +464,30 @@ class _PostAction extends StatelessWidget {
   }
 }
 
+class _BreederBadge extends StatelessWidget {
+  const _BreederBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Breeder badge',
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: _kPrimaryGreen.withValues(alpha: 0.12),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.emoji_events_rounded,
+          size: 13,
+          color: _kPrimaryGreen,
+        ),
+      ),
+    );
+  }
+}
+
 class _Avatar extends StatelessWidget {
   const _Avatar({required this.size, required this.imageUrl});
 
@@ -544,5 +577,3 @@ class _BottomNavBar extends StatelessWidget {
     );
   }
 }
-
-

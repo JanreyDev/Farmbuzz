@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-const Color _kChatSurface = Color(0xFFE3E5E9);
-const Color _kOutgoingBubble = Color(0xFFC9993A);
-const Color _kIncomingBubble = Color(0xFFF7F7F7);
-const Color _kMutedText = Color(0xFF8A9098);
+const Color _kChatSurface = Color(0xFFF1F8F2);
+const Color _kOutgoingBubble = Color(0xFF2E7D32);
+const Color _kIncomingBubble = Color(0xFFE8F5E9);
+const Color _kMutedText = Color(0xFF7A8680);
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkText = Color(0xFF1F2A22);
 
 class MessagingScreen extends StatelessWidget {
   const MessagingScreen({super.key});
@@ -38,13 +40,13 @@ class _ChatHeader extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () => Navigator.of(context).maybePop(),
-            icon: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF2E3340)),
+            icon: const Icon(Icons.arrow_back, size: 20, color: _kDarkText),
           ),
           Container(
             width: 30,
             height: 30,
             decoration: const BoxDecoration(
-              color: Color(0xFFF4EACE),
+              color: _kIncomingBubble,
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
@@ -53,7 +55,7 @@ class _ChatHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFFA57913),
+                color: _kPrimaryGreen,
               ),
             ),
           ),
@@ -67,16 +69,16 @@ class _ChatHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2230),
+                  color: _kDarkText,
                 ),
               ),
               Row(
                 children: [
-                  Icon(Icons.circle, size: 6, color: Color(0xFF56BD6B)),
+                  Icon(Icons.circle, size: 6, color: _kPrimaryGreen),
                   SizedBox(width: 3),
                   Text(
                     'Online',
-                    style: TextStyle(fontSize: 10, color: Color(0xFF56BD6B)),
+                    style: TextStyle(fontSize: 10, color: _kPrimaryGreen),
                   ),
                 ],
               ),
@@ -85,7 +87,7 @@ class _ChatHeader extends StatelessWidget {
           const Spacer(),
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.call_outlined, size: 18, color: Color(0xFFB68512)),
+            icon: const Icon(Icons.call_outlined, size: 18, color: _kPrimaryGreen),
           ),
           IconButton(
             onPressed: () {},
@@ -117,7 +119,7 @@ class _ChatBody extends StatelessWidget {
       ),
       _Message(text: 'Solid! Magkano per head?', time: '10:36 AM'),
       _Message(
-        text: '₱8,500 each. Bulk discount if you take all 3 - ₱22,000',
+        text: '\u20B18,500 each. Bulk discount if you take all 3 - \u20B122,000',
         time: '10:38 AM',
         isMine: true,
       ),
@@ -152,7 +154,7 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bubbleColor = message.isMine ? _kOutgoingBubble : _kIncomingBubble;
-    final textColor = message.isMine ? Colors.white : const Color(0xFF2E3340);
+    final textColor = message.isMine ? Colors.white : _kDarkText;
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(12),
       topRight: const Radius.circular(12),
@@ -208,14 +210,14 @@ class _Composer extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.add, color: Color(0xFFB68512), size: 20),
+            icon: const Icon(Icons.add, color: _kPrimaryGreen, size: 20),
           ),
           Expanded(
             child: Container(
               height: 36,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0F2F5),
+                color: _kIncomingBubble,
                 borderRadius: BorderRadius.circular(18),
               ),
               alignment: Alignment.centerLeft,
@@ -233,7 +235,7 @@ class _Composer extends StatelessWidget {
             width: 30,
             height: 30,
             decoration: const BoxDecoration(
-              color: Color(0xFFB68512),
+              color: _kPrimaryGreen,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.send, size: 15, color: Colors.white),
