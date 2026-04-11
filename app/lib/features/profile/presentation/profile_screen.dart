@@ -21,6 +21,16 @@ const String _kProfileCoverUrl =
     'https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?auto=format&fit=crop&w=1200&q=80';
 const String _kProfileAvatarUrl =
     'https://randomuser.me/api/portraits/men/32.jpg';
+const _kPostGalleryImages = [
+  'https://images.pexels.com/photos/15235677/pexels-photo-15235677.jpeg?auto=compress&cs=tinysrgb&w=900',
+  'https://images.pexels.com/photos/13293244/pexels-photo-13293244.jpeg?auto=compress&cs=tinysrgb&w=900',
+  'https://images.pexels.com/photos/18846336/pexels-photo-18846336.jpeg?auto=compress&cs=tinysrgb&w=900',
+];
+const _kBirdGalleryImages = [
+  'https://images.pexels.com/photos/13607889/pexels-photo-13607889.jpeg?auto=compress&cs=tinysrgb&w=900',
+  'https://images.pexels.com/photos/19198208/pexels-photo-19198208.jpeg?auto=compress&cs=tinysrgb&w=900',
+  'https://images.pexels.com/photos/13632433/pexels-photo-13632433.jpeg?auto=compress&cs=tinysrgb&w=900',
+];
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -48,6 +58,8 @@ class ProfileScreen extends StatelessWidget {
                   const _ProfileBody(),
                   const _InsetBar(),
                   const _AchievementsSection(),
+                  const _InsetBar(),
+                  const _GalleryTabsSection(),
                   const _InsetBar(),
                   const _FarmManagementSection(),
                   const _InsetBar(),
@@ -232,7 +244,7 @@ class _ProfileBody extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '3rd generation breeder. Champions since 1998. Pure Kelso\nand Sweater lines.',
+            '🐔 3rd generation breeder. Champions since 1998. Pure Kelso\nand Sweater lines.',
             style: TextStyle(
               fontSize: 11.5,
               color: isDark ? _kProfileMutedDark : const Color(0xFF666C75),
@@ -261,8 +273,41 @@ class _ProfileBody extends StatelessWidget {
               _StatItem(value: '489', label: 'Posts'),
               _StatItem(value: '2,847', label: 'Followers'),
               _StatItem(value: '312', label: 'Following'),
-              _StatItem(value: '79%', label: 'Win Rate'),
+              _StatItem(value: '79', label: 'Win Rate (%)'),
             ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            decoration: BoxDecoration(
+              color: isDark ? _kProfileCardDark : _kSoftGreen,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isDark ? _kProfileBorderDark : _kSoftGreenBorder,
+              ),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _InfoPill(
+                  icon: Icons.auto_awesome_outlined,
+                  text: 'Level 12 Breeder',
+                  darkMode: isDark,
+                ),
+                _InfoPill(
+                  icon: Icons.bolt_outlined,
+                  text: 'XP: 2,450',
+                  darkMode: isDark,
+                ),
+                _InfoPill(
+                  icon: Icons.emoji_events_outlined,
+                  text: '#23 in Pampanga',
+                  darkMode: isDark,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           Divider(
@@ -326,12 +371,21 @@ class _AchievementsSection extends StatelessWidget {
                   color: isDark ? Colors.white : _kDarkGreen,
                 ),
               ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {},
+                style: TextButton.styleFrom(
+                  foregroundColor: _kPrimaryGreen,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                child: const Text('View All'),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           LayoutBuilder(
             builder: (context, constraints) {
-              const spacing = 8.0;
+              const spacing = 10.0;
               const visibleCards = 2.5;
               final cardWidth =
                   (constraints.maxWidth - (spacing * (visibleCards - 1))) /
@@ -341,6 +395,8 @@ class _AchievementsSection extends StatelessWidget {
                 height: 92,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(right: _kProfileInset),
                   itemCount: achievements.length,
                   separatorBuilder: (_, index) =>
                       const SizedBox(width: spacing),
@@ -404,6 +460,178 @@ class _AchievementCard extends StatelessWidget {
   }
 }
 
+class _InfoPill extends StatelessWidget {
+  const _InfoPill({
+    required this.icon,
+    required this.text,
+    required this.darkMode,
+  });
+
+  final IconData icon;
+  final String text;
+  final bool darkMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: darkMode ? const Color(0xFF1F3B22) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: darkMode ? _kProfileBorderDark : _kSoftGreenBorder,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: _kPrimaryGreen),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: darkMode ? Colors.white : const Color(0xFF1F2230),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GalleryTabsSection extends StatefulWidget {
+  const _GalleryTabsSection();
+
+  @override
+  State<_GalleryTabsSection> createState() => _GalleryTabsSectionState();
+}
+
+class _GalleryTabsSectionState extends State<_GalleryTabsSection>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? _kProfileCardDark : _kSoftGreen;
+    final borderColor = isDark ? _kProfileBorderDark : _kSoftGreenBorder;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_kProfileInset, 10, _kProfileInset, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Gallery',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: isDark ? Colors.white : _kDarkGreen,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TabBar(
+            controller: _tabController,
+            labelColor: _kPrimaryGreen,
+            unselectedLabelColor: isDark ? _kProfileMutedDark : _kProfileMuted,
+            indicatorColor: _kPrimaryGreen,
+            tabs: const [
+              Tab(text: 'Posts'),
+              Tab(text: 'Birds'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 148,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _kPostGalleryImages.length,
+                  separatorBuilder: (_, index) => const SizedBox(width: 8),
+                  itemBuilder: (_, index) => _GalleryCard(
+                    color: cardColor,
+                    borderColor: borderColor,
+                    imageUrl: _kPostGalleryImages[index],
+                  ),
+                ),
+                ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _kBirdGalleryImages.length,
+                  separatorBuilder: (_, index) => const SizedBox(width: 8),
+                  itemBuilder: (_, index) => _GalleryCard(
+                    color: cardColor,
+                    borderColor: borderColor,
+                    imageUrl: _kBirdGalleryImages[index],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GalleryCard extends StatelessWidget {
+  const _GalleryCard({
+    required this.color,
+    required this.borderColor,
+    required this.imageUrl,
+  });
+
+  final Color color;
+  final Color borderColor;
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      width: 180,
+      height: 140,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Container(
+          color: isDark ? const Color(0xFF1F3B22) : const Color(0xFFDCEFD8),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.image_outlined,
+            color: _kPrimaryGreen,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _FarmManagementSection extends StatelessWidget {
   const _FarmManagementSection();
 
@@ -423,7 +651,7 @@ class _FarmManagementSection extends StatelessWidget {
       ),
       _FarmManagementItem(
         title: 'Bloodline Registry',
-        subtitle: 'Track pairings, hatch history, and lines',
+        subtitle: 'Track pairings and bloodline history',
         icon: Icons.account_tree_outlined,
         route: AppRoutes.bloodlineRegistry,
       ),
