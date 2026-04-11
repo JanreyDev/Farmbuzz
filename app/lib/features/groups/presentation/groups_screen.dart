@@ -1,13 +1,19 @@
 import 'package:app/app/navigation/app_routes.dart';
-import 'package:app/app/theme/app_theme.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:app/app/widgets/app_drawer.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
 const double _kGroupsInset = 14;
-const Color _kGroupsBg = Color(0xFFF1F1F1);
-const Color _kGroupsCardBg = Color(0xFFF8F8F8);
+const Color _kGroupsBg = Color(0xFFF5F5F5);
+const Color _kGroupsCardBg = Color(0xFFE8F5E9);
+const Color _kGroupsBgDark = Color(0xFF1F1F1F);
+const Color _kGroupsCardDark = Color(0xFF242628);
+const Color _kGroupsBorderDark = Color(0xFF35383D);
+const Color _kGroupsMutedDark = Color(0xFFB0B8B2);
+const Color _kPrimaryGreen = Color(0xFF2E7D32);
+const Color _kDarkGreen = Color(0xFF1B5E20);
+const Color _kLightGreen = Color(0xFF66BB6A);
 
 class GroupsScreen extends StatelessWidget {
   const GroupsScreen({super.key});
@@ -15,6 +21,8 @@ class GroupsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final screenBg = isDark ? _kGroupsBgDark : _kGroupsBg;
 
     const groups = [
       _GroupData(
@@ -25,7 +33,7 @@ class GroupsScreen extends StatelessWidget {
         lastSeen: '2m ago',
         tag: 'BLOODLINE',
         icon: Icons.emoji_events_outlined,
-        headerColor: Color(0xFFF0EDE4),
+        headerColor: Color(0xFFDCEFD8),
       ),
       _GroupData(
         title: 'Pampanga Sabongeros',
@@ -35,7 +43,7 @@ class GroupsScreen extends StatelessWidget {
         lastSeen: '15m ago',
         tag: 'REGIONAL',
         icon: Icons.location_on_outlined,
-        headerColor: Color(0xFFEAF1EC),
+        headerColor: Color(0xFFE2F4E3),
       ),
       _GroupData(
         title: 'Conditioning Science PH',
@@ -45,18 +53,19 @@ class GroupsScreen extends StatelessWidget {
         lastSeen: '5m ago',
         tag: 'GENERAL',
         icon: Icons.groups_2_outlined,
-        headerColor: Color(0xFFF3EAE4),
+        headerColor: Color(0xFFD6EFD8),
       ),
     ];
 
     return Scaffold(
-      backgroundColor: _kGroupsBg,
+      backgroundColor: screenBg,
       appBar: const FarmBuzzHomeAppBar(),
       drawer: const FarmBuzzAppDrawer(),
       body: SafeArea(
         top: false,
+        bottom: false,
         child: ColoredBox(
-          color: _kGroupsBg,
+          color: screenBg,
           child: Column(
             children: [
               Expanded(
@@ -68,13 +77,13 @@ class GroupsScreen extends StatelessWidget {
                     const SizedBox(height: 18),
                     const _FilterChips(),
                     const SizedBox(height: 40),
-                    const Text(
+                    Text(
                       'My Groups',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF1F2230),
-                      height: 1,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : _kDarkGreen,
+                        height: 1,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -85,12 +94,12 @@ class GroupsScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                  const Text(
+                    Text(
                     'Discover Groups',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF1F2230),
+                      color: isDark ? Colors.white : _kDarkGreen,
                       height: 1,
                       ),
                     ),
@@ -98,7 +107,7 @@ class GroupsScreen extends StatelessWidget {
                 ),
               ),
               Theme(
-                data: theme.copyWith(cardColor: _kGroupsBg),
+                data: theme.copyWith(cardColor: screenBg),
                 child: AppBottomNav(
                   activeItem: AppBottomNavItem.create,
                   onItemTap: (item) => _handleNav(context, item),
@@ -129,22 +138,33 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 38,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F2F5),
+        color: isDark ? const Color(0xFF1C1F22) : const Color(0xFFEFF8F0),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E6EB)),
+        border: Border.all(
+          color: isDark ? _kGroupsBorderDark : const Color(0xFFCFE4D1),
+        ),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.search, size: 18, color: Color(0xFF9097A0)),
-          SizedBox(width: 8),
+          Icon(
+            Icons.search,
+            size: 18,
+            color: isDark ? _kGroupsMutedDark : _kPrimaryGreen,
+          ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Search groups...',
-              style: TextStyle(fontSize: 13, color: Color(0xFF9097A0)),
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? _kGroupsMutedDark : const Color(0xFF5F7962),
+              ),
             ),
           ),
         ],
@@ -158,6 +178,7 @@ class _FilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     const chips = ['All', 'Bloodline', 'Regional', 'Cockpit', 'General'];
     return SizedBox(
       height: 32,
@@ -171,17 +192,23 @@ class _FilterChips extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? const Color(0xFFF7EFD7) : const Color(0xFFE7EAEE),
+              color: selected
+                  ? (isDark ? const Color(0xFF1F3B22) : const Color(0xFFE8F5E9))
+                  : (isDark ? _kGroupsCardDark : const Color(0xFFDCEFD8)),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: selected ? kGoldAccent : const Color(0xFFDEE2E8),
+                color: selected
+                    ? _kPrimaryGreen
+                    : (isDark ? _kGroupsBorderDark : const Color(0xFFBFDABD)),
               ),
             ),
             child: Text(
               chips[index],
               style: TextStyle(
                 fontSize: 11,
-                color: selected ? const Color(0xFFA67913) : const Color(0xFF6F7680),
+                color: selected
+                    ? (isDark ? _kLightGreen : _kDarkGreen)
+                    : (isDark ? _kGroupsMutedDark : const Color(0xFF5A6F5D)),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -199,11 +226,18 @@ class _GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? _kGroupsCardDark : _kGroupsCardBg;
+    final borderColor = isDark ? _kGroupsBorderDark : const Color(0xFFCFE4D1);
+    final headerBg = isDark
+        ? Color.alphaBlend(data.headerColor.withValues(alpha: 0.18), _kGroupsCardDark)
+        : data.headerColor;
+
     return Container(
       decoration: BoxDecoration(
-        color: _kGroupsCardBg,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDE2E8)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,14 +245,18 @@ class _GroupCard extends StatelessWidget {
           Container(
             height: 42,
             decoration: BoxDecoration(
-              color: data.headerColor,
+              color: headerBg,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
             ),
             alignment: Alignment.center,
-            child: Icon(data.icon, size: 18, color: const Color(0xFFB68512)),
+            child: Icon(
+              data.icon,
+              size: 18,
+              color: isDark ? _kLightGreen : _kPrimaryGreen,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
@@ -227,49 +265,63 @@ class _GroupCard extends StatelessWidget {
               children: [
                 Text(
                   data.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F2230),
+                    color: isDark ? Colors.white : _kDarkGreen,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   data.subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF6E7480),
+                    color: isDark ? _kGroupsMutedDark : const Color(0xFF5D7261),
                     height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.groups_2_outlined, size: 12, color: Color(0xFF8A9098)),
+                    Icon(
+                      Icons.groups_2_outlined,
+                      size: 12,
+                      color: isDark ? _kGroupsMutedDark : const Color(0xFF6E8472),
+                    ),
                     const SizedBox(width: 2),
                     Text(
                       data.members,
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF8A9098)),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark ? _kGroupsMutedDark : const Color(0xFF6E8472),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.watch_later_outlined, size: 12, color: Color(0xFF8A9098)),
+                    Icon(
+                      Icons.watch_later_outlined,
+                      size: 12,
+                      color: isDark ? _kGroupsMutedDark : const Color(0xFF6E8472),
+                    ),
                     const SizedBox(width: 2),
                     Text(
                       data.lastSeen,
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF8A9098)),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark ? _kGroupsMutedDark : const Color(0xFF6E8472),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE7EAEE),
+                        color: isDark ? const Color(0xFF1F3B22) : const Color(0xFFDDEFD9),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         data.tag,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
-                          color: Color(0xFF6F7680),
+                          color: isDark ? _kLightGreen : _kDarkGreen,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -282,14 +334,14 @@ class _GroupCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDDF3DE),
+                        color: isDark ? const Color(0xFF214327) : const Color(0xFFCFECCF),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         'JOINED',
                         style: TextStyle(
                           fontSize: 10,
-                          color: Color(0xFF4E9A5C),
+                          color: isDark ? _kLightGreen : _kDarkGreen,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -298,14 +350,19 @@ class _GroupCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8EFCF),
+                        color: isDark ? const Color(0xFF1F3B22) : const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDark
+                              ? _kGroupsBorderDark
+                              : const Color(0xFFBFDABD),
+                        ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'View Group',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFFAA7E14),
+                          color: isDark ? _kLightGreen : _kPrimaryGreen,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
