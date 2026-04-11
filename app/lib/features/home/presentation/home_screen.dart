@@ -1,6 +1,7 @@
 import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:app/app/widgets/app_drawer.dart';
+import 'package:app/features/home/presentation/story_viewer_screen.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -106,6 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _StoriesStrip(
                   stories: _stories,
                   onCreateStoryTap: _openCreateStory,
+                  onStoryTap: _openStoryViewer,
                 ),
                 const SizedBox(height: 10),
                 const _SectionDivider(),
@@ -169,6 +171,30 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       });
+  }
+
+  void _openStoryViewer(int index) {
+    if (_stories.isEmpty) {
+      return;
+    }
+    final safeIndex = index.clamp(0, _stories.length - 1);
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (_) => StoryViewerScreen(
+          stories: _stories
+              .map(
+                (s) => StoryItem(
+                  imageUrl: s.imageUrl,
+                  username: s.name,
+                  avatarUrl: s.avatarUrl,
+                  timestamp: '2h ago',
+                ),
+              )
+              .toList(),
+          initialIndex: safeIndex,
+        ),
+      ),
+    );
   }
 
   List<Widget> _buildPostFeed() {
@@ -301,10 +327,12 @@ class _StoriesStrip extends StatelessWidget {
   const _StoriesStrip({
     required this.stories,
     required this.onCreateStoryTap,
+    required this.onStoryTap,
   });
 
   final List<_HomeStoryData> stories;
   final VoidCallback onCreateStoryTap;
+  final ValueChanged<int> onStoryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -315,11 +343,12 @@ class _StoriesStrip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           _CreateStoryCard(onTap: onCreateStoryTap),
-          ...stories.map(
-            (story) => _StoryCard(
-              name: story.name,
-              imageUrl: story.imageUrl,
-              avatarUrl: story.avatarUrl,
+          ...stories.asMap().entries.map(
+            (entry) => _StoryCard(
+              onTap: () => onStoryTap(entry.key),
+              name: entry.value.name,
+              imageUrl: entry.value.imageUrl,
+              avatarUrl: entry.value.avatarUrl,
             ),
           ),
         ],
@@ -403,11 +432,13 @@ class _CreateStoryCard extends StatelessWidget {
 
 class _StoryCard extends StatelessWidget {
   const _StoryCard({
+    required this.onTap,
     required this.name,
     required this.imageUrl,
     required this.avatarUrl,
   });
 
+  final VoidCallback onTap;
   final String name;
   final String imageUrl;
   final String avatarUrl;
@@ -416,59 +447,63 @@ class _StoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      width: _kStoryCardWidth,
-      margin: const EdgeInsets.only(right: _kStoryCardGap),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.onSurface.withValues(alpha: 0.12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: _kStoryCardWidth,
+        margin: const EdgeInsets.only(right: _kStoryCardGap),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: colorScheme.onSurface.withValues(alpha: 0.12),
+          ),
         ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _NetworkFeedImage(imageUrl: imageUrl, fit: BoxFit.cover),
-          Positioned(
-            top: 8,
-            left: 8,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: _kPrimaryGreen, width: 2),
-              ),
-              child: CircleAvatar(backgroundImage: NetworkImage(avatarUrl)),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black54],
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _NetworkFeedImage(imageUrl: imageUrl, fit: BoxFit.cover),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _kPrimaryGreen, width: 2),
                 ),
-              ),
-              child: Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+                child: CircleAvatar(backgroundImage: NetworkImage(avatarUrl)),
               ),
             ),
-          ),
-        ],
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black54],
+                  ),
+                ),
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -500,6 +535,7 @@ class _PostCard extends StatefulWidget {
 
 class _PostCardState extends State<_PostCard> {
   late bool _isLiked;
+  bool _isFollowing = false;
   late int _likeCount;
   late List<String> _comments;
 
@@ -560,17 +596,22 @@ class _PostCardState extends State<_PostCard> {
                           const _BreederBadge(),
                           const SizedBox(width: 8),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: _toggleFollow,
                             style: TextButton.styleFrom(
                               minimumSize: const Size(0, 28),
                               padding: const EdgeInsets.symmetric(horizontal: 10),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              foregroundColor: _kPrimaryGreen,
+                              foregroundColor: _isFollowing
+                                  ? colorScheme.onSurface.withValues(alpha: 0.75)
+                                  : _kPrimaryGreen,
+                              backgroundColor: _isFollowing
+                                  ? colorScheme.onSurface.withValues(alpha: 0.10)
+                                  : _kPrimaryGreen.withValues(alpha: 0.12),
                               textStyle: theme.textTheme.labelMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            child: const Text('Follow'),
+                            child: Text(_isFollowing ? 'Following' : 'Follow'),
                           ),
                         ],
                       ),
@@ -684,6 +725,10 @@ class _PostCardState extends State<_PostCard> {
       _isLiked = !_isLiked;
       _likeCount += _isLiked ? 1 : -1;
     });
+  }
+
+  void _toggleFollow() {
+    setState(() => _isFollowing = !_isFollowing);
   }
 
   Future<void> _openComments() async {
@@ -862,7 +907,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 itemCount: _visibleComments.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                separatorBuilder: (_, _) => const SizedBox(height: 8),
                 itemBuilder: (_, index) {
                   final parsed = _CommentData.fromRaw(_visibleComments[index]);
                   return _CommentTile(
