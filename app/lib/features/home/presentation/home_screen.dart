@@ -62,6 +62,26 @@ class _HomeScreenState extends State<HomeScreen> {
       avatarUrl: _kStoryAvatarGoldenHatch,
     ),
   ];
+  final List<_HomePostData> _posts = <_HomePostData>[
+    const _HomePostData(
+      author: 'Black Warrior Farm',
+      timeAgo: '1h',
+      text:
+          'Morning update: Black Warrior hit target weight today. Ready for conditioning this weekend.',
+      likes: '47',
+      imageUrl: _kPostImageOne,
+      avatarUrl: _kPostAvatarOne,
+    ),
+    const _HomePostData(
+      author: 'Golden Hatch Breeders',
+      timeAgo: '3h',
+      text:
+          'Brooder check complete. Vaccination done for 12 chicks and feed schedule updated.',
+      likes: '91',
+      imageUrl: _kPostImageTwo,
+      avatarUrl: _kPostAvatarTwo,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.only(bottom: 10),
               children: [
                 const SizedBox(height: 10),
-                const _ComposerRow(),
+                _ComposerRow(onTapCreatePost: _openCreatePost),
                 const SizedBox(height: 10),
                 _StoriesStrip(
                   stories: _stories,
@@ -88,25 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10),
                 const _SectionDivider(),
                 const SizedBox(height: 8),
-                _PostCard(
-                  author: 'Black Warrior Farm',
-                  timeAgo: '1h',
-                  text:
-                      'Morning update: Black Warrior hit target weight today. Ready for conditioning this weekend.',
-                  likes: '47',
-                  imageUrl: _kPostImageOne,
-                  avatarUrl: _kPostAvatarOne,
-                ),
-                const _SectionDivider(),
-                _PostCard(
-                  author: 'Golden Hatch Breeders',
-                  timeAgo: '3h',
-                  text:
-                      'Brooder check complete. Vaccination done for 12 chicks and feed schedule updated.',
-                  likes: '91',
-                  imageUrl: _kPostImageTwo,
-                  avatarUrl: _kPostAvatarTwo,
-                ),
+                ..._buildPostFeed(),
               ],
             ),
           ),
@@ -138,6 +140,54 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     });
   }
+
+  Future<void> _openCreatePost() async {
+    final result = await Navigator.of(context).pushNamed(AppRoutes.createPost);
+    if (!mounted || result is! Map<String, dynamic>) {
+      return;
+    }
+
+    final text = (result['text'] as String? ?? '').trim();
+    final imageUrl = result['imageUrl'] as String?;
+    if (text.isEmpty && (imageUrl == null || imageUrl.isEmpty)) {
+      return;
+    }
+
+    setState(() {
+      _posts.insert(
+        0,
+        _HomePostData(
+          author: 'Ricardo Santos',
+          timeAgo: 'Just now',
+          text: text,
+          likes: '0',
+          imageUrl: imageUrl,
+          avatarUrl: _kComposerAvatarUrl,
+        ),
+      );
+    });
+  }
+
+  List<Widget> _buildPostFeed() {
+    final widgets = <Widget>[];
+    for (var i = 0; i < _posts.length; i++) {
+      final post = _posts[i];
+      widgets.add(
+        _PostCard(
+          author: post.author,
+          timeAgo: post.timeAgo,
+          text: post.text,
+          likes: post.likes,
+          imageUrl: post.imageUrl,
+          avatarUrl: post.avatarUrl,
+        ),
+      );
+      if (i != _posts.length - 1) {
+        widgets.add(const _SectionDivider());
+      }
+    }
+    return widgets;
+  }
 }
 
 class _HomeStoryData {
@@ -164,8 +214,28 @@ class _HomeStoryData {
   }
 }
 
+class _HomePostData {
+  const _HomePostData({
+    required this.author,
+    required this.timeAgo,
+    required this.text,
+    required this.likes,
+    required this.avatarUrl,
+    this.imageUrl,
+  });
+
+  final String author;
+  final String timeAgo;
+  final String text;
+  final String likes;
+  final String? imageUrl;
+  final String avatarUrl;
+}
+
 class _ComposerRow extends StatelessWidget {
-  const _ComposerRow();
+  const _ComposerRow({required this.onTapCreatePost});
+
+  final VoidCallback onTapCreatePost;
 
   @override
   Widget build(BuildContext context) {
@@ -179,29 +249,40 @@ class _ComposerRow extends StatelessWidget {
           const _Avatar(size: 42, imageUrl: _kComposerAvatarUrl),
           const SizedBox(width: 10),
           Expanded(
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: isDark ? _kHomeCardDark : _kHomeCardLight,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: colorScheme.onSurface.withValues(alpha: 0.18),
+            child: InkWell(
+              onTap: onTapCreatePost,
+              borderRadius: BorderRadius.circular(22),
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? _kHomeCardDark : _kHomeCardLight,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: colorScheme.onSurface.withValues(alpha: 0.18),
+                  ),
                 ),
-              ),
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'What\'s happening on your farm?',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.66),
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'What\'s happening on your farm?',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.66),
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 8),
-          Icon(
-            Icons.image_outlined,
-            color: colorScheme.onSurface.withValues(alpha: 0.65),
+          InkWell(
+            onTap: onTapCreatePost,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: Icon(
+                Icons.image_outlined,
+                color: colorScheme.onSurface.withValues(alpha: 0.65),
+              ),
+            ),
           ),
         ],
       ),
@@ -392,15 +473,15 @@ class _PostCard extends StatelessWidget {
     required this.timeAgo,
     required this.text,
     required this.likes,
-    required this.imageUrl,
     required this.avatarUrl,
+    this.imageUrl,
   });
 
   final String author;
   final String timeAgo;
   final String text;
   final String likes;
-  final String imageUrl;
+  final String? imageUrl;
   final String avatarUrl;
 
   @override
@@ -497,11 +578,13 @@ class _PostCard extends StatelessWidget {
                     : colorScheme.onSurface.withValues(alpha: 0.92),
               ),
             ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: _NetworkFeedImage(imageUrl: imageUrl, fit: BoxFit.cover),
-            ),
+            if (imageUrl != null) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: _NetworkFeedImage(imageUrl: imageUrl!, fit: BoxFit.cover),
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [

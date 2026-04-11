@@ -40,54 +40,91 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (AiGlobalFab.isVisible.value) {
+      AiGlobalFab.isVisible.value = false;
+    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final titleColor = isDark ? Colors.white : const Color(0xFF1F2230);
+    final dockBg = isDark
+        ? const Color(0xB3000000)
+        : Colors.white.withValues(alpha: 0.96);
+    final inputBg = isDark
+        ? Colors.white.withValues(alpha: 0.14)
+        : const Color(0xFFF0F2F5);
+    final inputHint = isDark ? Colors.white70 : const Color(0xFF8A9098);
+    final bodyOverlayTop = isDark
+        ? const Color(0x99000000)
+        : const Color(0x80FFFFFF);
+    final bodyOverlayBottom = isDark
+        ? const Color(0xC2000000)
+        : const Color(0x00FFFFFF);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDark ? Colors.black : Colors.white,
       body: Stack(
         fit: StackFit.expand,
         children: [
           GestureDetector(
             onTap: _openGalleryPicker,
             child: _selectedImageUrl == null
-                ? const DecoratedBox(
+                ? DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
                         center: Alignment(0, -0.28),
                         radius: 1.05,
-                        colors: [Color(0xFF1B1B1B), Colors.black],
+                        colors: isDark
+                            ? const [Color(0xFF1B1B1B), Colors.black]
+                            : const [Color(0xFFF8F9FB), Color(0xFFEFF1F5)],
                       ),
                     ),
-                    child: SizedBox.expand(),
+                    child: const SizedBox.expand(),
                   )
                 : Image.network(_selectedImageUrl!, fit: BoxFit.cover),
           ),
-          const DecoratedBox(
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0x99000000), Colors.transparent, Color(0xC2000000)],
-                stops: [0, 0.36, 1],
+                colors: [bodyOverlayTop, Colors.transparent, bodyOverlayBottom],
+                stops: const [0, 0.36, 1],
               ),
             ),
           ),
           if (_selectedImageUrl == null)
-            const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add_photo_alternate_outlined, size: 52, color: Colors.white70),
-                  SizedBox(height: 10),
-                  Text(
-                    'Tap to add photo',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 27,
-                      fontWeight: FontWeight.w800,
+            Center(
+              child: GestureDetector(
+                onTap: _openGalleryPicker,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 74,
+                      height: 74,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.06),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.add_photo_alternate_outlined,
+                        size: 36,
+                        color: isDark ? Colors.white : const Color(0xFF5D6672),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tap to add photo',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1F2230),
+                        fontSize: 23,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           Positioned(
@@ -96,26 +133,31 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 6, 8, 0),
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
                 child: Row(
                   children: [
                     _TopBarIcon(
                       icon: Icons.arrow_back,
                       onTap: () => Navigator.of(context).maybePop(),
+                      color: titleColor,
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Center(
                         child: Text(
                           'Story',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
+                            color: titleColor,
+                            fontSize: 21,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
                     ),
-                    _TopBarIcon(icon: Icons.settings_outlined, onTap: () {}),
+                    _TopBarIcon(
+                      icon: Icons.settings_outlined,
+                      onTap: () {},
+                      color: titleColor,
+                    ),
                   ],
                 ),
               ),
@@ -127,41 +169,58 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
             bottom: 0,
             child: Container(
               padding: EdgeInsets.fromLTRB(14, 12, 14, 14 + bottomInset),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xB3000000)],
-                ),
+              decoration: BoxDecoration(
+                color: dockBg,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
+                      color: inputBg,
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? Colors.white24 : const Color(0xFFE2E6EB),
+                      ),
                     ),
                     child: TextField(
                       controller: _captionController,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                      cursorColor: Colors.white,
-                      decoration: const InputDecoration(
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1F2230),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      cursorColor: isDark ? Colors.white : const Color(0xFF1F2230),
+                      decoration: InputDecoration(
                         hintText: 'Add a caption...',
-                        hintStyle: TextStyle(color: Colors.white70),
+                        hintStyle: TextStyle(color: inputHint),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      _StoryIconAction(icon: Icons.photo_camera_outlined, onTap: _openCameraPicker),
+                      _StoryIconAction(
+                        icon: Icons.photo_camera_outlined,
+                        onTap: _openCameraPicker,
+                        darkMode: isDark,
+                      ),
                       const SizedBox(width: 8),
-                      _StoryIconAction(icon: Icons.photo_library_outlined, onTap: _openGalleryPicker),
+                      _StoryIconAction(
+                        icon: Icons.photo_library_outlined,
+                        onTap: _openGalleryPicker,
+                        darkMode: isDark,
+                      ),
                       const SizedBox(width: 8),
-                      _StoryIconAction(icon: Icons.emoji_emotions_outlined, onTap: _insertEmoji),
+                      _StoryIconAction(
+                        icon: Icons.emoji_emotions_outlined,
+                        onTap: _insertEmoji,
+                        darkMode: isDark,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
@@ -262,31 +321,41 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 }
 
 class _TopBarIcon extends StatelessWidget {
-  const _TopBarIcon({required this.icon, required this.onTap});
+  const _TopBarIcon({
+    required this.icon,
+    required this.onTap,
+    required this.color,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
       onPressed: onTap,
-      icon: Icon(icon, color: Colors.white, size: 24),
+      icon: Icon(icon, color: color, size: 22),
       splashRadius: 22,
     );
   }
 }
 
 class _StoryIconAction extends StatelessWidget {
-  const _StoryIconAction({required this.icon, required this.onTap});
+  const _StoryIconAction({
+    required this.icon,
+    required this.onTap,
+    required this.darkMode,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
+  final bool darkMode;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.18),
+      color: darkMode ? Colors.white.withValues(alpha: 0.18) : const Color(0xFFF0F2F5),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -294,7 +363,11 @@ class _StoryIconAction extends StatelessWidget {
         child: SizedBox(
           width: 38,
           height: 38,
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(
+            icon,
+            color: darkMode ? Colors.white : const Color(0xFF1F2230),
+            size: 20,
+          ),
         ),
       ),
     );

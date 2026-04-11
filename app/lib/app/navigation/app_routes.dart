@@ -13,6 +13,7 @@ class AppRoutes {
   static const profile = '/profile';
   static const messaging = '/messaging';
   static const createStory = '/create-story';
+  static const createPost = '/create-post';
   static const groups = '/groups';
   static const cockpitDirectory = '/cockpit-directory';
   static const learnHub = '/learn-hub';

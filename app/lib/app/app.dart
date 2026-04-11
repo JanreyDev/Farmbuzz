@@ -3,6 +3,7 @@ import 'package:app/app/theme/theme_mode_controller.dart';
 import 'package:app/features/auth/presentation/login_screen.dart';
 import 'package:app/features/auth/presentation/signup_screen.dart';
 import 'package:app/features/explore/presentation/explore_screen.dart';
+import 'package:app/features/home/presentation/create_post_screen.dart';
 import 'package:app/features/home/presentation/home_screen.dart';
 import 'package:app/features/home/presentation/create_story_screen.dart';
 import 'package:app/features/marketplace/presentation/marketplace_screen.dart';
@@ -74,6 +75,7 @@ class _FarmBuzzAppState extends State<FarmBuzzApp> {
           AppRoutes.onboarding: (_) => const OnboardingScreen(),
           AppRoutes.home: (_) => const HomeScreen(),
           AppRoutes.createStory: (_) => const CreateStoryScreen(),
+          AppRoutes.createPost: (_) => const CreatePostScreen(),
           AppRoutes.login: (_) => const LoginScreen(),
           AppRoutes.signup: (_) => const SignUpScreen(),
           AppRoutes.subscription: (_) => const SubscriptionScreen(),
