@@ -23,4 +23,5 @@ class AppRoutes {
   static const healthRecords = '/health-records';
   static const weightTracker = '/weight-tracker';
   static const breedingPlanner = '/breeding-planner';
+  static const addBird = '/add-bird';
 }

@@ -22,6 +22,7 @@ class _AiGlobalFabState extends State<AiGlobalFab> with SingleTickerProviderStat
     AppRoutes.subscription,
     AppRoutes.messaging,
     AppRoutes.createStory,
+    AppRoutes.addBird,
   };
 
   @override

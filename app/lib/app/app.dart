@@ -11,6 +11,7 @@ import 'package:app/features/messaging/presentation/messaging_screen.dart';
 import 'package:app/features/groups/presentation/groups_screen.dart';
 import 'package:app/features/cockpit/presentation/cockpit_directory_screen.dart';
 import 'package:app/features/farm/presentation/farm_dashboard_screen.dart';
+import 'package:app/features/farm/presentation/add_bird_screen.dart';
 import 'package:app/features/bloodline/presentation/bloodline_registry_screen.dart';
 import 'package:app/features/qr/presentation/qr_leg_bands_screen.dart';
 import 'package:app/features/health/presentation/health_records_screen.dart';
@@ -120,6 +121,7 @@ class _FarmBuzzAppState extends State<FarmBuzzApp> {
           AppRoutes.healthRecords: (_) => const HealthRecordsScreen(),
           AppRoutes.weightTracker: (_) => const WeightTrackerScreen(),
           AppRoutes.breedingPlanner: (_) => const BreedingPlannerScreen(),
+          AppRoutes.addBird: (_) => const AddBirdScreen(),
         },
       ),
     );
