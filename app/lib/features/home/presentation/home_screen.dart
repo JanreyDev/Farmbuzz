@@ -1,6 +1,7 @@
 import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:app/app/widgets/app_drawer.dart';
+import 'package:app/app/widgets/ai_chat_button.dart';
 import 'package:app/features/home/presentation/story_viewer_screen.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
@@ -173,12 +174,13 @@ class _HomeScreenState extends State<HomeScreen> {
       });
   }
 
-  void _openStoryViewer(int index) {
+  Future<void> _openStoryViewer(int index) async {
     if (_stories.isEmpty) {
       return;
     }
     final safeIndex = index.clamp(0, _stories.length - 1);
-    Navigator.of(context, rootNavigator: true).push(
+    AiGlobalFab.isVisible.value = false;
+    await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (_) => StoryViewerScreen(
           stories: _stories
@@ -195,6 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+    AiGlobalFab.isVisible.value = true;
   }
 
   List<Widget> _buildPostFeed() {

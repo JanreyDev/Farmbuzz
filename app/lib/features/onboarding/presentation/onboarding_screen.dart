@@ -77,13 +77,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final isLastPage = _currentIndex == _items.length - 1;
+    final pageBg = isDark ? const Color(0xFF101713) : const Color(0xFFF7FAF7);
+    final panelBorder = isDark ? const Color(0xFF32443A) : const Color(0xFFD9E6DB);
+    final panelTop = isDark ? const Color(0xFF1A231E) : Colors.white;
+    final panelBottom = isDark
+        ? const Color(0xFF152019)
+        : _kLightGreen.withValues(alpha: 0.10);
+    final skipColor = isDark ? const Color(0xFFE2F2E4) : _kDarkGreen;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF7),
+      backgroundColor: pageBg,
       body: Stack(
         children: [
-          const _BackdropAccent(),
+          _BackdropAccent(isDark: isDark),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
@@ -99,13 +107,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          foregroundColor: _kDarkGreen,
+                          foregroundColor: skipColor,
                         ),
                         child: Text(
                           'Skip',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: _kDarkGreen,
+                            color: skipColor,
                           ),
                         ),
                       ),
@@ -140,12 +148,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white,
-                          _kLightGreen.withValues(alpha: 0.10),
+                          panelTop,
+                          panelBottom,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFD9E6DB)),
+                      border: Border.all(color: panelBorder),
                       boxShadow: [
                         BoxShadow(
                           color: _kDarkGreen.withValues(alpha: 0.08),
@@ -180,7 +188,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _BackdropAccent extends StatelessWidget {
-  const _BackdropAccent();
+  const _BackdropAccent({required this.isDark});
+
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +204,7 @@ class _BackdropAccent extends StatelessWidget {
             height: 320,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _kLightGreen.withValues(alpha: 0.16),
+              color: _kLightGreen.withValues(alpha: isDark ? 0.11 : 0.16),
             ),
           ),
         ),
@@ -206,7 +216,7 @@ class _BackdropAccent extends StatelessWidget {
             height: 230,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _kPrimaryGreen.withValues(alpha: 0.08),
+              color: _kPrimaryGreen.withValues(alpha: isDark ? 0.10 : 0.08),
             ),
           ),
         ),

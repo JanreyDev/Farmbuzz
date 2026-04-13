@@ -23,6 +23,19 @@ class OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardTop = isDark ? const Color(0xFF1B2420) : const Color(0xFFFFFFFF);
+    final cardBottom = isDark ? const Color(0xFF141D18) : const Color(0xFFF4FAF5);
+    final cardBorder = isDark ? const Color(0xFF33453A) : const Color(0xFFD8E7DA);
+    final innerCardBg = isDark ? const Color(0xFF18231D) : const Color(0xFFEEF6EF);
+    final innerCardBorder = isDark ? const Color(0xFF33473C) : const Color(0xFFD8E8DA);
+    final titleColor = isDark ? const Color(0xFFE6F5E8) : const Color(0xFF152217);
+    final descColor = isDark ? const Color(0xFFA9BAAE) : const Color(0xFF4C5E50);
+    final highlightColor = isDark ? const Color(0xFFC7D8CC) : const Color(0xFF273328);
+    final badgeColor = isDark ? const Color(0xFFE2F2E4) : _kDarkGreen;
+    final dotsColor = isDark
+        ? const Color(0xFFBFD5C6).withValues(alpha: 0.55)
+        : _kDarkGreen.withValues(alpha: 0.42);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -35,16 +48,16 @@ class OnboardingPage extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFFFFFFFF), Color(0xFFF4FAF5)],
+                  colors: [cardTop, cardBottom],
                 ),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFD8E7DA)),
+                border: Border.all(color: cardBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: _kDarkGreen.withValues(alpha: 0.12),
+                    color: _kDarkGreen.withValues(alpha: isDark ? 0.24 : 0.12),
                     blurRadius: 22,
                     offset: const Offset(0, 10),
                   ),
@@ -71,7 +84,7 @@ class OnboardingPage extends StatelessWidget {
                         child: Text(
                           badge,
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: _kDarkGreen,
+                            color: badgeColor,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -80,7 +93,7 @@ class OnboardingPage extends StatelessWidget {
                       Icon(
                         Icons.more_horiz_rounded,
                         size: 20,
-                        color: _kDarkGreen.withValues(alpha: 0.42),
+                        color: dotsColor,
                       ),
                     ],
                   ),
@@ -89,9 +102,9 @@ class OnboardingPage extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF6EF),
+                      color: innerCardBg,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFFD8E8DA)),
+                      border: Border.all(color: innerCardBorder),
                     ),
                     child: Column(
                       children: [
@@ -182,7 +195,7 @@ class OnboardingPage extends StatelessWidget {
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       height: 1.25,
-                                      color: const Color(0xFF273328),
+                                      color: highlightColor,
                                     ),
                                   ),
                                 ),
@@ -203,7 +216,7 @@ class OnboardingPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF152217),
+              color: titleColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -212,7 +225,7 @@ class OnboardingPage extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
               height: 1.35,
-              color: const Color(0xFF4C5E50),
+              color: descColor,
               fontWeight: FontWeight.w500,
             ),
           ),

@@ -11,9 +11,11 @@ class SubscriptionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final pageBg = isDark ? const Color(0xFF101512) : _kPageBg;
 
     return Scaffold(
-      backgroundColor: _kPageBg,
+      backgroundColor: pageBg,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -24,20 +26,21 @@ class SubscriptionScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _Header(theme: theme),
+                    _Header(theme: theme, isDark: isDark),
                     const SizedBox(height: 14),
-                    const _HeroCard(),
+                    _HeroCard(isDark: isDark),
                     const SizedBox(height: 14),
-                    const _TimelineCard(),
+                    _TimelineCard(isDark: isDark),
                     const SizedBox(height: 14),
-                    const _IncludedCard(),
+                    _IncludedCard(isDark: isDark),
                     const SizedBox(height: 14),
-                    const _PlanCard(),
+                    _PlanCard(isDark: isDark),
                   ],
                 ),
               ),
             ),
             _BottomCta(
+              isDark: isDark,
               onStart: () => Navigator.of(context).pushReplacementNamed(AppRoutes.login),
             ),
           ],
@@ -48,9 +51,10 @@ class SubscriptionScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.theme});
+  const _Header({required this.theme, required this.isDark});
 
   final ThemeData theme;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -68,14 +72,16 @@ class _Header extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              color: _kDarkGreen,
+              color: isDark ? const Color(0xFFE3F3E5) : _kDarkGreen,
             ),
           ),
         ),
         IconButton(
           onPressed: () {},
           icon: const Icon(Icons.help_outline),
-          color: _kDarkGreen.withValues(alpha: 0.75),
+          color: isDark
+              ? const Color(0xFFBBD1C1).withValues(alpha: 0.8)
+              : _kDarkGreen.withValues(alpha: 0.75),
           tooltip: 'Help',
         ),
       ],
@@ -84,7 +90,9 @@ class _Header extends StatelessWidget {
 }
 
 class _HeroCard extends StatelessWidget {
-  const _HeroCard();
+  const _HeroCard({required this.isDark});
+
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -93,13 +101,15 @@ class _HeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF0F7F1), Color(0xFFE2F0E4)],
+          colors: isDark
+              ? const [Color(0xFF1A231E), Color(0xFF16201B)]
+              : const [Color(0xFFF0F7F1), Color(0xFFE2F0E4)],
         ),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFCEE1D1)),
+        border: Border.all(color: isDark ? const Color(0xFF34463B) : const Color(0xFFCEE1D1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +130,7 @@ class _HeroCard extends StatelessWidget {
                 child: Text(
                   '30-Day Free Trial',
                   style: theme.textTheme.headlineSmall?.copyWith(
-                    color: _kDarkGreen,
+                    color: isDark ? const Color(0xFFE3F3E5) : _kDarkGreen,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -131,7 +141,7 @@ class _HeroCard extends StatelessWidget {
           Text(
             'Enjoy full FarmBuzz access today with zero upfront payment.',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: const Color(0xFF3F5242),
+              color: isDark ? const Color(0xFFAABBB0) : const Color(0xFF3F5242),
               height: 1.32,
             ),
           ),
@@ -139,9 +149,17 @@ class _HeroCard extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: const [
-              _MiniPill(icon: Icons.lock_clock_outlined, label: 'No charge today'),
-              _MiniPill(icon: Icons.cancel_outlined, label: 'Cancel anytime'),
+            children: [
+              _MiniPill(
+                icon: Icons.lock_clock_outlined,
+                label: 'No charge today',
+                isDark: isDark,
+              ),
+              _MiniPill(
+                icon: Icons.cancel_outlined,
+                label: 'Cancel anytime',
+                isDark: isDark,
+              ),
             ],
           ),
         ],
@@ -151,19 +169,20 @@ class _HeroCard extends StatelessWidget {
 }
 
 class _MiniPill extends StatelessWidget {
-  const _MiniPill({required this.icon, required this.label});
+  const _MiniPill({required this.icon, required this.label, required this.isDark});
 
   final IconData icon;
   final String label;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1C2721) : Colors.white,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFD7E5D9)),
+        border: Border.all(color: isDark ? const Color(0xFF3B4D42) : const Color(0xFFD7E5D9)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -172,10 +191,10 @@ class _MiniPill extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF345138),
+              color: isDark ? const Color(0xFFC2D4C7) : const Color(0xFF345138),
             ),
           ),
         ],
@@ -185,35 +204,41 @@ class _MiniPill extends StatelessWidget {
 }
 
 class _TimelineCard extends StatelessWidget {
-  const _TimelineCard();
+  const _TimelineCard({required this.isDark});
+
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return _Panel(
+      isDark: isDark,
       title: 'What happens next',
       titleStyle: theme.textTheme.titleMedium?.copyWith(
-        color: _kDarkGreen,
+        color: isDark ? const Color(0xFFE3F3E5) : _kDarkGreen,
         fontWeight: FontWeight.w800,
       ),
-      child: const Column(
+      child: Column(
         children: [
           _StepRow(
             step: '1',
             title: 'Start your free trial',
             subtitle: 'Get instant access to all FarmBuzz features.',
+            isDark: isDark,
           ),
           _StepRow(
             step: '2',
             title: 'We remind you before billing',
             subtitle: 'We send a reminder before the trial ends.',
+            isDark: isDark,
           ),
           _StepRow(
             step: '3',
             title: 'Continue for \u20B139.99/month',
             subtitle: 'Or cancel anytime during trial with no charge.',
             isLast: true,
+            isDark: isDark,
           ),
         ],
       ),
@@ -226,6 +251,7 @@ class _StepRow extends StatelessWidget {
     required this.step,
     required this.title,
     required this.subtitle,
+    required this.isDark,
     this.isLast = false,
   });
 
@@ -233,6 +259,7 @@ class _StepRow extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool isLast;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +294,7 @@ class _StepRow extends StatelessWidget {
                   width: 2,
                   height: 36,
                   margin: const EdgeInsets.symmetric(vertical: 4),
-                  color: const Color(0xFFD5E5D7),
+                  color: isDark ? const Color(0xFF3A4D41) : const Color(0xFFD5E5D7),
                 ),
             ],
           ),
@@ -282,14 +309,14 @@ class _StepRow extends StatelessWidget {
                     title,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1F2A21),
+                      color: isDark ? const Color(0xFFE0F1E2) : const Color(0xFF1F2A21),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF556458),
+                      color: isDark ? const Color(0xFFA8B9AE) : const Color(0xFF556458),
                       height: 1.25,
                     ),
                   ),
@@ -304,27 +331,30 @@ class _StepRow extends StatelessWidget {
 }
 
 class _IncludedCard extends StatelessWidget {
-  const _IncludedCard();
+  const _IncludedCard({required this.isDark});
+
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return _Panel(
+      isDark: isDark,
       title: 'Everything included',
       titleStyle: theme.textTheme.titleMedium?.copyWith(
-        color: _kDarkGreen,
+        color: isDark ? const Color(0xFFE3F3E5) : _kDarkGreen,
         fontWeight: FontWeight.w800,
       ),
-      child: const Wrap(
+      child: Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
-          _FeaturePill(label: 'Farm Records'),
-          _FeaturePill(label: 'Community Groups'),
-          _FeaturePill(label: 'Marketplace Access'),
-          _FeaturePill(label: 'Insights & Reports'),
-          _FeaturePill(label: 'Messaging'),
+          _FeaturePill(label: 'Farm Records', isDark: isDark),
+          _FeaturePill(label: 'Community Groups', isDark: isDark),
+          _FeaturePill(label: 'Marketplace Access', isDark: isDark),
+          _FeaturePill(label: 'Insights & Reports', isDark: isDark),
+          _FeaturePill(label: 'Messaging', isDark: isDark),
         ],
       ),
     );
@@ -332,18 +362,19 @@ class _IncludedCard extends StatelessWidget {
 }
 
 class _FeaturePill extends StatelessWidget {
-  const _FeaturePill({required this.label});
+  const _FeaturePill({required this.label, required this.isDark});
 
   final String label;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F7F1),
+        color: isDark ? const Color(0xFF1A251F) : const Color(0xFFF0F7F1),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFD3E5D6)),
+        border: Border.all(color: isDark ? const Color(0xFF395044) : const Color(0xFFD3E5D6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -352,10 +383,10 @@ class _FeaturePill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF2C4330),
+              color: isDark ? const Color(0xFFC2D4C7) : const Color(0xFF2C4330),
             ),
           ),
         ],
@@ -365,16 +396,19 @@ class _FeaturePill extends StatelessWidget {
 }
 
 class _PlanCard extends StatelessWidget {
-  const _PlanCard();
+  const _PlanCard({required this.isDark});
+
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return _Panel(
+      isDark: isDark,
       title: 'FarmBuzz Plan',
       titleStyle: theme.textTheme.titleMedium?.copyWith(
-        color: _kDarkGreen,
+        color: isDark ? const Color(0xFFE3F3E5) : _kDarkGreen,
         fontWeight: FontWeight.w800,
       ),
       child: Row(
@@ -393,7 +427,7 @@ class _PlanCard extends StatelessWidget {
             child: Text(
               '/ month',
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: const Color(0xFF58655A),
+                color: isDark ? const Color(0xFFABBBB0) : const Color(0xFF58655A),
               ),
             ),
           ),
@@ -401,14 +435,14 @@ class _PlanCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF4EB),
+              color: isDark ? const Color(0xFF203026) : const Color(0xFFEAF4EB),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text(
+            child: Text(
               'After Trial',
               style: TextStyle(
                 fontSize: 11,
-                color: Color(0xFF2B5D30),
+                color: isDark ? const Color(0xFFC6E4C9) : const Color(0xFF2B5D30),
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -424,20 +458,22 @@ class _Panel extends StatelessWidget {
     required this.title,
     required this.child,
     required this.titleStyle,
+    required this.isDark,
   });
 
   final String title;
   final Widget child;
   final TextStyle? titleStyle;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF16201A) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFD9E5DB)),
+        border: Border.all(color: isDark ? const Color(0xFF33473B) : const Color(0xFFD9E5DB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,18 +488,23 @@ class _Panel extends StatelessWidget {
 }
 
 class _BottomCta extends StatelessWidget {
-  const _BottomCta({required this.onStart});
+  const _BottomCta({required this.onStart, required this.isDark});
 
   final VoidCallback onStart;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF16201A) : Colors.white,
         border: Border(
-          top: BorderSide(color: const Color(0xFFD8E5DA).withValues(alpha: 0.9)),
+          top: BorderSide(
+            color: isDark
+                ? const Color(0xFF33473B)
+                : const Color(0xFFD8E5DA).withValues(alpha: 0.9),
+          ),
         ),
       ),
       child: SafeArea(

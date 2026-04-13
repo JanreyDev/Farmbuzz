@@ -43,6 +43,32 @@ class FarmBuzzApp extends StatefulWidget {
   State<FarmBuzzApp> createState() => _FarmBuzzAppState();
 }
 
+class AppRouteTracker extends NavigatorObserver {
+  static final ValueNotifier<String?> currentRoute = ValueNotifier<String?>(null);
+
+  static void _setRoute(Route<dynamic>? route) {
+    currentRoute.value = route?.settings.name;
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _setRoute(route);
+    super.didPush(route, previousRoute);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _setRoute(previousRoute);
+    super.didPop(route, previousRoute);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    _setRoute(newRoute);
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+  }
+}
+
 class _FarmBuzzAppState extends State<FarmBuzzApp> {
   @override
   void initState() {
@@ -57,6 +83,7 @@ class _FarmBuzzAppState extends State<FarmBuzzApp> {
       builder: (context, mode, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
         navigatorKey: FarmBuzzApp.navigatorKey,
+        navigatorObservers: [AppRouteTracker()],
         title: 'FarmBuzz',
         theme: widget.theme,
         darkTheme: widget.darkTheme,

@@ -15,6 +15,7 @@ class PageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(totalPages, (index) {
@@ -28,7 +29,9 @@ class PageIndicator extends StatelessWidget {
           decoration: BoxDecoration(
             color: isActive
                 ? _kPrimaryGreen
-                : _kDarkGreen.withValues(alpha: 0.18),
+                : (isDark
+                    ? const Color(0xFF8DA998).withValues(alpha: 0.35)
+                    : _kDarkGreen.withValues(alpha: 0.18)),
             borderRadius: BorderRadius.circular(999),
           ),
         );

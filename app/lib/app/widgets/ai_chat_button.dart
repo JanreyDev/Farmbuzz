@@ -1,5 +1,6 @@
 import 'package:app/app/widgets/ai_chat_sheet.dart';
 import 'package:app/app/app.dart';
+import 'package:app/app/navigation/app_routes.dart';
 import 'package:flutter/material.dart';
 
 class AiGlobalFab extends StatefulWidget {
@@ -14,6 +15,14 @@ class AiGlobalFab extends StatefulWidget {
 
 class _AiGlobalFabState extends State<AiGlobalFab> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
+  static const Set<String> _hiddenRoutes = {
+    AppRoutes.splash,
+    AppRoutes.onboarding,
+    AppRoutes.login,
+    AppRoutes.subscription,
+    AppRoutes.messaging,
+    AppRoutes.createStory,
+  };
 
   @override
   void initState() {
@@ -35,21 +44,28 @@ class _AiGlobalFabState extends State<AiGlobalFab> with SingleTickerProviderStat
     return Positioned(
       right: 16,
       bottom: 100, 
-      child: ValueListenableBuilder<bool>(
-        valueListenable: AiGlobalFab.isVisible,
-        builder: (context, visible, _) {
-          return AnimatedOpacity(
-            opacity: visible ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 250),
-            child: IgnorePointer(
-              ignoring: !visible,
-              child: ScaleTransition(
-                scale: Tween(begin: 1.0, end: 1.08).animate(
-                  CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+      child: ValueListenableBuilder<String?>(
+        valueListenable: AppRouteTracker.currentRoute,
+        builder: (context, routeName, _) {
+          final isBlockedRoute = _hiddenRoutes.contains(routeName);
+          return ValueListenableBuilder<bool>(
+            valueListenable: AiGlobalFab.isVisible,
+            builder: (context, visible, _) {
+              final shouldShow = visible && !isBlockedRoute;
+              return AnimatedOpacity(
+                opacity: shouldShow ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 250),
+                child: IgnorePointer(
+                  ignoring: !shouldShow,
+                  child: ScaleTransition(
+                    scale: Tween(begin: 1.0, end: 1.08).animate(
+                      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+                    ),
+                    child: const AiChatButton(),
+                  ),
                 ),
-                child: const AiChatButton(),
-              ),
-            ),
+              );
+            },
           );
         },
       ),
@@ -99,7 +115,7 @@ class AiChatButton extends StatelessWidget {
                 child: Image.asset(
                   'assets/images/buzz_mascot.png',
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, error, stackTrace) => const Icon(
                     Icons.auto_awesome_rounded,
                     color: Colors.white,
                     size: 24,

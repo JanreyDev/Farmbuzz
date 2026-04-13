@@ -34,22 +34,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final pageBg = isDark ? const Color(0xFF111714) : const Color(0xFFF5F7F2);
+    final titleColor = isDark ? const Color(0xFFE3F3E5) : _kDarkGreen;
+    final subtitleColor = isDark ? const Color(0xFF9FB3A2) : const Color(0xFF727272);
+    final dividerColor = isDark ? const Color(0xFF31463A) : const Color(0xFFDCE4DD);
+    final mutedText = isDark ? const Color(0xFFA6B5AB) : const Color(0xFF777777);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F2),
+      backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F7F2),
+        backgroundColor: pageBg,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _kDarkGreen),
+          icon: Icon(Icons.arrow_back, color: titleColor),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text(
+        title: Text(
           'Login',
           style: TextStyle(
-            color: _kDarkGreen,
+            color: titleColor,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -59,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(
             height: 1,
-            color: const Color(0xFFDCE4DD),
+            color: dividerColor,
           ),
         ),
       ),
@@ -79,24 +87,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Welcome Back',
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w800,
-                    color: _kDarkGreen,
+                    color: titleColor,
                     letterSpacing: 0.2,
                   ),
                 ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Log in to your FarmBuzz account',
-                          style: TextStyle(fontSize: 16, color: Color(0xFF727272)),
+                          style: TextStyle(fontSize: 16, color: subtitleColor),
                         ),
                         const SizedBox(height: 24),
                         _MobileNumberField(
                           controller: _mobileController,
                           validator: _mobileValidator,
+                          isDark: isDark,
                         ),
                         const SizedBox(height: 14),
                         AuthInputField(
@@ -119,10 +128,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {},
-                            child: const Text(
+                            child: Text(
                               'Forgot Password?',
                               style: TextStyle(
-                                color: _kDarkGreen,
+                                color: titleColor,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -146,10 +155,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text('Log In'),
                         ),
                         const SizedBox(height: 18),
-                        const Row(
+                        Row(
                           children: [
-                            Expanded(child: Divider(color: Color(0xFFDBDBDB))),
-                            Padding(
+                            Expanded(child: Divider(color: isDark ? const Color(0xFF364B40) : const Color(0xFFDBDBDB))),
+                            const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 10),
                               child: Text(
                                 'OR',
@@ -160,24 +169,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            Expanded(child: Divider(color: Color(0xFFDBDBDB))),
+                            Expanded(child: Divider(color: isDark ? const Color(0xFF364B40) : const Color(0xFFDBDBDB))),
                           ],
                         ),
                         const SizedBox(height: 14),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Don\'t have an account? ',
-                              style: TextStyle(color: Color(0xFF777777)),
+                              style: TextStyle(color: mutedText),
                             ),
                             GestureDetector(
                               onTap: () =>
                                   Navigator.of(context).pushNamed(AppRoutes.signup),
-                              child: const Text(
+                              child: Text(
                                 'Sign Up',
                                 style: TextStyle(
-                                  color: _kDarkGreen,
+                                  color: titleColor,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -217,51 +226,53 @@ class _MobileNumberField extends StatelessWidget {
   const _MobileNumberField({
     required this.controller,
     required this.validator,
+    required this.isDark,
   });
 
   final TextEditingController controller;
   final String? Function(String?) validator;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Mobile Number',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF555555),
+            color: isDark ? const Color(0xFFB6C7BC) : const Color(0xFF555555),
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFEEF3EE),
+            color: isDark ? const Color(0xFF1A231E) : const Color(0xFFEEF3EE),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFD7E2D8)),
+            border: Border.all(color: isDark ? const Color(0xFF34453B) : const Color(0xFFD7E2D8)),
           ),
           child: Row(
             children: [
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(left: 12),
                 child: Icon(
                   Icons.phone_outlined,
                   size: 19,
-                  color: Color(0xFF7F8F82),
+                  color: isDark ? const Color(0xFF96AA9C) : const Color(0xFF7F8F82),
                 ),
               ),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                 width: 1,
                 height: 20,
-                color: const Color(0xFFCBD8CC),
+                color: isDark ? const Color(0xFF3C4E43) : const Color(0xFFCBD8CC),
               ),
-              const Text(
+              Text(
                 '+63',
                 style: TextStyle(
-                  color: Color(0xFF556358),
+                  color: isDark ? const Color(0xFFB6C8BB) : const Color(0xFF556358),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -276,9 +287,9 @@ class _MobileNumberField extends StatelessWidget {
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(10),
                   ],
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: '9XX XXX XXXX',
-                    hintStyle: TextStyle(color: Color(0xFF8A988D)),
+                    hintStyle: TextStyle(color: isDark ? const Color(0xFF7F9286) : const Color(0xFF8A988D)),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.fromLTRB(0, 14, 12, 14),
                     counterText: '',

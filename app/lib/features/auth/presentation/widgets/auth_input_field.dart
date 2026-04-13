@@ -40,15 +40,22 @@ class AuthInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = isDark ? const Color(0xFFB6C7BC) : const Color(0xFF555555);
+    final fillColor = isDark ? const Color(0xFF1A231E) : _kAuthFieldBg;
+    final borderColor = isDark ? const Color(0xFF34453B) : _kAuthFieldBorder;
+    final iconColor = isDark ? const Color(0xFF96AA9C) : _kAuthFieldIcon;
+    final hintColor = isDark ? const Color(0xFF7F9286) : _kAuthFieldHint;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF555555),
+            color: labelColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -63,14 +70,14 @@ class AuthInputField extends StatelessWidget {
           decoration: InputDecoration(
             counterText: '',
             hintText: hintText,
-            hintStyle: const TextStyle(color: _kAuthFieldHint),
+            hintStyle: TextStyle(color: hintColor),
             filled: true,
-            fillColor: _kAuthFieldBg,
+            fillColor: fillColor,
             prefixText: prefixText,
             prefixIcon: Icon(
               prefixIcon,
               size: 19,
-              color: _kAuthFieldIcon,
+              color: iconColor,
             ),
             suffixIcon: suffixIcon == null
                 ? null
@@ -79,7 +86,7 @@ class AuthInputField extends StatelessWidget {
                     icon: Icon(
                       suffixIcon,
                       size: 19,
-                      color: _kAuthFieldIcon,
+                      color: iconColor,
                     ),
                   ),
             border: OutlineInputBorder(
@@ -88,7 +95,7 @@ class AuthInputField extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _kAuthFieldBorder),
+              borderSide: BorderSide(color: borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
