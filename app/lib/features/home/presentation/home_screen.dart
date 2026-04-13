@@ -5,6 +5,7 @@ import 'package:app/app/widgets/ai_chat_button.dart';
 import 'package:app/features/home/presentation/story_viewer_screen.dart';
 import 'package:app/features/home/presentation/widgets/custom_app_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kHomeBgLight = Color(0xFFF5F5F5);
@@ -34,6 +35,12 @@ const _kPostImageOne =
     'https://images.pexels.com/photos/15235677/pexels-photo-15235677.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kPostImageTwo =
     'https://images.pexels.com/photos/13293244/pexels-photo-13293244.jpeg?auto=compress&cs=tinysrgb&w=900';
+const _kPostImageThree =
+    'https://images.pexels.com/photos/18846336/pexels-photo-18846336.jpeg?auto=compress&cs=tinysrgb&w=900';
+const _kPostImageFour =
+    'https://images.pexels.com/photos/13607889/pexels-photo-13607889.jpeg?auto=compress&cs=tinysrgb&w=900';
+const _kPostImageFive =
+    'https://images.pexels.com/photos/19198208/pexels-photo-19198208.jpeg?auto=compress&cs=tinysrgb&w=900';
 const _kPostAvatarOne =
     'https://images.pexels.com/photos/18699978/pexels-photo-18699978.jpeg?auto=compress&cs=tinysrgb&w=300';
 const _kPostAvatarTwo =
@@ -71,9 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
       text:
           'Morning update: Black Warrior hit target weight today. Ready for conditioning this weekend.',
       likes: 47,
-      imageUrl: _kPostImageOne,
+      imageUrls: [_kPostImageOne, _kPostImageThree, _kPostImageFour],
       avatarUrl: _kPostAvatarOne,
       comments: ['Juan: Nice bird!', 'Mark: Good condition!'],
+      isOwner: false,
+      hasListing: true,
     ),
     const _HomePostData(
       author: 'Golden Hatch Breeders',
@@ -81,9 +90,17 @@ class _HomeScreenState extends State<HomeScreen> {
       text:
           'Brooder check complete. Vaccination done for 12 chicks and feed schedule updated.',
       likes: 91,
-      imageUrl: _kPostImageTwo,
+      imageUrls: [
+        _kPostImageTwo,
+        _kPostImageFive,
+        _kPostImageOne,
+        _kPostImageThree,
+        _kPostImageFour,
+      ],
       avatarUrl: _kPostAvatarTwo,
       comments: ['Rico: Looking healthy!', 'Allen: Great progress.'],
+      isOwner: false,
+      hasListing: false,
     ),
   ];
 
@@ -153,8 +170,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final text = (result['text'] as String? ?? '').trim();
-    final imageUrl = result['imageUrl'] as String?;
-    if (text.isEmpty && (imageUrl == null || imageUrl.isEmpty)) {
+    final rawImageUrls = result['imageUrls'];
+    final imageUrls = rawImageUrls is List
+        ? rawImageUrls.whereType<String>().where((e) => e.isNotEmpty).take(10).toList()
+        : <String>[];
+    final legacyImage = result['imageUrl'] as String?;
+    if (legacyImage != null && legacyImage.isNotEmpty && imageUrls.isEmpty) {
+      imageUrls.add(legacyImage);
+    }
+
+    if (text.isEmpty && imageUrls.isEmpty) {
       return;
     }
 
@@ -166,9 +191,11 @@ class _HomeScreenState extends State<HomeScreen> {
             timeAgo: 'Just now',
             text: text,
             likes: 0,
-            imageUrl: imageUrl,
+            imageUrls: imageUrls,
             avatarUrl: _kComposerAvatarUrl,
             comments: const [],
+            isOwner: true,
+            hasListing: false,
           ),
         );
       });
@@ -212,8 +239,10 @@ class _HomeScreenState extends State<HomeScreen> {
           text: post.text,
           initialLikeCount: post.likes,
           initialComments: post.comments,
-          imageUrl: post.imageUrl,
+          imageUrls: post.imageUrls,
           avatarUrl: post.avatarUrl,
+          isOwner: post.isOwner,
+          hasListing: post.hasListing,
         ),
       );
       if (i != _posts.length - 1) {
@@ -256,7 +285,9 @@ class _HomePostData {
     required this.likes,
     required this.comments,
     required this.avatarUrl,
-    this.imageUrl,
+    required this.imageUrls,
+    required this.isOwner,
+    required this.hasListing,
   });
 
   final String author;
@@ -264,8 +295,10 @@ class _HomePostData {
   final String text;
   final int likes;
   final List<String> comments;
-  final String? imageUrl;
+  final List<String> imageUrls;
   final String avatarUrl;
+  final bool isOwner;
+  final bool hasListing;
 }
 
 class _ComposerRow extends StatelessWidget {
@@ -521,7 +554,9 @@ class _PostCard extends StatefulWidget {
     required this.initialLikeCount,
     required this.initialComments,
     required this.avatarUrl,
-    this.imageUrl,
+    required this.imageUrls,
+    required this.isOwner,
+    required this.hasListing,
   });
 
   final String author;
@@ -529,8 +564,10 @@ class _PostCard extends StatefulWidget {
   final String text;
   final int initialLikeCount;
   final List<String> initialComments;
-  final String? imageUrl;
+  final List<String> imageUrls;
   final String avatarUrl;
+  final bool isOwner;
+  final bool hasListing;
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -627,14 +664,23 @@ class _PostCardState extends State<_PostCard> {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.more_horiz,
-                  color: colorScheme.onSurface.withValues(alpha: 0.65),
+                IconButton(
+                  onPressed: _showPostOptions,
+                  splashRadius: 18,
+                  tooltip: 'Post options',
+                  icon: Icon(
+                    Icons.more_horiz,
+                    color: colorScheme.onSurface.withValues(alpha: 0.70),
+                  ),
                 ),
-                const SizedBox(width: 2),
-                Icon(
-                  Icons.close,
-                  color: colorScheme.onSurface.withValues(alpha: 0.65),
+                IconButton(
+                  onPressed: _hidePostQuick,
+                  splashRadius: 18,
+                  tooltip: 'Hide post',
+                  icon: Icon(
+                    Icons.close,
+                    color: colorScheme.onSurface.withValues(alpha: 0.70),
+                  ),
                 ),
               ],
             ),
@@ -649,14 +695,11 @@ class _PostCardState extends State<_PostCard> {
                     : colorScheme.onSurface.withValues(alpha: 0.92),
               ),
             ),
-            if (widget.imageUrl != null) ...[
+            if (widget.imageUrls.isNotEmpty) ...[
               const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: _NetworkFeedImage(
-                  imageUrl: widget.imageUrl!,
-                  fit: BoxFit.cover,
-                ),
+              _PostMediaGrid(
+                imageUrls: widget.imageUrls,
+                author: widget.author,
               ),
             ],
             const SizedBox(height: 12),
@@ -734,6 +777,80 @@ class _PostCardState extends State<_PostCard> {
     setState(() => _isFollowing = !_isFollowing);
   }
 
+  Future<void> _showPostOptions() async {
+    final actions = _buildPostActions();
+    final selected = await showModalBottomSheet<_PostMenuAction>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _PostOptionsSheet(
+        author: widget.author,
+        isOwner: widget.isOwner,
+        actions: actions,
+      ),
+    );
+    if (!mounted || selected == null) return;
+    await _handlePostAction(selected);
+  }
+
+  List<_PostMenuAction> _buildPostActions() {
+    if (widget.isOwner) {
+      return const [
+        _PostMenuAction.edit,
+        _PostMenuAction.delete,
+        _PostMenuAction.pinToProfile,
+        _PostMenuAction.turnOffComments,
+        _PostMenuAction.viewInsights,
+        _PostMenuAction.copyLink,
+      ];
+    }
+
+    final actions = <_PostMenuAction>[
+      _PostMenuAction.savePost,
+      _PostMenuAction.messageFarm,
+      if (widget.hasListing) _PostMenuAction.viewListing,
+      _PostMenuAction.hidePost,
+      _PostMenuAction.muteUser,
+      _PostMenuAction.blockUser,
+      _PostMenuAction.reportPost,
+      _PostMenuAction.copyLink,
+    ];
+    return actions;
+  }
+
+  Future<void> _handlePostAction(_PostMenuAction action) async {
+    switch (action) {
+      case _PostMenuAction.delete:
+        _showActionToast('Post deleted');
+        break;
+      case _PostMenuAction.hidePost:
+        _showActionToast('Post hidden from your feed');
+        break;
+      case _PostMenuAction.copyLink:
+        await Clipboard.setData(
+          ClipboardData(text: 'https://farmbuzz.app/post/${widget.author.hashCode}-${widget.timeAgo.hashCode}'),
+        );
+        _showActionToast('Post link copied');
+        break;
+      default:
+        _showActionToast('${action.label} selected');
+        break;
+    }
+  }
+
+  void _hidePostQuick() {
+    _showActionToast('Post hidden from your feed');
+  }
+
+  void _showActionToast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _openComments() async {
     await showModalBottomSheet<void>(
       context: context,
@@ -747,6 +864,308 @@ class _PostCardState extends State<_PostCard> {
           },
         );
       },
+    );
+  }
+}
+
+class _PostMediaGrid extends StatelessWidget {
+  const _PostMediaGrid({
+    required this.imageUrls,
+    required this.author,
+  });
+
+  final List<String> imageUrls;
+  final String author;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = imageUrls.take(10).toList(growable: false);
+    if (media.isEmpty) return const SizedBox.shrink();
+    const gap = 3.0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+
+          if (media.length == 1) {
+            return AspectRatio(
+              aspectRatio: 4 / 5,
+              child: _MediaTile(
+                imageUrl: media[0],
+                onTap: () => _openGallery(context, media, 0),
+              ),
+            );
+          }
+
+          if (media.length == 2) {
+            return SizedBox(
+              height: width * 0.62,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _MediaTile(
+                      imageUrl: media[0],
+                      onTap: () => _openGallery(context, media, 0),
+                    ),
+                  ),
+                  const SizedBox(width: gap),
+                  Expanded(
+                    child: _MediaTile(
+                      imageUrl: media[1],
+                      onTap: () => _openGallery(context, media, 1),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (media.length == 3) {
+            return SizedBox(
+              height: width * 0.78,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: _MediaTile(
+                      imageUrl: media[0],
+                      onTap: () => _openGallery(context, media, 0),
+                    ),
+                  ),
+                  const SizedBox(width: gap),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: _MediaTile(
+                            imageUrl: media[1],
+                            onTap: () => _openGallery(context, media, 1),
+                          ),
+                        ),
+                        const SizedBox(height: gap),
+                        Expanded(
+                          child: _MediaTile(
+                            imageUrl: media[2],
+                            onTap: () => _openGallery(context, media, 2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return SizedBox(
+            height: width,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _MediaTile(
+                          imageUrl: media[0],
+                          onTap: () => _openGallery(context, media, 0),
+                        ),
+                      ),
+                      const SizedBox(width: gap),
+                      Expanded(
+                        child: _MediaTile(
+                          imageUrl: media[1],
+                          onTap: () => _openGallery(context, media, 1),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: gap),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _MediaTile(
+                          imageUrl: media[2],
+                          onTap: () => _openGallery(context, media, 2),
+                        ),
+                      ),
+                      const SizedBox(width: gap),
+                      Expanded(
+                        child: _MediaTile(
+                          imageUrl: media[3],
+                          onTap: () => _openGallery(context, media, 3),
+                          overlayText: media.length > 4 ? '+${media.length - 4} more' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openGallery(BuildContext context, List<String> media, int initialIndex) {
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _PostGalleryViewer(
+          imageUrls: media,
+          initialIndex: initialIndex,
+          title: author,
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaTile extends StatelessWidget {
+  const _MediaTile({
+    required this.imageUrl,
+    required this.onTap,
+    this.overlayText,
+  });
+
+  final String imageUrl;
+  final VoidCallback onTap;
+  final String? overlayText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _NetworkFeedImage(imageUrl: imageUrl, fit: BoxFit.cover),
+            if (overlayText != null)
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.50),
+                ),
+                child: Center(
+                  child: Text(
+                    overlayText!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PostGalleryViewer extends StatefulWidget {
+  const _PostGalleryViewer({
+    required this.imageUrls,
+    required this.initialIndex,
+    required this.title,
+  });
+
+  final List<String> imageUrls;
+  final int initialIndex;
+  final String title;
+
+  @override
+  State<_PostGalleryViewer> createState() => _PostGalleryViewerState();
+}
+
+class _PostGalleryViewerState extends State<_PostGalleryViewer> {
+  late final PageController _pageController;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.imageUrls.length,
+              onPageChanged: (value) => setState(() => _index = value),
+              itemBuilder: (context, i) {
+                return InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
+                  child: Center(
+                    child: _NetworkFeedImage(
+                      imageUrl: widget.imageUrls[i],
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 10,
+              left: 12,
+              right: 12,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  ),
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.42),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${_index + 1}/${widget.imageUrls.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -778,6 +1197,182 @@ class _PostActionButton extends StatelessWidget {
         style: TextStyle(
           color: color,
           fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+enum _PostMenuAction {
+  edit('Edit Post', Icons.edit_outlined),
+  delete('Delete Post', Icons.delete_outline, isDestructive: true),
+  pinToProfile('Pin to Profile', Icons.push_pin_outlined),
+  turnOffComments('Turn off comments', Icons.comments_disabled_outlined),
+  viewInsights('View Insights', Icons.insights_outlined),
+  copyLink('Copy Link', Icons.link_outlined),
+  savePost('Save Post', Icons.bookmark_border_rounded),
+  messageFarm('Message Farm', Icons.chat_bubble_outline_rounded),
+  viewListing('View Listing', Icons.storefront_outlined),
+  hidePost('Hide Post', Icons.visibility_off_outlined),
+  muteUser('Mute User', Icons.volume_off_outlined),
+  blockUser('Block User', Icons.block_outlined, isDestructive: true),
+  reportPost('Report Post', Icons.flag_outlined, isDestructive: true);
+
+  const _PostMenuAction(this.label, this.icon, {this.isDestructive = false});
+
+  final String label;
+  final IconData icon;
+  final bool isDestructive;
+}
+
+class _PostOptionsSheet extends StatelessWidget {
+  const _PostOptionsSheet({
+    required this.author,
+    required this.isOwner,
+    required this.actions,
+  });
+
+  final String author;
+  final bool isOwner;
+  final List<_PostMenuAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1A1D1C) : Colors.white;
+    final subtitleColor = colorScheme.onSurface.withValues(alpha: 0.65);
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x55000000),
+              blurRadius: 24,
+              offset: Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.onSurface.withValues(alpha: 0.22),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: _kPrimaryGreen.withValues(alpha: 0.18),
+                    child: Text(
+                      author.isEmpty ? 'F' : author[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: _kPrimaryGreen,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          author,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          isOwner ? 'Manage your post' : 'Post actions',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: subtitleColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.56,
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                itemCount: actions.length,
+                separatorBuilder: (_, _) => Divider(
+                  height: 1,
+                  color: colorScheme.onSurface.withValues(alpha: 0.08),
+                ),
+                itemBuilder: (context, index) {
+                  final action = actions[index];
+                  final color = action.isDestructive
+                      ? const Color(0xFFDC2626)
+                      : colorScheme.onSurface.withValues(alpha: 0.92);
+                  return ListTile(
+                    onTap: () => Navigator.of(context).pop(action),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    leading: Icon(action.icon, color: color),
+                    title: Text(
+                      action.label,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: colorScheme.onSurface.withValues(alpha: 0.35),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    side: BorderSide(
+                      color: colorScheme.onSurface.withValues(alpha: 0.16),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1223,6 +1818,15 @@ class _NetworkFeedImage extends StatelessWidget {
     return Image.network(
       imageUrl,
       fit: fit,
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded) return child;
+        return AnimatedOpacity(
+          opacity: frame == null ? 0 : 1,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          child: child,
+        );
+      },
       errorBuilder: (_, _, _) {
         return ColoredBox(
           color: colorScheme.surfaceContainerHighest,

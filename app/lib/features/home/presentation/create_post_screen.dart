@@ -26,13 +26,13 @@ class CreatePostScreen extends StatefulWidget {
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
   final FocusNode _contentFocus = FocusNode();
-  String? _imageUrl;
+  final List<String> _imageUrls = <String>[];
   String? _location;
   _PostVisibility _visibility = _PostVisibility.public;
   bool _isPosting = false;
 
   bool get _canPost =>
-      _contentController.text.trim().isNotEmpty || _imageUrl != null;
+      _contentController.text.trim().isNotEmpty || _imageUrls.isNotEmpty;
 
   @override
   void initState() {
@@ -206,41 +206,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                      if (_imageUrl != null) ...[
+                      if (_imageUrls.isNotEmpty) ...[
                         const SizedBox(height: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Stack(
-                            children: [
-                              Image.network(
-                                _imageUrl!,
-                                width: double.infinity,
-                                height: 220,
-                                fit: BoxFit.cover,
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: InkWell(
-                                  onTap: () => setState(() => _imageUrl = null),
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.55),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        _CreatePostImagePreview(
+                          imageUrls: _imageUrls,
+                          onRemove: (index) {
+                            setState(() => _imageUrls.removeAt(index));
+                          },
                         ),
                       ],
                       if (_location != null) ...[
@@ -290,12 +262,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   _ActionButton(
                     icon: Icons.photo_camera_outlined,
                     label: 'Camera',
-                    onTap: () => _pickImage(_kSampleCameraImages),
+                    onTap: () => _pickImages(),
                   ),
                   _ActionButton(
                     icon: Icons.photo_library_outlined,
-                    label: 'Upload Image',
-                    onTap: () => _pickImage(_kSampleGalleryImages),
+                    label: 'Upload Images',
+                    onTap: () => _pickImages(),
                   ),
                   _ActionButton(
                     icon: Icons.location_on_outlined,
@@ -311,41 +283,133 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 
-  Future<void> _pickImage(List<String> options) async {
-    final selected = await showModalBottomSheet<String>(
+  Future<void> _pickImages() async {
+    final options = <String>[
+      ..._kSampleGalleryImages,
+      ..._kSampleCameraImages,
+    ];
+    final selected = await showModalBottomSheet<List<String>>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-          child: SizedBox(
-            height: 108,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: options.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => InkWell(
-                onTap: () => Navigator.of(context).pop(options[index]),
-                borderRadius: BorderRadius.circular(10),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    options[index],
-                    width: 108,
-                    height: 108,
-                    fit: BoxFit.cover,
-                  ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final picked = <String>{..._imageUrls};
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final remaining = 10 - picked.length;
+            return SafeArea(
+              top: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Text(
+                          'Select up to 10 images',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$remaining left',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.48,
+                      ),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 6,
+                          crossAxisSpacing: 6,
+                        ),
+                        itemBuilder: (_, index) {
+                          final image = options[index];
+                          final selected = picked.contains(image);
+                          return InkWell(
+                            onTap: () {
+                              setModalState(() {
+                                if (selected) {
+                                  picked.remove(image);
+                                  return;
+                                }
+                                if (picked.length >= 10) return;
+                                if (_isValidImageFormat(image)) {
+                                  picked.add(image);
+                                }
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.network(image, fit: BoxFit.cover),
+                                  if (selected)
+                                    Container(
+                                      color: Colors.black.withValues(alpha: 0.35),
+                                      child: const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(context).pop(picked.toList()),
+                        child: Text('Done (${picked.length})'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
 
     if (!mounted || selected == null) {
       return;
     }
-    setState(() => _imageUrl = selected);
+    setState(() {
+      _imageUrls
+        ..clear()
+        ..addAll(selected.take(10));
+    });
   }
 
   void _addLocation() {
@@ -363,10 +427,70 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
     Navigator.of(context).pop({
       'text': _contentController.text.trim(),
-      'imageUrl': _imageUrl,
+      'imageUrls': _imageUrls,
       'location': _location,
       'visibility': _visibility.label,
     });
+  }
+
+  bool _isValidImageFormat(String imageUrl) {
+    final lower = imageUrl.toLowerCase();
+    return lower.contains('.jpg') ||
+        lower.contains('.jpeg') ||
+        lower.contains('.png');
+  }
+}
+
+class _CreatePostImagePreview extends StatelessWidget {
+  const _CreatePostImagePreview({
+    required this.imageUrls,
+    required this.onRemove,
+  });
+
+  final List<String> imageUrls;
+  final ValueChanged<int> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = imageUrls.take(10).toList(growable: false);
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: media.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 6,
+        crossAxisSpacing: 6,
+      ),
+      itemBuilder: (context, index) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(media[index], fit: BoxFit.cover),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: InkWell(
+                  onTap: () => onRemove(index),
+                  borderRadius: BorderRadius.circular(99),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.58),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
