@@ -32,7 +32,7 @@ class BirdCard extends StatelessWidget {
                 width: 76,
                 height: 76,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, error, stackTrace) => Container(
                   width: 76,
                   height: 76,
                   color: colorScheme.surfaceContainerHighest,

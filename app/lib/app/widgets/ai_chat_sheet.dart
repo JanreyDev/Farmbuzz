@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class AiChatSheet extends StatelessWidget {
@@ -42,7 +41,7 @@ class AiChatSheet extends StatelessWidget {
                         child: Image.asset(
                           'assets/images/buzz_mascot.png',
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, error, stackTrace) => Container(
                             color: const Color(0xFF2E7D32),
                             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
                           ),

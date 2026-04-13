@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 const Color _kPrimaryGreen = Color(0xFF2E7D32);
 const Color _kDarkGreen = Color(0xFF1B5E20);
-const Color _kLightGreen = Color(0xFF66BB6A);
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

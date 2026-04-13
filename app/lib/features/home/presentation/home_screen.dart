@@ -762,9 +762,10 @@ class _PostCardState extends State<_PostCard> {
                   label: 'Comment',
                   onTap: _openComments,
                 ),
-                const _PostActionButton(
+                _PostActionButton(
                   icon: Icons.share_outlined,
                   label: 'Share',
+                  onTap: _sharePost,
                 ),
               ],
             ),
@@ -850,6 +851,78 @@ class _PostCardState extends State<_PostCard> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<void> _sharePost() async {
+    final postLink = 'https://farmbuzz.app/post/${widget.author.hashCode}-${widget.timeAgo.hashCode}';
+    final postSummary = '${widget.author}\n\n${widget.text}\n\n$postLink';
+
+    final selected = await showModalBottomSheet<_PostShareAction>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1D1C) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 8,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.onSurface.withValues(alpha: 0.20),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: const Icon(Icons.link_outlined),
+                  title: const Text('Copy post link'),
+                  onTap: () => Navigator.of(context).pop(_PostShareAction.copyLink),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.article_outlined),
+                  title: const Text('Copy post text'),
+                  onTap: () => Navigator.of(context).pop(_PostShareAction.copyText),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.chat_bubble_outline),
+                  title: const Text('Share to Messages'),
+                  onTap: () => Navigator.of(context).pop(_PostShareAction.openMessages),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) return;
+
+    switch (selected) {
+      case _PostShareAction.copyLink:
+        await Clipboard.setData(ClipboardData(text: postLink));
+        _showActionToast('Post link copied');
+        break;
+      case _PostShareAction.copyText:
+        await Clipboard.setData(ClipboardData(text: postSummary));
+        _showActionToast('Post text copied');
+        break;
+      case _PostShareAction.openMessages:
+        Navigator.of(context).pushNamed(AppRoutes.messaging);
+        break;
+    }
   }
 
   Future<void> _openComments() async {
@@ -1231,6 +1304,12 @@ enum _PostMenuAction {
   final String label;
   final IconData icon;
   final bool isDestructive;
+}
+
+enum _PostShareAction {
+  copyLink,
+  copyText,
+  openMessages,
 }
 
 class _PostOptionsSheet extends StatelessWidget {
