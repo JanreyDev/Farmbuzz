@@ -1,4 +1,4 @@
-import 'package:app/app/navigation/app_routes.dart';
+﻿import 'package:app/app/navigation/app_routes.dart';
 import 'package:app/app/widgets/app_bottom_nav.dart';
 import 'package:app/app/widgets/app_drawer.dart';
 import 'package:app/app/widgets/ai_chat_button.dart';
@@ -575,7 +575,6 @@ class _PostCard extends StatefulWidget {
 
 class _PostCardState extends State<_PostCard> {
   late bool _isLiked;
-  bool _isFollowing = false;
   late int _likeCount;
   late List<String> _comments;
 
@@ -612,74 +611,84 @@ class _PostCardState extends State<_PostCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Stack(
+              clipBehavior: Clip.none,
               children: [
-                _Avatar(size: 42, imageUrl: widget.avatarUrl),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
+                Padding(
+                  padding: const EdgeInsets.only(right: 26),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              widget.author,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
+                      _Avatar(size: 44, imageUrl: widget.avatarUrl),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    widget.author,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          const _BreederBadge(),
-                          const SizedBox(width: 8),
-                          TextButton(
-                            onPressed: _toggleFollow,
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(0, 28),
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              foregroundColor: _isFollowing
-                                  ? colorScheme.onSurface.withValues(alpha: 0.75)
-                                  : _kPrimaryGreen,
-                              backgroundColor: _isFollowing
-                                  ? colorScheme.onSurface.withValues(alpha: 0.10)
-                                  : _kPrimaryGreen.withValues(alpha: 0.12),
-                              textStyle: theme.textTheme.labelMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 17,
+                                  height: 17,
+                                  decoration: BoxDecoration(
+                                    color: _kPrimaryGreen.withValues(alpha: 0.14),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.emoji_events_rounded,
+                                    size: 11,
+                                    color: _kPrimaryGreen,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.public,
+                                  size: 12,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.62),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${widget.timeAgo}  -  Public',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurface.withValues(alpha: 0.62),
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: Text(_isFollowing ? 'Following' : 'Follow'),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '${widget.timeAgo} - Public',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.62),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: _showPostOptions,
-                  splashRadius: 18,
-                  tooltip: 'Post options',
-                  icon: Icon(
-                    Icons.more_horiz,
-                    color: colorScheme.onSurface.withValues(alpha: 0.70),
-                  ),
-                ),
-                IconButton(
-                  onPressed: _hidePostQuick,
-                  splashRadius: 18,
-                  tooltip: 'Hide post',
-                  icon: Icon(
-                    Icons.close,
-                    color: colorScheme.onSurface.withValues(alpha: 0.70),
+                Positioned(
+                  top: -12,
+                  right: -10,
+                  child: IconButton(
+                    onPressed: _showPostOptions,
+                    splashRadius: 18,
+                    constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+                    padding: EdgeInsets.zero,
+                    tooltip: 'Post options',
+                    icon: Icon(
+                      Icons.more_horiz,
+                      color: colorScheme.onSurface.withValues(alpha: 0.70),
+                    ),
                   ),
                 ),
               ],
@@ -773,10 +782,6 @@ class _PostCardState extends State<_PostCard> {
     });
   }
 
-  void _toggleFollow() {
-    setState(() => _isFollowing = !_isFollowing);
-  }
-
   Future<void> _showPostOptions() async {
     final actions = _buildPostActions();
     final selected = await showModalBottomSheet<_PostMenuAction>(
@@ -836,10 +841,6 @@ class _PostCardState extends State<_PostCard> {
         _showActionToast('${action.label} selected');
         break;
     }
-  }
-
-  void _hidePostQuick() {
-    _showActionToast('Post hidden from your feed');
   }
 
   void _showActionToast(String message) {
@@ -1011,8 +1012,10 @@ class _PostMediaGrid extends StatelessWidget {
     );
   }
 
-  void _openGallery(BuildContext context, List<String> media, int initialIndex) {
-    Navigator.of(context, rootNavigator: true).push(
+  Future<void> _openGallery(BuildContext context, List<String> media, int initialIndex) async {
+    final previousVisibility = AiGlobalFab.isVisible.value;
+    AiGlobalFab.isVisible.value = false;
+    await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (_) => _PostGalleryViewer(
           imageUrls: media,
@@ -1021,6 +1024,7 @@ class _PostMediaGrid extends StatelessWidget {
         ),
       ),
     );
+    AiGlobalFab.isVisible.value = previousVisibility;
   }
 }
 
@@ -1086,16 +1090,20 @@ class _PostGalleryViewer extends StatefulWidget {
 class _PostGalleryViewerState extends State<_PostGalleryViewer> {
   late final PageController _pageController;
   late int _index;
+  late bool _wasAiVisible;
 
   @override
   void initState() {
     super.initState();
+    _wasAiVisible = AiGlobalFab.isVisible.value;
+    AiGlobalFab.isVisible.value = false;
     _index = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
   }
 
   @override
   void dispose() {
+    AiGlobalFab.isVisible.value = _wasAiVisible;
     _pageController.dispose();
     super.dispose();
   }
@@ -1761,30 +1769,6 @@ enum _CommentFilter {
 
   const _CommentFilter(this.label);
   final String label;
-}
-
-class _BreederBadge extends StatelessWidget {
-  const _BreederBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'Breeder badge',
-      child: Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          color: _kPrimaryGreen.withValues(alpha: 0.12),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.emoji_events_rounded,
-          size: 13,
-          color: _kPrimaryGreen,
-        ),
-      ),
-    );
-  }
 }
 
 class _Avatar extends StatelessWidget {
