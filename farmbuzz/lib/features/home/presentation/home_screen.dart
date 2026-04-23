@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'widgets/home_feed_view.dart';
 import 'widgets/home_drawer.dart';
 import 'widgets/my_farm_view.dart';
+import 'widgets/bantay_ai_view.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const HomeFeedView(),
     const MyFarmView(),
-    const Center(child: Text('Bantay AI', style: TextStyle(color: Colors.white))),
+    const BantayAiView(),
     const Center(child: Text('Clubs', style: TextStyle(color: Colors.white))),
     const Center(child: Text('Leaderboard', style: TextStyle(color: Colors.white))),
   ];
