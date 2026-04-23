@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 
+enum LandingView { login, forgotPin }
+
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
 
@@ -11,15 +13,25 @@ class LandingScreen extends StatefulWidget {
 }
 
 class _LandingScreenState extends State<LandingScreen> {
+  LandingView _currentView = LandingView.login;
   final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _forgotMobileController = TextEditingController();
 
   @override
   void dispose() {
     _mobileController.dispose();
+    _forgotMobileController.dispose();
     super.dispose();
   }
 
   bool get _canLogin => _mobileController.text.trim().length == 10;
+  bool get _canReset => _forgotMobileController.text.trim().length == 10;
+
+  void _setView(LandingView view) {
+    setState(() {
+      _currentView = view;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,12 +83,21 @@ class _LandingScreenState extends State<LandingScreen> {
                                   SizedBox(height: isCompact ? 20 : 30),
                                   _HeroText(isCompact: isCompact),
                                   SizedBox(height: isCompact ? 20 : 30),
-                                  _LoginCard(
-                                    isCompact: isCompact,
-                                    mobileController: _mobileController,
-                                    canLogin: _canLogin,
-                                    onChanged: (_) => setState(() {}),
-                                  ),
+                                  _currentView == LandingView.login
+                                      ? _LoginCard(
+                                          isCompact: isCompact,
+                                          mobileController: _mobileController,
+                                          canLogin: _canLogin,
+                                          onChanged: (_) => setState(() {}),
+                                          onForgotPin: () => _setView(LandingView.forgotPin),
+                                        )
+                                      : _ForgotPinCard(
+                                          isCompact: isCompact,
+                                          mobileController: _forgotMobileController,
+                                          canReset: _canReset,
+                                          onChanged: (_) => setState(() {}),
+                                          onBack: () => _setView(LandingView.login),
+                                        ),
                                 ],
                               ),
                             ),
@@ -308,12 +329,14 @@ class _LoginCard extends StatefulWidget {
     required this.mobileController,
     required this.canLogin,
     required this.onChanged,
+    required this.onForgotPin,
   });
 
   final bool isCompact;
   final TextEditingController mobileController;
   final bool canLogin;
   final ValueChanged<String> onChanged;
+  final VoidCallback onForgotPin;
 
   @override
   State<_LoginCard> createState() => _LoginCardState();
@@ -482,11 +505,11 @@ class _LoginCardState extends State<_LoginCard> {
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () {},
+            onPressed: widget.onForgotPin,
             child: const Text(
               'Forgot PIN?',
               style: TextStyle(
-                color: Color(0xFF54E07D),
+                color: AppColors.accentGreen,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -532,6 +555,214 @@ class _LoginCardState extends State<_LoginCard> {
               child: const Text(
                 'Create new account',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _ForgotPinCard extends StatefulWidget {
+  const _ForgotPinCard({
+    required this.isCompact,
+    required this.mobileController,
+    required this.canReset,
+    required this.onChanged,
+    required this.onBack,
+  });
+
+  final bool isCompact;
+  final TextEditingController mobileController;
+  final bool canReset;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onBack;
+
+  @override
+  State<_ForgotPinCard> createState() => _ForgotPinCardState();
+}
+
+class _ForgotPinCardState extends State<_ForgotPinCard> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showActive = _isFocused || widget.canReset;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        widget.isCompact ? 12 : 16,
+        widget.isCompact ? 14 : 18,
+        widget.isCompact ? 12 : 16,
+        widget.isCompact ? 16 : 20,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.accentGreen.withValues(alpha: 0.15)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.cardDarkGreen.withValues(alpha: 0.9),
+            AppColors.cardDeepGreen.withValues(alpha: 0.95),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: widget.onBack,
+                icon: const Icon(Icons.arrow_back, color: Colors.white70, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Reset your PIN',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.instrumentSerif(
+              fontSize: widget.isCompact ? 20 : 22,
+              color: const Color(0xFFEAF7ED),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Enter your phone number to reset your PIN',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textGrey,
+              fontSize: widget.isCompact ? 12 : 13,
+            ),
+          ),
+          SizedBox(height: widget.isCompact ? 14 : 16),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: widget.isCompact ? 10 : 12),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: showActive
+                    ? AppColors.accentGreen.withValues(alpha: 0.8)
+                    : Colors.white.withValues(alpha: 0.1),
+                width: showActive ? 1.4 : 1.0,
+              ),
+              boxShadow: [
+                if (showActive)
+                  BoxShadow(
+                    color: AppColors.accentGreen.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+              ],
+            ),
+            child: Row(
+              children: [
+                _CountryPicker(isCompact: widget.isCompact),
+                const SizedBox(width: 8),
+                Container(width: 1, height: 20, color: Colors.white.withValues(alpha: 0.1)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: widget.mobileController,
+                    focusNode: _focusNode,
+                    onChanged: widget.onChanged,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: '9XX XXXX XXX',
+                      hintStyle: TextStyle(color: Color(0xFF61796A)),
+                      contentPadding: EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+                if (widget.canReset)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Icon(
+                      Icons.check_rounded,
+                      color: AppColors.accentGreen,
+                      size: 20,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: widget.isCompact ? 16 : 20),
+          Container(
+            decoration: widget.canReset
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.accentGreen.withValues(alpha: 0.45),
+                        blurRadius: 22,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  )
+                : null,
+            child: ElevatedButton(
+              onPressed: widget.canReset ? () {} : null,
+              style: ElevatedButton.styleFrom(
+                elevation: 0,
+                backgroundColor: widget.canReset ? AppColors.accentGreen : const Color(0xFF2D2D2D),
+                foregroundColor: widget.canReset ? Colors.black : Colors.white.withValues(alpha: 0.5),
+                disabledBackgroundColor: const Color(0xFF1A1A1A),
+                disabledForegroundColor: Colors.white.withValues(alpha: 0.2),
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(
+                    color: widget.canReset
+                        ? AppColors.accentGreen.withValues(alpha: 0.3)
+                        : Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+              ),
+              child: const Text(
+                'Send Reset Code',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
               ),
             ),
           ),
