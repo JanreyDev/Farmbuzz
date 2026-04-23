@@ -173,7 +173,7 @@ class _BreedingViewState extends State<_BreedingView> {
             const SizedBox(width: 8),
             Expanded(
               child: _ActionButton(
-                label: 'Collect eggs',
+                label: _subTabIndex == 0 ? 'Collect eggs' : 'Start incubating',
                 icon: Icons.add,
                 onTap: () {},
               ),
@@ -184,6 +184,7 @@ class _BreedingViewState extends State<_BreedingView> {
 
         // Sub-tab Content
         if (_subTabIndex == 0) const _CollectionGrid(),
+        if (_subTabIndex == 1) const _IncubatingGrid(),
         
         const SizedBox(height: 32),
       ],
@@ -2315,6 +2316,389 @@ class _HeroBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _IncubatingGrid extends StatelessWidget {
+  const _IncubatingGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        _IncubatingCard(
+          batchName: 'Apr 2026 • Barako × Inahin',
+          subLabel: 'Barako × Inahin',
+          day: 1,
+          totalDays: 21,
+          setCount: 31,
+          fertileCount: 10,
+          fertilePercent: '32%',
+          hatchedCount: 0,
+          status: 'CANDLING WINDOW',
+          statusColor: Color(0xFFFB923C),
+        ),
+        SizedBox(height: 16),
+        _IncubatingCard(
+          batchName: 'Apr 2026 • Lalaki',
+          subLabel: 'Lalaki',
+          day: 1,
+          totalDays: 21,
+          setCount: 9,
+          fertileCount: 0,
+          hatchedCount: 0,
+          status: 'CANDLING WINDOW',
+          statusColor: Color(0xFFFB923C),
+        ),
+        SizedBox(height: 16),
+        _IncubatingCard(
+          batchName: 'Apr 2026 • Stag × Pullet',
+          subLabel: 'Stag × Pullet',
+          day: 1,
+          totalDays: 21,
+          setCount: 10,
+          fertileCount: 0,
+          hatchedCount: 0,
+          status: 'CANDLING WINDOW',
+          statusColor: Color(0xFFFB923C),
+        ),
+      ],
+    );
+  }
+}
+class _IncubatingCard extends StatelessWidget {
+  const _IncubatingCard({
+    required this.batchName,
+    required this.subLabel,
+    required this.day,
+    required this.totalDays,
+    required this.setCount,
+    required this.fertileCount,
+    required this.hatchedCount,
+    this.fertilePercent,
+    required this.status,
+    required this.statusColor,
+  });
+
+  final String batchName;
+  final String subLabel;
+  final int day;
+  final int totalDays;
+  final int setCount;
+  final int fertileCount;
+  final String? fertilePercent;
+  final int hatchedCount;
+  final String status;
+  final Color statusColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey[100]!),
+      ),
+      child: Column(
+        children: [
+          // Header Section: Gradient Background
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFFF7ED), Color(0xFFFAF8F4)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusColor.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.fireplace_rounded, size: 20, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        status,
+                        style: GoogleFonts.inter(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          color: statusColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        batchName,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subLabel,
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: day.toString(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '/$totalDays',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '${totalDays - day}d to hatch',
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.more_vert_rounded, size: 20, color: Colors.grey[300]),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Progress Bar: Thick Blocks
+                Row(
+                  children: List.generate(totalDays, (index) {
+                    final bool isPassed = index < day;
+                    final bool isLastStage = index >= 18;
+                    
+                    Color blockColor = Colors.grey[100]!;
+                    if (isPassed) {
+                      blockColor = statusColor;
+                    } else if (isLastStage) {
+                      blockColor = const Color(0xFFDCFCE7); // Light green
+                    } else {
+                      blockColor = const Color(0xFFFEF3C7).withOpacity(0.5); // Light orange/yellow
+                    }
+
+                    return Expanded(
+                      child: Container(
+                        height: 14,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: blockColor,
+                          borderRadius: BorderRadius.circular(4),
+                          border: isPassed ? null : Border.all(color: Colors.grey[50]!),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 20),
+                // Stats Row: Bordered Blocks
+                Row(
+                  children: [
+                    _IncStat(label: 'SET', value: setCount.toString(), unit: 'eggs'),
+                    const SizedBox(width: 10),
+                    _IncStat(
+                      label: 'FERTILE',
+                      value: fertileCount.toString(),
+                      subValue: fertilePercent,
+                    ),
+                    const SizedBox(width: 10),
+                    _IncStat(label: 'HATCHED', value: hatchedCount.toString(), subValue: '—'),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Action Buttons: Bordered
+                Row(
+                  children: [
+                    _IncAction(icon: Icons.lightbulb_outline_rounded, label: 'Candle'),
+                    const SizedBox(width: 8),
+                    _IncAction(icon: Icons.thermostat_rounded, label: 'Env'),
+                    const SizedBox(width: 8),
+                    _IncAction(icon: Icons.auto_awesome_rounded, label: 'Hatch', isDisabled: true),
+                    const Spacer(),
+                    _IncAction(icon: Icons.visibility_outlined, label: 'Details', isPrimary: true),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _IncStat extends StatelessWidget {
+  const _IncStat({
+    required this.label,
+    required this.value,
+    this.unit,
+    this.subValue,
+  });
+
+  final String label;
+  final String value;
+  final String? unit;
+  final String? subValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[100]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                color: Colors.grey[400],
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
+                  ),
+                ),
+                if (unit != null) ...[
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      unit!,
+                      style: TextStyle(fontSize: 9, color: Colors.grey[400], fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+                if (subValue != null) ...[
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      subValue!,
+                      style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _IncAction extends StatelessWidget {
+  const _IncAction({
+    required this.icon,
+    required this.label,
+    this.isDisabled = false,
+    this.isPrimary = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isDisabled;
+  final bool isPrimary;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color = isDisabled ? Colors.grey[300]! : (isPrimary ? Colors.black : Colors.grey[700]!);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDisabled ? Colors.grey[50] : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isPrimary ? Colors.grey[200]! : (isDisabled ? Colors.grey[100]! : Colors.grey[200]!),
+        ),
+      ),
+      child: InkWell(
+        onTap: isDisabled ? null : () {},
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
