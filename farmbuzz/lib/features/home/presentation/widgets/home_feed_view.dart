@@ -94,7 +94,7 @@ class _StoriesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 160,
+      height: 190,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -134,12 +134,8 @@ class _AddStoryCard extends StatelessWidget {
       width: 100,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1B281B), Color(0xFF0A0F0A)],
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -148,54 +144,79 @@ class _AddStoryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Stack(
+      child: Column(
         children: [
-          const Positioned(
-            top: 12,
-            left: 12,
-            child: CircleAvatar(
-              radius: 14,
-              backgroundColor: Color(0xFF2D4F2D),
-              child: Icon(Icons.auto_awesome, color: AppColors.accentGreen, size: 14),
+          Expanded(
+            flex: 6,
+            child: Container(
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                image: DecorationImage(
+                  image: NetworkImage('https://i.pravatar.cc/150?u=janrey'),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            flex: 4,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                Text(
-                  'Your Story',
-                  style: GoogleFonts.instrumentSerif(
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(12),
+                      bottomRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: 12),
+                      Text(
+                        'Create story',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  '20h ago',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 10,
+                Positioned(
+                  top: -16,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppColors.accentGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 4,
-              decoration: const BoxDecoration(
-                color: AppColors.golden,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-              ),
             ),
           ),
         ],
@@ -223,7 +244,7 @@ class _StoryCard extends StatelessWidget {
       width: 100,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         image: DecorationImage(
           image: NetworkImage(imageUrl),
           fit: BoxFit.cover,
@@ -233,7 +254,7 @@ class _StoryCard extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -381,6 +402,7 @@ class _PostCard extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -397,57 +419,126 @@ class _PostCard extends StatelessWidget {
                   backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=trixie'),
                 ),
                 const SizedBox(width: 12),
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('TRIXIE', style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text('1h • 🌎', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                    const Text(
+                      'TRIXIE',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          '1h • ',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                        ),
+                        Icon(Icons.public, size: 10, color: Colors.grey[600]),
+                        Text(
+                          ' • Edited',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 const Spacer(),
-                IconButton(icon: const Icon(Icons.more_horiz), onPressed: () {}),
+                IconButton(
+                  icon: const Icon(Icons.more_horiz, color: Colors.grey),
+                  onPressed: () {},
+                ),
               ],
             ),
           ),
           
           // Post Text
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
               'OPEN FOR BIDDING GUYS\n2 KIND OF BREEDING NARIN MGA BOSS\nGET NYO NA :>\nPM IS THE KEY',
-              style: TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, height: 1.4),
             ),
           ),
 
           // Post Image
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.zero,
-            child: Image.network(
-              'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600',
-              width: double.infinity,
-              fit: BoxFit.cover,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Image.network(
+                'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600',
+                width: double.infinity,
+                height: 250,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
 
-          // Post Actions
+          // Engagement Stats
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                const Icon(Icons.favorite_border, size: 20, color: Colors.grey),
-                const SizedBox(width: 4),
-                const Text('24', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                const SizedBox(width: 16),
-                const Icon(Icons.chat_bubble_outline, size: 20, color: Colors.grey),
-                const SizedBox(width: 4),
-                const Text('8', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: AppColors.accentGreen,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.thumb_up, size: 10, color: Colors.white),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '2',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
                 const Spacer(),
-                const Icon(Icons.share_outlined, size: 20, color: Colors.grey),
+                Text(
+                  '4 comments',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(height: 1, thickness: 0.5, indent: 16, endIndent: 16),
+
+          // Action Buttons
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _PostAction(icon: Icons.thumb_up_outlined, label: 'Like'),
+                _PostAction(icon: Icons.chat_bubble_outline, label: 'Comment'),
+                _PostAction(icon: Icons.share_outlined, label: 'Share'),
+                _PostAction(icon: Icons.bookmark_outline, label: 'Save'),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PostAction extends StatelessWidget {
+  const _PostAction({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: () {},
+      icon: Icon(icon, size: 18, color: Colors.grey[700]),
+      label: Text(
+        label,
+        style: TextStyle(color: Colors.grey[700], fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.grey[200],
+        padding: const EdgeInsets.symmetric(horizontal: 8),
       ),
     );
   }
