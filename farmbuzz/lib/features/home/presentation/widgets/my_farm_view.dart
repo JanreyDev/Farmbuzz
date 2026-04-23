@@ -72,17 +72,22 @@ class _DashboardViewState extends State<_DashboardView> {
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: _buildTabContent(),
+              child: _selectedTabIndex == 0 
+                ? const _GetStartedCard() 
+                : const SizedBox.shrink(),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildTabContent() {
-    if (_selectedTabIndex != 0) return Container();
+class _GetStartedCard extends StatelessWidget {
+  const _GetStartedCard();
 
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -143,75 +148,75 @@ class _DashboardViewState extends State<_DashboardView> {
                   ),
                 ),
                 const SizedBox(height: 16),
-          
-          Text(
-            'Bring your farm to life in four steps',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Each step unlocks a layer of the dashboard — vitals, Bantay AI recommendations, milestones, and benchmarks all feed off this foundation.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[500],
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                '0 / 4 • 0%',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[400],
+                
+                Text(
+                  'Bring your farm to life in four steps',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          // Steps List
-          _OnboardingStep(
-            icon: Icons.egg_rounded,
-            color: const Color(0xFFB48634),
-            title: 'Start a breeding cycle',
-            description: 'Track 21 days of candling, settling, and hatch rates from a single timeline.',
-          ),
-          const SizedBox(height: 12),
-          _OnboardingStep(
-            icon: Icons.eco_rounded,
-            color: const Color(0xFF16A34A),
-            title: 'Add your first bird',
-            description: 'Vitals, lifecycle pyramid, and flock highlights come alive once your first bird is logged.',
-          ),
-          const SizedBox(height: 12),
-          _OnboardingStep(
-            icon: Icons.people_rounded,
-            color: const Color(0xFF475569),
-            title: 'Invite your team',
-            description: 'Your hands can log health and feed events from their phones. Every action is audited.',
-          ),
-          const SizedBox(height: 12),
-          _OnboardingStep(
-            icon: Icons.assignment_ind_rounded,
-            color: const Color(0xFF9A3412),
-            title: 'Complete your farm profile',
-            description: 'Add a bio and registration numbers (NIPIC, BAI, LGU) for buyer-facing trust.',
-          ),
-                ],
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  'Each step unlocks a layer of the dashboard — vitals, Bantay AI recommendations, milestones, and benchmarks all feed off this foundation.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[500],
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      '0 / 4 • 0%',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Steps List
+                const _OnboardingStep(
+                  icon: Icons.egg_rounded,
+                  color: Color(0xFFB48634),
+                  title: 'Start a breeding cycle',
+                  description: 'Track 21 days of candling, settling, and hatch rates from a single timeline.',
+                ),
+                const SizedBox(height: 12),
+                const _OnboardingStep(
+                  icon: Icons.eco_rounded,
+                  color: Color(0xFF16A34A),
+                  title: 'Add your first bird',
+                  description: 'Vitals, lifecycle pyramid, and flock highlights come alive once your first bird is logged.',
+                ),
+                const SizedBox(height: 12),
+                const _OnboardingStep(
+                  icon: Icons.people_rounded,
+                  color: Color(0xFF475569),
+                  title: 'Invite your team',
+                  description: 'Your hands can log health and feed events from their phones. Every action is audited.',
+                ),
+                const SizedBox(height: 12),
+                const _OnboardingStep(
+                  icon: Icons.assignment_ind_rounded,
+                  color: Color(0xFF9A3412),
+                  title: 'Complete your farm profile',
+                  description: 'Add a bio and registration numbers (NIPIC, BAI, LGU) for buyer-facing trust.',
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
   }
 }
 
