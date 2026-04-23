@@ -105,6 +105,10 @@ class _DashboardViewState extends State<_DashboardView> {
         );
       case 1:
         return const _BreedingView();
+      case 2:
+        return const _FlockView();
+      case 3:
+        return const _TeamView();
       default:
         return const SizedBox.shrink();
     }
@@ -221,13 +225,15 @@ class _PerformanceSection extends StatelessWidget {
           children: const [
             _StatCard(
               title: 'FERTILITY RATE',
+              value: '32%',
               icon: Icons.egg_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
-              description: 'Candle your first cycle to see this.',
+              description: 'Well below average — troubleshoot.',
             ),
             _StatCard(
               title: 'HATCH RATE',
+              value: '—',
               icon: Icons.auto_awesome_rounded,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -235,6 +241,7 @@ class _PerformanceSection extends StatelessWidget {
             ),
             _StatCard(
               title: 'SETTLING LOSS',
+              value: '—',
               icon: Icons.favorite_border_rounded,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -273,6 +280,7 @@ class _LifecycleSection extends StatelessWidget {
           children: const [
             _StatCard(
               title: 'BROODING MORTALITY',
+              value: '—',
               icon: Icons.home_outlined,
               color: Color(0xFF9A3412),
               iconBg: Color(0xFFFFF7ED),
@@ -280,6 +288,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             _StatCard(
               title: 'STAGE SURVIVAL',
+              value: '—',
               icon: Icons.show_chart_rounded,
               color: Color(0xFF1E40AF),
               iconBg: Color(0xFFEFF6FF),
@@ -287,6 +296,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             _StatCard(
               title: 'CULL RATE',
+              value: '—',
               icon: Icons.content_cut_rounded,
               color: Color(0xFF854D0E),
               iconBg: Color(0xFFFEFCE8),
@@ -294,6 +304,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             _StatCard(
               title: 'TIME TO MATURITY',
+              value: '—',
               icon: Icons.timer_outlined,
               color: Color(0xFF475569),
               iconBg: Color(0xFFF1F5F9),
@@ -332,6 +343,7 @@ class _QualitySection extends StatelessWidget {
           children: const [
             _StatCard(
               title: 'BULL STAG RATE',
+              value: '—',
               icon: Icons.military_tech_outlined,
               color: Color(0xFFB48634),
               iconBg: Color(0xFFFEFCE8),
@@ -339,6 +351,7 @@ class _QualitySection extends StatelessWidget {
             ),
             _StatCard(
               title: 'BROOD PROMOTION RATE',
+              value: '—',
               icon: Icons.workspace_premium_outlined,
               color: Color(0xFFB48634),
               iconBg: Color(0xFFFEFCE8),
@@ -377,6 +390,7 @@ class _HealthSection extends StatelessWidget {
           children: const [
             _StatCard(
               title: 'VACCINATION RATE',
+              value: '—',
               icon: Icons.medical_services_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -384,6 +398,7 @@ class _HealthSection extends StatelessWidget {
             ),
             _StatCard(
               title: 'DISEASE INCIDENCE',
+              value: '—',
               icon: Icons.bug_report_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -391,6 +406,7 @@ class _HealthSection extends StatelessWidget {
             ),
             _StatCard(
               title: 'AVG WEIGHT GAIN',
+              value: '—',
               icon: Icons.fitness_center_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -414,24 +430,27 @@ class _BreedingStats extends StatelessWidget {
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 2.1,
+      childAspectRatio: 1.4,
       children: const [
         _StatCard(
           title: 'EGGS INCUBATING',
+          value: '71',
           icon: Icons.egg_outlined,
           color: Color(0xFF9A3412),
           iconBg: Color(0xFFFFF7ED),
-          description: 'Nothing in the incubator',
+          description: '71 at stake across active cycles',
         ),
         _StatCard(
           title: 'AVG FERTILITY',
+          value: '32%',
           icon: Icons.analytics_outlined,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
-          description: 'Log candling to see fertility.',
+          description: 'Well below average — troubleshoot.',
         ),
         _StatCard(
           title: 'AVG YIELD',
+          value: '—',
           icon: Icons.auto_awesome_rounded,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
@@ -439,6 +458,7 @@ class _BreedingStats extends StatelessWidget {
         ),
         _StatCard(
           title: 'CHICK QUALITY',
+          value: '—',
           icon: Icons.star_outline_rounded,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
@@ -666,7 +686,14 @@ class _ViewToggle extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Colors.grey[100]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -709,22 +736,40 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 16),
-      label: Text(
-        label,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF16A34A), Color(0xFF15803D)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF16A34A).withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF16A34A),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+        label: Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }
@@ -1096,10 +1141,12 @@ class _StatCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.description,
+    this.value = '—',
     this.iconBg,
   });
 
   final String title;
+  final String value;
   final IconData icon;
   final Color color;
   final String description;
@@ -1127,7 +1174,7 @@ class _StatCard extends StatelessWidget {
             left: 0,
             top: 0,
             bottom: 0,
-            width: 2,
+            width: 3,
             child: Container(color: color),
           ),
           Padding(
@@ -1161,12 +1208,12 @@ class _StatCard extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-                Container(
-                  width: 20,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(2),
+                Text(
+                  value,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black,
                   ),
                 ),
                 const Spacer(),
@@ -2760,3 +2807,926 @@ class _ArchiveView extends StatelessWidget {
     );
   }
 }
+
+
+class _FlockView extends StatefulWidget {
+  const _FlockView();
+
+  @override
+  State<_FlockView> createState() => _FlockViewState();
+}
+
+class _FlockViewState extends State<_FlockView> {
+  int _categoryTabIndex = 0;
+  int _stageTabIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Flock Stats
+        const _FlockStats(),
+        const SizedBox(height: 24),
+
+        // Lifecycle Timeline
+        const _FlockTimeline(),
+        const SizedBox(height: 24),
+
+        // Category Sub-tabs
+        Row(
+          children: [
+            Expanded(
+              child: _SubTabItem(
+                label: 'Batch',
+                icon: Icons.layers_outlined,
+                count: 0,
+                isActive: _categoryTabIndex == 0,
+                onTap: () => setState(() => _categoryTabIndex = 0),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SubTabItem(
+                label: 'Stag / Cock',
+                icon: Icons.military_tech_outlined,
+                count: 0,
+                isActive: _categoryTabIndex == 1,
+                onTap: () => setState(() => _categoryTabIndex = 1),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SubTabItem(
+                label: 'Pullet / Hen',
+                icon: Icons.female_rounded,
+                count: 0,
+                isActive: _categoryTabIndex == 2,
+                onTap: () => setState(() => _categoryTabIndex = 2),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Stage Filters
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _StageFilter(
+                label: 'Brooder',
+                icon: Icons.fireplace_rounded,
+                count: 0,
+                isActive: _stageTabIndex == 0,
+                onTap: () => setState(() => _stageTabIndex = 0),
+              ),
+              const SizedBox(width: 8),
+              _StageFilter(
+                label: 'Range',
+                icon: Icons.terrain_rounded,
+                count: 0,
+                isActive: _stageTabIndex == 1,
+                onTap: () => setState(() => _stageTabIndex = 1),
+              ),
+              const SizedBox(width: 8),
+              _StageFilter(
+                label: 'Archive',
+                icon: Icons.inventory_2_rounded,
+                count: 0,
+                isActive: _stageTabIndex == 2,
+                onTap: () => setState(() => _stageTabIndex = 2),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Action Bar
+        Row(
+          children: [
+            const _ViewToggle(),
+            const Spacer(),
+            _ActionButton(
+              label: 'Add batch',
+              icon: Icons.add,
+              onTap: () {},
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Empty State
+        const _FlockEmptyState(),
+        const SizedBox(height: 32),
+      ],
+    );
+  }
+}
+
+class _FlockStats extends StatelessWidget {
+  const _FlockStats();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.4,
+      children: const [
+        _StatCard(
+          title: 'MY FLOCK',
+          value: '0',
+          icon: Icons.groups_rounded,
+          color: Color(0xFF16A34A),
+          iconBg: Color(0xFFF0FDF4),
+          description: 'no birds yet',
+        ),
+        _StatCard(
+          title: 'SURVIVABILITY (30D)',
+          value: '—',
+          icon: Icons.shield_outlined,
+          color: Color(0xFF16A34A),
+          iconBg: Color(0xFFF0FDF4),
+          description: 'add birds to start tracking',
+        ),
+        _StatCard(
+          title: 'MORTALITY (30D)',
+          value: '—',
+          icon: Icons.show_chart_rounded,
+          color: Color(0xFF64748B),
+          iconBg: Color(0xFFF8FAFC),
+          description: 'nothing to measure yet',
+        ),
+      ],
+    );
+  }
+}
+
+class _FlockTimeline extends StatelessWidget {
+  const _FlockTimeline();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            Positioned(
+              top: 6,
+              left: 20,
+              right: 20,
+              child: Container(height: 1.5, color: Colors.grey[200]),
+            ),
+            Row(
+              children: const [
+                _TimelineStep(
+                  label: 'Brooder',
+                  days: 'DAY 1 - 6 WKS',
+                  icon: Icons.fireplace_rounded,
+                  color: Color(0xFFFB923C),
+                  iconBg: Color(0xFFFFF7ED),
+                ),
+                SizedBox(width: 40),
+                _TimelineStep(
+                  label: 'Range',
+                  days: '6 WKS - 4 MOS',
+                  icon: Icons.terrain_rounded,
+                  color: Color(0xFF16A34A),
+                  iconBg: Color(0xFFF0FDF4),
+                ),
+                SizedBox(width: 40),
+                _TimelineStep(
+                  label: 'Cording',
+                  days: '4 MOS +',
+                  icon: Icons.bolt_rounded,
+                  color: Color(0xFF3B82F6),
+                  iconBg: Color(0xFFEFF6FF),
+                ),
+                SizedBox(width: 40),
+                _TimelineStep(
+                  label: 'Stag',
+                  days: '9 - 23 MOS',
+                  icon: Icons.insights_rounded,
+                  color: Color(0xFF3B82F6),
+                  iconBg: Color(0xFFEFF6FF),
+                ),
+                SizedBox(width: 40),
+                _TimelineStep(
+                  label: 'Cock',
+                  days: '2 - 4 YRS +',
+                  icon: Icons.workspace_premium_rounded,
+                  color: Color(0xFF1E3A8A),
+                  iconBg: Color(0xFFEEF2FF),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StageFilter extends StatelessWidget {
+  const _StageFilter({
+    required this.label,
+    required this.icon,
+    required this.count,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final int count;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFFF0FDF4) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? const Color(0xFF16A34A).withOpacity(0.2) : Colors.grey[200]!,
+          ),
+          boxShadow: isActive ? [
+            BoxShadow(
+              color: const Color(0xFF16A34A).withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ] : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive ? const Color(0xFF16A34A) : Colors.grey[400],
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: isActive ? const Color(0xFF16A34A) : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isActive ? const Color(0xFF16A34A).withOpacity(0.1) : Colors.grey[50],
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                count.toString(),
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: isActive ? const Color(0xFF16A34A) : Colors.grey[400],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FlockEmptyState extends StatelessWidget {
+  const _FlockEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF8F4),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey[100]!),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF0FDF4),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.group_work_outlined,
+              size: 32,
+              color: Color(0xFF16A34A),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No brooder batches',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'New hatches land here as brooder batches, day 1 to 6 weeks.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Colors.grey[500],
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TeamView extends StatelessWidget {
+  const _TeamView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Team Header Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.grey[200]!),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFBD805F),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.person_add_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'TEAM MANAGEMENT',
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF64748B),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Just you for now',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Invite by phone — we SMS them a join link. No email needed.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  _ActionButton(
+                    label: 'Invite member',
+                    icon: Icons.add_circle_outline_rounded,
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 32),
+
+        // Members Section
+        Text(
+          'Members',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Invite hands, your manager, and your vet. SMS-first — no email required.',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[500],
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Empty State
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFAF8F4),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.grey[100]!),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.people_outline_rounded,
+                  size: 32,
+                  color: Color(0xFF16A34A),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Invite your first teammate',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Hand keepers log daily food. Managers run the farm. Your vet writes health records. An accountant sees only the numbers. Each role sees only what they need.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: Colors.grey[500],
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _ActionButton(
+                label: 'Send first invite',
+                icon: Icons.send_rounded,
+                onTap: () {},
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 40),
+
+        // Permission Matrix
+        Text(
+          'Permission matrix',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'What each role can do. Tap any cell to see the rule.',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[500],
+          ),
+        ),
+        const SizedBox(height: 24),
+        
+        // Matrix Table
+        const _MatrixHeader(),
+        const _MatrixRow(label: 'SCOPE', values: ['OWNER', 'MANAGER', 'CARETAKER', 'VETERINARIAN', 'VIEWER'], isHeader: true),
+        const Divider(height: 1),
+        const _MatrixRow(label: 'Farm Settings', values: ['Full', 'Full', 'None', 'None', 'Read']),
+        const _MatrixRow(label: 'Breeding Logic', values: ['Full', 'Full', 'Read', 'None', 'Read']),
+        const _MatrixRow(label: 'Flock Records', values: ['Full', 'Full', 'Full', 'Read', 'Read']),
+        const _MatrixRow(label: 'Health Logs', values: ['Full', 'Full', 'Full', 'Full', 'Read']),
+        const _MatrixRow(label: 'Financials', values: ['Full', 'Read', 'None', 'None', 'Read']),
+        const _MatrixRow(label: 'Team Mgmt', values: ['Full', 'None', 'None', 'None', 'None']),
+        const SizedBox(height: 40),
+
+        // Recent Activity
+        Text(
+          'Recent activity',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Every change on this farm, traceable to a person.',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[500],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Activity Groups
+        const _ActivityGroupHeader(label: 'TODAY'),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey[100]!),
+          ),
+          child: Column(
+            children: const [
+              _ActivityItem(
+                userName: 'Janrey',
+                action: 'created a hatch batch',
+                time: '2:21 PM',
+                icon: Icons.access_time_rounded,
+                isGreen: true,
+              ),
+              Divider(height: 1),
+              _ActivityItem(
+                userName: 'Janrey',
+                action: 'candled a hatch batch',
+                time: '2:00 PM',
+                icon: Icons.access_time_rounded,
+                isGreen: true,
+              ),
+              Divider(height: 1),
+              _ActivityItem(
+                userName: 'Janrey',
+                action: 'collection logged',
+                time: '1:58 PM',
+                icon: Icons.access_time_rounded,
+              ),
+              Divider(height: 1),
+              _ActivityItem(
+                userName: 'Janrey',
+                action: 'collection logged',
+                time: '1:31 PM',
+                icon: Icons.access_time_rounded,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        const _ActivityGroupHeader(label: 'YESTERDAY'),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey[100]!),
+          ),
+          child: const _ActivityItem(
+            userName: 'Janrey',
+            action: 'created the farm',
+            time: '11:48 AM',
+            icon: Icons.access_time_rounded,
+          ),
+        ),
+        const SizedBox(height: 32),
+
+        // Audit Trail Banner
+        const _AuditTrailBanner(),
+        
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+}
+
+class _ActivityGroupHeader extends StatelessWidget {
+  const _ActivityGroupHeader({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          color: Colors.grey[400],
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityItem extends StatelessWidget {
+  const _ActivityItem({
+    required this.userName,
+    required this.action,
+    required this.time,
+    required this.icon,
+    this.isGreen = false,
+  });
+
+  final String userName;
+  final String action;
+  final String time;
+  final IconData icon;
+  final bool isGreen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isGreen ? const Color(0xFFF0FDF4) : const Color(0xFFF1F5F9),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 14,
+              color: isGreen ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: Colors.black,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: '$userName ',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(
+                        text: action,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  time,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[400],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AuditTrailBanner extends StatelessWidget {
+  const _AuditTrailBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCFCE7)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF16A34A),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.shield_rounded,
+              size: 16,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'The audit trail is tamper-proof',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF166534),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'When you remove a team member, their access revokes immediately. Everything they logged before removal stays — you can\'t delete history. That\'s what makes the record trustworthy to vets, buyers, and registries.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: const Color(0xFF15803D).withOpacity(0.8),
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _MatrixHeader extends StatelessWidget {
+  const _MatrixHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 12),
+          Text(
+            'ROLE PERMISSIONS',
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              color: Colors.grey[400],
+              letterSpacing: 1.0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MatrixRow extends StatelessWidget {
+  const _MatrixRow({
+    required this.label,
+    required this.values,
+    this.isHeader = false,
+  });
+
+  final String label;
+  final List<String> values;
+  final bool isHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isHeader ? Colors.white : null,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey[100]!),
+        ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: isHeader ? FontWeight.w900 : FontWeight.w700,
+                color: isHeader ? Colors.grey[400] : Colors.black,
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: values.map((v) => _MatrixCell(value: v, isHeader: isHeader)).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MatrixCell extends StatelessWidget {
+  const _MatrixCell({required this.value, required this.isHeader});
+  final String value;
+  final bool isHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isFull = value == 'Full';
+    final bool isNone = value == 'None';
+    
+    return Container(
+      width: 100,
+      alignment: Alignment.center,
+      child: isHeader 
+        ? Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF1E40AF),
+            ),
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isFull ? const Color(0xFFF0FDF4) : (isNone ? const Color(0xFFFEF2F2) : const Color(0xFFF1F5F9)),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                color: isFull ? const Color(0xFF16A34A) : (isNone ? const Color(0xFFEF4444) : const Color(0xFF64748B)),
+              ),
+            ),
+          ),
+    );
+  }
+}
+
