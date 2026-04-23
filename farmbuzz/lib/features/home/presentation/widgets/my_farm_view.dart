@@ -167,24 +167,27 @@ class _BreedingViewState extends State<_BreedingView> {
         ),
         const SizedBox(height: 12),
         // Action bar: Full-width
-        Row(
-          children: [
-            const _ViewToggle(),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ActionButton(
-                label: _subTabIndex == 0 ? 'Collect eggs' : 'Start incubating',
-                icon: Icons.add,
-                onTap: () {},
+        if (_subTabIndex != 2) ...[
+          Row(
+            children: [
+              const _ViewToggle(),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ActionButton(
+                  label: _subTabIndex == 0 ? 'Collect eggs' : 'Start incubating',
+                  icon: Icons.add,
+                  onTap: () {},
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
 
         // Sub-tab Content
         if (_subTabIndex == 0) const _CollectionGrid(),
         if (_subTabIndex == 1) const _IncubatingGrid(),
+        if (_subTabIndex == 2) const _ArchiveView(),
         
         const SizedBox(height: 32),
       ],
@@ -2699,6 +2702,60 @@ class _IncAction extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+class _ArchiveView extends StatelessWidget {
+  const _ArchiveView();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF8F4),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey[100]!),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF0FDF4),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.inventory_2_outlined,
+              size: 32,
+              color: Color(0xFF16A34A),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No archived batches yet',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Moved-to-brooder and cancelled cycles land here. They keep the full paper trail so you can compare seasons.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: Colors.grey[500],
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
