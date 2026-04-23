@@ -68,31 +68,125 @@ class _DashboardViewState extends State<_DashboardView> {
             const SizedBox(height: 12),
             _DashboardTabs(
               selectedIndex: _selectedTabIndex,
-              onChanged: (index) => setState(() => _selectedTabIndex = index),
+              onChanged: (index) => setState(() {
+                _selectedTabIndex = index;
+                _selectedSubTabIndex = 0; // Reset sub-tab when main tab changes
+              }),
             ),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _selectedTabIndex == 0 
-                ? Column(
-                    children: const [
-                      _GetStartedCard(),
-                      SizedBox(height: 24),
-                      _PerformanceSection(),
-                      SizedBox(height: 24),
-                      _LifecycleSection(),
-                      SizedBox(height: 24),
-                      _QualitySection(),
-                      SizedBox(height: 24),
-                      _HealthSection(),
-                      SizedBox(height: 32),
-                    ],
-                  )
-                : const SizedBox.shrink(),
+              child: _buildTabContent(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  int _selectedSubTabIndex = 0;
+
+  Widget _buildTabContent() {
+    switch (_selectedTabIndex) {
+      case 0:
+        return Column(
+          children: const [
+            _GetStartedCard(),
+            SizedBox(height: 24),
+            _PerformanceSection(),
+            SizedBox(height: 24),
+            _LifecycleSection(),
+            SizedBox(height: 24),
+            _QualitySection(),
+            SizedBox(height: 24),
+            _HealthSection(),
+            SizedBox(height: 32),
+          ],
+        );
+      case 1:
+        return const _BreedingView();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+}
+
+class _BreedingView extends StatefulWidget {
+  const _BreedingView();
+
+  @override
+  State<_BreedingView> createState() => _BreedingViewState();
+}
+
+class _BreedingViewState extends State<_BreedingView> {
+  int _subTabIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Breeding Stats
+        const _BreedingStats(),
+        const SizedBox(height: 24),
+        
+        // Timeline
+        const _BreedingTimeline(),
+        const SizedBox(height: 24),
+
+        // Sub-tabs: Full-width with Gaps
+        Row(
+          children: [
+            Expanded(
+              child: _SubTabItem(
+                label: 'Collection',
+                icon: Icons.inventory_2_outlined,
+                count: 4,
+                isActive: _subTabIndex == 0,
+                onTap: () => setState(() => _subTabIndex = 0),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SubTabItem(
+                label: 'Incubating',
+                icon: Icons.timer_outlined,
+                isActive: _subTabIndex == 1,
+                onTap: () => setState(() => _subTabIndex = 1),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SubTabItem(
+                label: 'Archive',
+                icon: Icons.archive_outlined,
+                isActive: _subTabIndex == 2,
+                onTap: () => setState(() => _subTabIndex = 2),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Action bar: Full-width
+        Row(
+          children: [
+            const _ViewToggle(),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _ActionButton(
+                label: 'Collect eggs',
+                icon: Icons.add,
+                onTap: () {},
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Sub-tab Content
+        if (_subTabIndex == 0) const _CollectionGrid(),
+        
+        const SizedBox(height: 32),
+      ],
     );
   }
 }
@@ -301,6 +395,605 @@ class _HealthSection extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _BreedingStats extends StatelessWidget {
+  const _BreedingStats();
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 2.1,
+      children: const [
+        _StatCard(
+          title: 'EGGS INCUBATING',
+          icon: Icons.egg_outlined,
+          color: Color(0xFF9A3412),
+          iconBg: Color(0xFFFFF7ED),
+          description: 'Nothing in the incubator',
+        ),
+        _StatCard(
+          title: 'AVG FERTILITY',
+          icon: Icons.analytics_outlined,
+          color: Color(0xFF475569),
+          iconBg: Color(0xFFF1F5F9),
+          description: 'Log candling to see fertility.',
+        ),
+        _StatCard(
+          title: 'AVG YIELD',
+          icon: Icons.auto_awesome_rounded,
+          color: Color(0xFF475569),
+          iconBg: Color(0xFFF1F5F9),
+          description: 'Log a hatch to see yield.',
+        ),
+        _StatCard(
+          title: 'CHICK QUALITY',
+          icon: Icons.star_outline_rounded,
+          color: Color(0xFF475569),
+          iconBg: Color(0xFFF1F5F9),
+          description: 'Log hatch outcomes to see quality.',
+        ),
+      ],
+    );
+  }
+}
+
+class _BreedingTimeline extends StatelessWidget {
+  const _BreedingTimeline();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          // Background Line
+          Positioned(
+            top: 6,
+            left: 40,
+            right: 40,
+            child: Container(
+              height: 1.5,
+              color: Colors.grey[200],
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: const [
+              _TimelineStep(
+                label: 'Candling',
+                days: 'DAY 1-10',
+                icon: Icons.lightbulb_outline_rounded,
+                color: Color(0xFFFB923C),
+                iconBg: Color(0xFFFFF7ED),
+              ),
+              _TimelineStep(
+                label: 'Settling',
+                days: 'DAY 11-18',
+                icon: Icons.settings_input_component_rounded,
+                color: Color(0xFF475569),
+                iconBg: Color(0xFFF1F5F9),
+              ),
+              _TimelineStep(
+                label: 'Hatch',
+                days: 'DAY 19-21',
+                icon: Icons.egg_outlined,
+                color: Color(0xFF16A34A),
+                iconBg: Color(0xFFF0FDF4),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineStep extends StatelessWidget {
+  const _TimelineStep({
+    required this.label,
+    required this.days,
+    required this.icon,
+    required this.color,
+    required this.iconBg,
+    this.isLast = false,
+  });
+
+  final String label;
+  final String days;
+  final IconData icon;
+  final Color color;
+  final Color iconBg;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Hollow Circle on Line
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 2.5),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Label Section below
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Icon(icon, size: 10, color: color),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+                Text(
+                  days,
+                  style: GoogleFonts.inter(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.info_outline_rounded, size: 10, color: Colors.grey[300]),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SubTabItem extends StatelessWidget {
+  const _SubTabItem({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.isActive = false,
+    this.count,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool isActive;
+  final int? count;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF16A34A) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF16A34A).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isActive ? Colors.white : Colors.grey[500],
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: isActive ? Colors.white : Colors.grey[500],
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: isActive ? Colors.white.withOpacity(0.2) : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: GoogleFonts.inter(
+                    fontSize: 8,
+                    fontWeight: FontWeight.w900,
+                    color: isActive ? Colors.white : Colors.grey[600],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ViewToggle extends StatelessWidget {
+  const _ViewToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          _ToggleItem(icon: Icons.grid_view_rounded, isActive: true),
+          _ToggleItem(icon: Icons.list_rounded, isActive: false),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleItem extends StatelessWidget {
+  const _ToggleItem({required this.icon, required this.isActive});
+  final IconData icon;
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: isActive ? Colors.grey[100] : Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Icon(icon, size: 16, color: isActive ? Colors.black : Colors.grey[400]),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16),
+      label: Text(
+        label,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF16A34A),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+class _CollectionGrid extends StatelessWidget {
+  const _CollectionGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        _CollectionCard(
+          title: 'Female',
+          count: 21,
+          date: 'Apr 23',
+          age: '0d old',
+          note: '—',
+        ),
+        SizedBox(height: 12),
+        _CollectionCard(
+          title: 'Lalaki',
+          count: 9,
+          date: 'Apr 23',
+          age: '0d old',
+          note: '—',
+        ),
+        SizedBox(height: 12),
+        _CollectionCard(
+          title: 'Stag × Pullet',
+          count: 10,
+          date: 'Apr 23',
+          age: '0d old',
+          note: '2nd batch',
+        ),
+        SizedBox(height: 12),
+        _CollectionCard(
+          title: 'Cock × Hen',
+          count: 21,
+          date: 'Apr 23',
+          age: '0d old',
+          note: 'this is just a test',
+        ),
+      ],
+    );
+  }
+}
+
+class _CollectionCard extends StatelessWidget {
+  const _CollectionCard({
+    required this.title,
+    required this.count,
+    required this.date,
+    required this.age,
+    this.note,
+  });
+
+  final String title;
+  final int count;
+  final String date;
+  final String age;
+  final String? note;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[100]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: Title and Egg Count
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'FRESH',
+                          style: GoogleFonts.inter(
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF16A34A),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      count.toString(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Text(
+                      'EGGS',
+                      style: GoogleFonts.inter(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.grey[400],
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Middle Section: Metadata (Cream background)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAF8F4),
+              border: Border.symmetric(
+                horizontal: BorderSide(color: Colors.grey[100]!),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.grey),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Collected $date • $age',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Text(
+                        'NOTE',
+                        style: GoogleFonts.inter(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        note ?? '—',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Footer: Flush Action Blocks
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                _FooterIconButton(
+                  icon: Icons.edit_outlined,
+                  onTap: () {},
+                ),
+                _FooterIconButton(
+                  icon: Icons.delete_outline_rounded,
+                  onTap: () {},
+                ),
+                Expanded(
+                  child: Material(
+                    color: const Color(0xFF16A34A),
+                    child: InkWell(
+                      onTap: () {},
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.auto_awesome_rounded, size: 14, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Incubate $count eggs',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FooterIconButton extends StatelessWidget {
+  const _FooterIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 50,
+      decoration: BoxDecoration(
+        border: Border(
+          right: BorderSide(color: Colors.grey[100]!),
+        ),
+      ),
+      child: Material(
+        color: Colors.white,
+        child: InkWell(
+          onTap: onTap,
+          child: Center(
+            child: Icon(icon, size: 18, color: Colors.grey[400]),
+          ),
+        ),
+      ),
     );
   }
 }
