@@ -109,6 +109,8 @@ class _DashboardViewState extends State<_DashboardView> {
         return const _FlockView();
       case 3:
         return const _TeamView();
+      case 4:
+        return const _ReportsView();
       default:
         return const SizedBox.shrink();
     }
@@ -3174,12 +3176,16 @@ class _TeamView extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFFAF5), Color(0xFFFFF4EB)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.grey[200]!),
+            border: Border.all(color: const Color(0xFFFFE4D1)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: const Color(0xFFFB923C).withOpacity(0.05),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -3210,7 +3216,7 @@ class _TeamView extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: const Color(0xFFFFEDD5),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -3730,3 +3736,672 @@ class _MatrixCell extends StatelessWidget {
   }
 }
 
+class _ReportsView extends StatefulWidget {
+  const _ReportsView();
+
+  @override
+  State<_ReportsView> createState() => _ReportsViewState();
+}
+
+class _ReportsViewState extends State<_ReportsView> {
+  int _categoryIndex = 0;
+  int _scopeIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Reports Header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFFAF5), Color(0xFFFFF4EB)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFFFE4D1)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFB923C).withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFBD805F),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.bar_chart_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFEDD5),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'YOUR FARM IN NUMBERS',
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFBD805F),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Farm name · Gamefowl metrics',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Every number updates as you log. PH benchmarks shown where available.',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  _ActionButton(
+                    label: 'Yearbook PDF',
+                    icon: Icons.description_outlined,
+                    onTap: () {},
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Category Filter Bar
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _MetricFilterChip(
+                label: 'Production',
+                count: 6,
+                icon: Icons.auto_awesome_rounded,
+                isActive: _categoryIndex == 0,
+                onTap: () => setState(() => _categoryIndex = 0),
+              ),
+              const SizedBox(width: 8),
+              _MetricFilterChip(
+                label: 'Efficiency',
+                count: 3,
+                icon: Icons.speed_rounded,
+                isActive: _categoryIndex == 1,
+                onTap: () => setState(() => _categoryIndex = 1),
+              ),
+              const SizedBox(width: 8),
+              _MetricFilterChip(
+                label: 'Risk',
+                count: 5,
+                icon: Icons.warning_amber_rounded,
+                isActive: _categoryIndex == 2,
+                onTap: () => setState(() => _categoryIndex = 2),
+              ),
+              const SizedBox(width: 8),
+              _MetricFilterChip(
+                label: 'Economics',
+                count: 3,
+                icon: Icons.payments_rounded,
+                isActive: _categoryIndex == 3,
+                onTap: () => setState(() => _categoryIndex = 3),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Scope Filter Bar
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Text(
+                'SCOPE',
+                style: GoogleFonts.inter(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.grey[400],
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(width: 16),
+              _ScopeChip(label: 'All', count: 6, isActive: _scopeIndex == 0, onTap: () => setState(() => _scopeIndex = 0)),
+              const SizedBox(width: 8),
+              _ScopeChip(label: 'Farm', count: 4, isActive: _scopeIndex == 1, onTap: () => setState(() => _scopeIndex = 1)),
+              const SizedBox(width: 8),
+              _ScopeChip(label: 'Batch', count: 2, isActive: _scopeIndex == 2, onTap: () => setState(() => _scopeIndex = 2)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Category Header
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDCFCE7)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle),
+                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Production · 6 metrics',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF166534),
+                    ),
+                  ),
+                  Text(
+                    'What your farm produces — birds, eggs, hatches.',
+                    style: TextStyle(fontSize: 11, color: const Color(0xFF15803D).withOpacity(0.8)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Metric Grid
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 0.8,
+          children: const [
+            _MetricCard(
+              title: 'FERTILITY RATE',
+              badge: 'FARM',
+              formula: 'Fertile eggs ÷ eggs set',
+            ),
+            _MetricCard(
+              title: 'HATCH RATE',
+              badge: 'BATCH',
+              formula: 'Chicks hatched ÷ fertile eggs',
+            ),
+            _MetricCard(
+              title: 'CHICK SURVIVAL (8WK)',
+              badge: 'BATCH',
+              formula: 'Chicks surviving to 8 weeks',
+            ),
+            _MetricCard(
+              title: 'STAG → COCK RATE',
+              badge: 'FARM',
+              formula: 'Stags reaching cock / brood-cock selection',
+            ),
+            _MetricCard(
+              title: 'PEDIGREE DEPTH',
+              badge: 'FARM',
+              formula: 'Average documented generations',
+            ),
+            _MetricCard(
+              title: 'AUTHENTICATED FLOCK',
+              badge: 'FARM',
+              formula: 'Birds with active QR certificates',
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 40),
+        
+        // PH Benchmarks Header
+        Text(
+          'PH benchmarks',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Private, opt-in comparison to anonymized peer farms of your type + region.',
+          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+        ),
+        const SizedBox(height: 20),
+
+        // Benchmark Feature Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFDCFCE7)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF16A34A),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.public_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Know where you stand among PH breeders',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'We aggregate numbers across PH farms of your type and share anonymized percentile comparisons. Your individual numbers are never shared — only medians and top-10% bands. Opt out anytime from Settings.',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _BenchmarkAction(
+                      label: 'Download card',
+                      icon: Icons.file_download_outlined,
+                      onTap: () {},
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _BenchmarkAction(
+                      label: 'Share profile',
+                      icon: Icons.share_rounded,
+                      onTap: () {},
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+}
+
+class _MetricFilterChip extends StatelessWidget {
+  const _MetricFilterChip({
+    required this.label,
+    required this.count,
+    required this.icon,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final IconData icon;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF16A34A) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isActive ? Colors.transparent : Colors.grey[200]!),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 14, color: isActive ? Colors.white : Colors.grey[500]),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: isActive ? Colors.white : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isActive ? Colors.white.withOpacity(0.2) : Colors.grey[100],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count.toString(),
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: isActive ? Colors.white : Colors.grey[400],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScopeChip extends StatelessWidget {
+  const _ScopeChip({
+    required this.label,
+    required this.count,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF16A34A) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isActive ? Colors.transparent : Colors.grey[200]!),
+        ),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: isActive ? Colors.white : Colors.grey[600],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              count.toString(),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: isActive ? Colors.white : Colors.grey[400],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.title,
+    required this.badge,
+    required this.formula,
+    this.value = '—',
+  });
+
+  final String title;
+  final String badge;
+  final String formula;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[100]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(height: 3, color: const Color(0xFF16A34A)),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.grey[400],
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              badge,
+                              style: GoogleFonts.inter(
+                                fontSize: 7,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            Icon(Icons.info_outline_rounded, size: 8, color: Colors.grey[300]),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    value,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    formula,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey[400],
+                      height: 1.3,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '— 30d',
+                    style: GoogleFonts.inter(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF8F4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'Not enough data for a trend yet',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.grey[400],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+class _BenchmarkAction extends StatelessWidget {
+  const _BenchmarkAction({
+    required this.label,
+    this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData? icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 14, color: Colors.black),
+                const SizedBox(width: 6),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
