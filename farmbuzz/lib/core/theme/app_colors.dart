@@ -5,7 +5,7 @@ class AppColors {
 
   // Brand Colors
   static const Color primaryGreen = Color(0xFF063A22);
-  static const Color accentGreen = Color(0xFF54E07D);
+  static const Color accentGreen = Color(0xFF16A34A);
   static const Color golden = Color(0xFFFFB61A);
   static const Color warningOrange = Color(0xFFF5A623);
 

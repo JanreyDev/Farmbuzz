@@ -93,18 +93,33 @@ class _StoriesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
+    return Container(
+      height: 160,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: 6,
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return const _AddStoryCard();
-          }
-          return const _StoryCard();
-        },
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: const [
+          _AddStoryCard(),
+          _StoryCard(
+            name: 'Alyssa Rose',
+            time: '1 new • 10m ago',
+            imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400',
+            avatarUrl: 'https://i.pravatar.cc/150?u=alyssa',
+          ),
+          _StoryCard(
+            name: 'TRIXIE',
+            time: '19h ago',
+            imageUrl: 'https://images.unsplash.com/photo-1516733725897-1aa73b87c8e8?w=400',
+            avatarUrl: 'https://i.pravatar.cc/150?u=trixie',
+          ),
+          _StoryCard(
+            name: 'John Doe',
+            time: '2h ago',
+            imageUrl: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=400',
+            avatarUrl: 'https://i.pravatar.cc/150?u=john',
+          ),
+        ],
       ),
     );
   }
@@ -116,78 +131,161 @@ class _AddStoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 80,
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      width: 100,
+      margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: NetworkImage('https://i.pravatar.cc/150?u=janrey'),
-          fit: BoxFit.cover,
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF1B281B), Color(0xFF0A0F0A)],
         ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Icon(Icons.add_circle, color: Colors.white, size: 24),
-            SizedBox(height: 4),
-            Text('Your Story', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-          ],
-        ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          const Positioned(
+            top: 12,
+            left: 12,
+            child: CircleAvatar(
+              radius: 14,
+              backgroundColor: Color(0xFF2D4F2D),
+              child: Icon(Icons.auto_awesome, color: AppColors.accentGreen, size: 14),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your Story',
+                  style: GoogleFonts.instrumentSerif(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '20h ago',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 4,
+              decoration: const BoxDecoration(
+                color: AppColors.golden,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _StoryCard extends StatelessWidget {
-  const _StoryCard();
+  const _StoryCard({
+    required this.name,
+    required this.time,
+    required this.imageUrl,
+    required this.avatarUrl,
+  });
+
+  final String name;
+  final String time;
+  final String imageUrl;
+  final String avatarUrl;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 80,
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      width: 100,
+      margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400'),
+        borderRadius: BorderRadius.circular(16),
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
           fit: BoxFit.cover,
         ),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
-          ),
-        ),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: AppColors.accentGreen,
-              child: CircleAvatar(
-                radius: 11,
-                backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=user'),
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.2),
+                  Colors.black.withValues(alpha: 0.7),
+                ],
               ),
             ),
-            Text('Alyssa...', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 8,
+            left: 8,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: AppColors.accentGreen,
+                shape: BoxShape.circle,
+              ),
+              child: CircleAvatar(
+                radius: 12,
+                backgroundImage: NetworkImage(avatarUrl),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  time,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 9,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -204,10 +302,11 @@ class _FilterTabs extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _FilterChip(label: 'For You', isActive: true),
-            _FilterChip(label: 'Following'),
-            _FilterChip(label: 'Trending'),
-            _FilterChip(label: 'Bantay'),
+            _FilterChip(label: 'For You', icon: Icons.auto_awesome, isActive: true),
+            _FilterChip(label: 'Following', icon: Icons.person_outline),
+            _FilterChip(label: 'Reels', icon: Icons.play_circle_outline),
+            _FilterChip(label: 'Trending', icon: Icons.trending_up),
+            _FilterChip(label: 'Bantay', icon: Icons.security_outlined),
           ],
         ),
       ),
@@ -216,26 +315,53 @@ class _FilterTabs extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-  const _FilterChip({required this.label, this.isActive = false});
+  const _FilterChip({
+    required this.label,
+    required this.icon,
+    this.isActive = false,
+  });
+
   final String label;
+  final IconData icon;
   final bool isActive;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.accentGreen : Colors.grey[200],
+        color: isActive ? AppColors.accentGreen : Colors.white,
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isActive ? Colors.black : Colors.grey[700],
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
+        border: Border.all(
+          color: isActive ? AppColors.accentGreen : Colors.grey.withValues(alpha: 0.2),
         ),
+        boxShadow: [
+          if (isActive)
+            BoxShadow(
+              color: AppColors.accentGreen.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 16,
+            color: isActive ? Colors.white : Colors.grey[600],
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: isActive ? Colors.white : Colors.grey[700],
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
