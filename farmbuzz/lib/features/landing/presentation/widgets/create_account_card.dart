@@ -9,6 +9,7 @@ import 'common/mobile_input.dart';
 import 'common/otp_input.dart';
 import 'common/pin_dots.dart';
 import 'common/numeric_keypad.dart';
+import 'package:farmbuzz/features/home/presentation/home_screen.dart';
 
 class CreateAccountCard extends StatefulWidget {
   const CreateAccountCard({
@@ -327,7 +328,10 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
                     });
                   });
                 } else {
-                  // Final logic here
+                  // Simulate registration success
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
                 }
               }
             }

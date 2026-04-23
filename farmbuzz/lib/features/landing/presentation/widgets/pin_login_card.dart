@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/features/home/presentation/home_screen.dart';
 import 'common/pin_dots.dart';
 import 'common/numeric_keypad.dart';
 
@@ -92,7 +93,15 @@ class _PinLoginCardState extends State<PinLoginCard> {
               if (_pin.length < 6) {
                 setState(() => _pin += val);
                 if (_pin.length == 6) {
-                  // Submit logic
+                  // Simulate login success
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
+                } else {
+                  // Simulate registration success
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                  );
                 }
               }
             },
