@@ -2,26 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 
-class MyFarmView extends StatelessWidget {
+import 'create_farm_view.dart';
+
+class MyFarmView extends StatefulWidget {
   const MyFarmView({super.key});
 
   @override
+  State<MyFarmView> createState() => _MyFarmViewState();
+}
+
+class _MyFarmViewState extends State<MyFarmView> {
+  bool _isCreatingFarm = false;
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _HeroBanner(),
-          const _FeaturesSection(),
-          const SizedBox(height: 32),
-        ],
+    if (_isCreatingFarm) {
+      return CreateFarmView(onBack: () => setState(() => _isCreatingFarm = false));
+    }
+
+    return Container(
+      color: const Color(0xFFF5F5F5),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _HeroBanner(),
+            _FeaturesSection(onCreateRequested: () => setState(() => _isCreatingFarm = true)),
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _FeaturesSection extends StatelessWidget {
-  const _FeaturesSection();
+  const _FeaturesSection({required this.onCreateRequested});
+
+  final VoidCallback onCreateRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +147,7 @@ class _FeaturesSection extends StatelessWidget {
           ),
           
           const SizedBox(height: 32),
-          const _CommitmentSection(),
+          _CommitmentSection(onCreateRequested: onCreateRequested),
         ],
       ),
     );
@@ -137,7 +155,9 @@ class _FeaturesSection extends StatelessWidget {
 }
 
 class _CommitmentSection extends StatefulWidget {
-  const _CommitmentSection();
+  const _CommitmentSection({required this.onCreateRequested});
+
+  final VoidCallback onCreateRequested;
 
   @override
   State<_CommitmentSection> createState() => _CommitmentSectionState();
@@ -265,7 +285,7 @@ class _CommitmentSectionState extends State<_CommitmentSection> {
                 
                 // Button
                 GestureDetector(
-                  onTap: _isTicked ? () {} : null,
+                  onTap: _isTicked ? widget.onCreateRequested : null,
                   child: Container(
                     width: double.infinity,
                     height: 56,
