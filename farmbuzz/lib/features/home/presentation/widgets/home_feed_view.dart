@@ -48,7 +48,7 @@ class _StatusUpdateBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -138,7 +138,7 @@ class _AddStoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -259,8 +259,8 @@ class _StoryCard extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withValues(alpha: 0.2),
-                  Colors.black.withValues(alpha: 0.7),
+                  Colors.black.withOpacity(0.2),
+                  Colors.black.withOpacity(0.7),
                 ],
               ),
             ),
@@ -299,7 +299,7 @@ class _StoryCard extends StatelessWidget {
                 Text(
                   time,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity(0.7),
                     fontSize: 9,
                   ),
                 ),
@@ -355,12 +355,12 @@ class _FilterChip extends StatelessWidget {
         color: isActive ? AppColors.accentGreen : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isActive ? AppColors.accentGreen : Colors.grey.withValues(alpha: 0.2),
+          color: isActive ? AppColors.accentGreen : Colors.grey.withOpacity(0.2),
         ),
         boxShadow: [
           if (isActive)
             BoxShadow(
-              color: AppColors.accentGreen.withValues(alpha: 0.2),
+              color: AppColors.accentGreen.withOpacity(0.2),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -400,7 +400,7 @@ class _PostCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

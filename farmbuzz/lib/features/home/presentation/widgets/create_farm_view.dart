@@ -3,9 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 
 class CreateFarmView extends StatefulWidget {
-  const CreateFarmView({super.key, required this.onBack});
+  const CreateFarmView({
+    super.key, 
+    required this.onBack,
+    required this.onCreated,
+  });
 
   final VoidCallback onBack;
+  final VoidCallback onCreated;
 
   @override
   State<CreateFarmView> createState() => _CreateFarmViewState();
@@ -79,79 +84,176 @@ class _CreateFarmViewState extends State<CreateFarmView> {
       'color': const Color(0xFF169846),
       'borderColor': const Color(0xFF169846),
     },
-  ];  @override
+  ];  bool _showSuccess = false;
+
+  void _handleCreateFarm() async {
+    setState(() => _showSuccess = true);
+    // Show toast for 2 seconds then navigate
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      widget.onCreated();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF5F5F5),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            color: const Color(0xFFF5F5F5),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(
-              children: [
-                Row(
+    return Stack(
+      children: [
+        Container(
+          color: const Color(0xFFF5F5F5),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                color: const Color(0xFFF5F5F5),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Column(
                   children: [
-                    GestureDetector(
-                      onTap: _currentStep == 1 
-                        ? widget.onBack 
-                        : () => setState(() => _currentStep = 1),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        Text(
-                          'Create your first farm',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black,
+                        GestureDetector(
+                          onTap: _currentStep == 1 
+                            ? widget.onBack 
+                            : () => setState(() => _currentStep = 1),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
                           ),
                         ),
-                        Text(
-                          'Step $_currentStep of 2',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                            fontWeight: FontWeight.w600,
-                          ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Create your first farm',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Step $_currentStep of 2',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: _currentStep == 1 ? 0.5 : 1.0,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accentGreen),
+                        minHeight: 4,
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: _currentStep == 1 ? 0.5 : 1.0,
-                    backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accentGreen),
-                    minHeight: 4,
-                  ),
+              ),
+              
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  child: _currentStep == 1 ? _buildStep1() : _buildStep2(),
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+        if (_showSuccess)
+          Positioned(
+            bottom: 40,
+            left: 20,
+            right: 20,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutBack,
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, 20 * (1 - value)),
+                  child: Opacity(
+                    opacity: value.clamp(0.0, 1.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF16A34A),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF16A34A), size: 20),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Farm created',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Text(
+                                  '${_farmNameController.text} is ready. Let\'s add your first birds.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(() => _showSuccess = false),
+                            icon: const Icon(Icons.close_rounded, size: 18, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: _currentStep == 1 ? _buildStep1() : _buildStep2(),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -225,7 +327,7 @@ class _CreateFarmViewState extends State<CreateFarmView> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -252,7 +354,7 @@ class _CreateFarmViewState extends State<CreateFarmView> {
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: (type['color'] as Color).withValues(alpha: 0.3),
+                                    color: (type['color'] as Color).withOpacity(0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -563,7 +665,7 @@ class _CreateFarmViewState extends State<CreateFarmView> {
               ),
             ),
             ElevatedButton(
-              onPressed: _isFormValid ? () {} : null,
+              onPressed: _isFormValid ? _handleCreateFarm : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.accentGreen,
                 foregroundColor: Colors.white,
