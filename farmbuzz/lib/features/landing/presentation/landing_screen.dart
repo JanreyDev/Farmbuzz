@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:farmbuzz/core/theme/app_colors.dart';
-
-enum LandingView { login, forgotPin }
+import '../../../core/theme/app_colors.dart';
+import 'landing_view.dart';
+import 'widgets/login_card.dart';
+import 'widgets/forgot_pin_card.dart';
+import 'widgets/create_account_card.dart';
+import 'widgets/pin_login_card.dart';
+import 'widgets/common/footer_links.dart';
+import 'widgets/common/grid_layer.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -16,16 +20,23 @@ class _LandingScreenState extends State<LandingScreen> {
   LandingView _currentView = LandingView.login;
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _forgotMobileController = TextEditingController();
+  final TextEditingController _registerMobileController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _referralController = TextEditingController();
 
   @override
   void dispose() {
     _mobileController.dispose();
     _forgotMobileController.dispose();
+    _registerMobileController.dispose();
+    _nameController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
   bool get _canLogin => _mobileController.text.trim().length == 10;
   bool get _canReset => _forgotMobileController.text.trim().length == 10;
+  bool get _canSendCode => _registerMobileController.text.trim().length == 10;
 
   void _setView(LandingView view) {
     setState(() {
@@ -35,132 +46,189 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isCompact = screenWidth < 380;
-    final horizontalPadding = isCompact ? 14.0 : 20.0;
-
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primaryGreen,
-              Color(0xFF0A281B),
-              Color(0xFF452804),
-              AppColors.darkBackground,
-            ],
-            stops: [0.0, 0.4, 0.85, 1.0],
+      body: Stack(
+        children: [
+          // Background Gradient
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF041C06), // Deep Green
+                    Color(0xFF1A1F04), // Dark Olive
+                    Color(0xFF2D1B02), // Darker Orange/Brown
+                  ],
+                  stops: [0.0, 0.6, 1.0],
+                ),
+              ),
+            ),
           ),
-        ),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            const _GridLayer(),
-            SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontalPadding,
-                          isCompact ? 12 : 20,
-                          horizontalPadding,
-                          20,
-                        ),
-                        child: Column(
+          const Positioned.fill(child: GridLayer()),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxHeight < 700;
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight - 40,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 420),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _TopBar(isCompact: isCompact),
-                                  SizedBox(height: isCompact ? 20 : 30),
-                                  _HeroText(isCompact: isCompact),
-                                  SizedBox(height: isCompact ? 20 : 30),
-                                  _currentView == LandingView.login
-                                      ? _LoginCard(
+                            _Logo(isCompact: isCompact),
+                            Row(
+                              children: [
+                                _LanguageSelector(isCompact: isCompact),
+                                const SizedBox(width: 12),
+                                _ThemeToggle(isCompact: isCompact),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        // Main Content
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: isCompact ? 30 : 40,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _Badge(isCompact: isCompact),
+                              const SizedBox(height: 16),
+                              _HeroText(isCompact: isCompact),
+                              const SizedBox(height: 20),
+                              Text(
+                                'Connect with breeders, manage your farm, and grow your network on FarmBuzz.',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  fontSize: isCompact ? 14 : 16,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+
+                              // Auth Card
+                              Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 420),
+                                  child: _currentView == LandingView.login
+                                      ? LoginCard(
                                           isCompact: isCompact,
                                           mobileController: _mobileController,
                                           canLogin: _canLogin,
                                           onChanged: (_) => setState(() {}),
                                           onForgotPin: () => _setView(LandingView.forgotPin),
+                                          onCreateAccount: () => _setView(LandingView.createAccount),
+                                          onLogin: () => _setView(LandingView.pinLogin),
                                         )
-                                      : _ForgotPinCard(
-                                          isCompact: isCompact,
-                                          mobileController: _forgotMobileController,
-                                          canReset: _canReset,
-                                          onChanged: (_) => setState(() {}),
-                                          onBack: () => _setView(LandingView.login),
-                                        ),
-                                ],
+                                      : _currentView == LandingView.pinLogin
+                                          ? PinLoginCard(
+                                              isCompact: isCompact,
+                                              phoneNumber: _mobileController.text.isEmpty ? '+63 961 **** 255' : '+63 ${_mobileController.text.substring(0, 3)} **** ${_mobileController.text.substring(7)}',
+                                              onNotYou: () => _setView(LandingView.login),
+                                              onForgotPin: () => _setView(LandingView.forgotPin),
+                                            )
+                                          : _currentView == LandingView.forgotPin
+                                          ? ForgotPinCard(
+                                              isCompact: isCompact,
+                                              mobileController: _forgotMobileController,
+                                              canReset: _canReset,
+                                              onChanged: (_) => setState(() {}),
+                                              onBack: () => _setView(LandingView.login),
+                                            )
+                                          : CreateAccountCard(
+                                              isCompact: isCompact,
+                                              nameController: _nameController,
+                                              mobileController: _registerMobileController,
+                                              referralController: _referralController,
+                                              canSendCode: _canSendCode,
+                                              onChanged: () => setState(() {}),
+                                              onLogin: () => _setView(LandingView.login),
+                                            ),
+                                ),
                               ),
-                            ),
-                            const Column(
-                              children: [
-                                _FooterLinks(),
-                                SizedBox(height: 10),
-                              ],
-                            ),
+                            ],
+                          ),
+                        ),
+
+                        // Footer
+                        const Column(
+                          children: [
+                            FooterLinks(),
+                            SizedBox(height: 16),
+                            _CopyrightText(),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.isCompact});
-
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const _Logo(),
-        const Spacer(),
-        _LanguageSelector(isCompact: isCompact),
-        const SizedBox(width: 8),
-        _ThemeToggle(isCompact: isCompact),
-      ],
-    );
-  }
-}
-
 class _Logo extends StatelessWidget {
-  const _Logo();
+  const _Logo({required this.isCompact});
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
     return Image.asset(
       'assets/images/logo.png',
-      height: 42,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        // Fallback if image fails to load
-        return const Text(
-          'FB FarmBuzz',
-          style: TextStyle(
-            color: AppColors.accentGreen,
-            fontWeight: FontWeight.w800,
-            fontSize: 17,
+      height: isCompact ? 32 : 40,
+      errorBuilder: (context, error, stackTrace) => Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.accentGreen,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'FB',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: isCompact ? 16 : 20,
+                color: Colors.black,
+              ),
+            ),
           ),
-        );
-      },
+          const SizedBox(width: 8),
+          Text(
+            'Farm',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: isCompact ? 18 : 22,
+            ),
+          ),
+          Text(
+            'Buzz',
+            style: TextStyle(
+              color: AppColors.golden,
+              fontWeight: FontWeight.bold,
+              fontSize: isCompact ? 18 : 22,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -172,33 +240,26 @@ class _LanguageSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 10 : 12,
-        vertical: isCompact ? 6 : 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: Colors.black.withValues(alpha: 0.24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        color: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
         children: [
-          Icon(Icons.language_rounded, size: 14, color: Color(0xFFE8F6EA)),
-          SizedBox(width: 6),
           Text(
             'English',
             style: TextStyle(
-              color: Color(0xFFE8F6EA),
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
+              color: Colors.white,
+              fontSize: isCompact ? 12 : 14,
             ),
           ),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 16,
-            color: Color(0xFFE8F6EA),
+            Icons.keyboard_arrow_down,
+            color: Colors.white70,
+            size: isCompact ? 16 : 18,
           ),
         ],
       ),
@@ -215,104 +276,56 @@ class _ThemeToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.2),
         shape: BoxShape.circle,
-        color: Colors.black.withValues(alpha: 0.24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.wb_sunny_outlined,
-        size: 16,
-        color: Color(0xFFE8F6EA),
+        color: Colors.white70,
+        size: isCompact ? 16 : 20,
       ),
-    );
-  }
-}
-
-class _HeroText extends StatelessWidget {
-  const _HeroText({required this.isCompact});
-
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    final heroStyle = GoogleFonts.instrumentSerif(
-      fontSize: isCompact ? 36 : 44,
-      height: 1.02,
-      fontWeight: FontWeight.w500,
-      color: const Color(0xFFEAF7ED),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _Badge(isCompact: isCompact),
-        SizedBox(height: isCompact ? 16 : 22),
-        RichText(
-          text: TextSpan(
-            style: heroStyle,
-            children: [
-              const TextSpan(text: 'Build your farm.\n'),
-              WidgetSpan(
-                child: ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [AppColors.accentGreen, AppColors.golden],
-                  ).createShader(bounds),
-                  child: Text(
-                    'Grow your flock.',
-                    style: heroStyle.copyWith(
-                      fontStyle: FontStyle.italic,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const TextSpan(text: '\nOwn your community.'),
-            ],
-          ),
-        ),
-        SizedBox(height: isCompact ? 12 : 16),
-        Text(
-          'Connect with breeders, manage your farm, and grow your network on FarmBuzz.',
-          style: TextStyle(
-            color: AppColors.textGrey,
-            fontSize: isCompact ? 13.5 : 14.5,
-            height: 1.42,
-          ),
-        ),
-      ],
     );
   }
 }
 
 class _Badge extends StatelessWidget {
   const _Badge({required this.isCompact});
-
   final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 10 : 12,
-        vertical: isCompact ? 5 : 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: AppColors.cardDarkGreen.withValues(alpha: 0.6),
-        border: Border.all(color: AppColors.accentGreen.withValues(alpha: 0.3)),
+        color: Colors.black.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.accentGreen.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.circle, size: 6, color: AppColors.accentGreen),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: AppColors.accentGreen,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accentGreen,
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+          ),
           const SizedBox(width: 8),
-          const Text(
-            "The Breeder's Network",
+          Text(
+            'The Breeder\'s Network',
             style: TextStyle(
-              color: Color(0xFFE8F6EA),
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: isCompact ? 10 : 12,
               fontWeight: FontWeight.w600,
-              fontSize: 11,
               letterSpacing: 0.5,
             ),
           ),
@@ -322,499 +335,43 @@ class _Badge extends StatelessWidget {
   }
 }
 
-class _LoginCard extends StatefulWidget {
-  const _LoginCard({
-    super.key,
-    required this.isCompact,
-    required this.mobileController,
-    required this.canLogin,
-    required this.onChanged,
-    required this.onForgotPin,
-  });
-
-  final bool isCompact;
-  final TextEditingController mobileController;
-  final bool canLogin;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onForgotPin;
-
-  @override
-  State<_LoginCard> createState() => _LoginCardState();
-}
-
-class _LoginCardState extends State<_LoginCard> {
-  final FocusNode _focusNode = FocusNode();
-  bool _isFocused = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.addListener(() {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final showActive = _isFocused || widget.canLogin;
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        widget.isCompact ? 12 : 16,
-        widget.isCompact ? 14 : 18,
-        widget.isCompact ? 12 : 16,
-        widget.isCompact ? 16 : 20,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.accentGreen.withValues(alpha: 0.15)),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.cardDarkGreen.withValues(alpha: 0.9),
-            AppColors.cardDeepGreen.withValues(alpha: 0.95),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Log into FarmBuzz',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.instrumentSerif(
-              fontSize: widget.isCompact ? 18 : 20,
-              color: const Color(0xFFEAF7ED),
-            ),
-          ),
-          SizedBox(height: widget.isCompact ? 10 : 12),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: widget.isCompact ? 10 : 12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: showActive
-                    ? AppColors.accentGreen.withValues(alpha: 0.8)
-                    : Colors.white.withValues(alpha: 0.1),
-                width: showActive ? 1.4 : 1.0,
-              ),
-              boxShadow: [
-                if (showActive)
-                  BoxShadow(
-                    color: AppColors.accentGreen.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _CountryPicker(isCompact: widget.isCompact),
-                const SizedBox(width: 8),
-                Container(width: 1, height: 20, color: Colors.white.withValues(alpha: 0.1)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: widget.mobileController,
-                    focusNode: _focusNode,
-                    onChanged: widget.onChanged,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '9XX XXXX XXX',
-                      hintStyle: TextStyle(color: Color(0xFF61796A)),
-                      contentPadding: EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-                if (widget.canLogin)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(
-                      Icons.check_rounded,
-                      color: AppColors.accentGreen,
-                      size: 20,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(height: widget.isCompact ? 10 : 12),
-          Container(
-            decoration: widget.canLogin
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.accentGreen.withValues(alpha: 0.45),
-                        blurRadius: 22,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  )
-                : null,
-            child: ElevatedButton(
-              onPressed: widget.canLogin ? () {} : null,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor: widget.canLogin ? AppColors.accentGreen : const Color(0xFF2D2D2D),
-                foregroundColor: widget.canLogin ? Colors.black : Colors.white.withValues(alpha: 0.5),
-                disabledBackgroundColor: const Color(0xFF1A1A1A),
-                disabledForegroundColor: Colors.white.withValues(alpha: 0.2),
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(
-                    color: widget.canLogin
-                        ? AppColors.accentGreen.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
-              child: const Text(
-                'Log In',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: widget.onForgotPin,
-            child: const Text(
-              'Forgot PIN?',
-              style: TextStyle(
-                color: AppColors.accentGreen,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            height: 1,
-            color: Colors.white.withValues(alpha: 0.05),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'New to FarmBuzz?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white54,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.golden.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.golden,
-                foregroundColor: const Color(0xFF2D2203),
-                minimumSize: const Size.fromHeight(52),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Text(
-                'Create new account',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-class _ForgotPinCard extends StatefulWidget {
-  const _ForgotPinCard({
-    required this.isCompact,
-    required this.mobileController,
-    required this.canReset,
-    required this.onChanged,
-    required this.onBack,
-  });
-
-  final bool isCompact;
-  final TextEditingController mobileController;
-  final bool canReset;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onBack;
-
-  @override
-  State<_ForgotPinCard> createState() => _ForgotPinCardState();
-}
-
-class _ForgotPinCardState extends State<_ForgotPinCard> {
-  final FocusNode _focusNode = FocusNode();
-  bool _isFocused = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.addListener(() {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final showActive = _isFocused || widget.canReset;
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        widget.isCompact ? 12 : 16,
-        widget.isCompact ? 14 : 18,
-        widget.isCompact ? 12 : 16,
-        widget.isCompact ? 16 : 20,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.accentGreen.withValues(alpha: 0.15)),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.cardDarkGreen.withValues(alpha: 0.9),
-            AppColors.cardDeepGreen.withValues(alpha: 0.95),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: widget.onBack,
-                icon: const Icon(Icons.arrow_back, color: Colors.white70, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              const Spacer(),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Reset your PIN',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.instrumentSerif(
-              fontSize: widget.isCompact ? 20 : 22,
-              color: const Color(0xFFEAF7ED),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Enter your phone number to reset your PIN',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textGrey,
-              fontSize: widget.isCompact ? 12 : 13,
-            ),
-          ),
-          SizedBox(height: widget.isCompact ? 14 : 16),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: widget.isCompact ? 10 : 12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: showActive
-                    ? AppColors.accentGreen.withValues(alpha: 0.8)
-                    : Colors.white.withValues(alpha: 0.1),
-                width: showActive ? 1.4 : 1.0,
-              ),
-              boxShadow: [
-                if (showActive)
-                  BoxShadow(
-                    color: AppColors.accentGreen.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _CountryPicker(isCompact: widget.isCompact),
-                const SizedBox(width: 8),
-                Container(width: 1, height: 20, color: Colors.white.withValues(alpha: 0.1)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: widget.mobileController,
-                    focusNode: _focusNode,
-                    onChanged: widget.onChanged,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '9XX XXXX XXX',
-                      hintStyle: TextStyle(color: Color(0xFF61796A)),
-                      contentPadding: EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-                if (widget.canReset)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(
-                      Icons.check_rounded,
-                      color: AppColors.accentGreen,
-                      size: 20,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(height: widget.isCompact ? 16 : 20),
-          Container(
-            decoration: widget.canReset
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.accentGreen.withValues(alpha: 0.45),
-                        blurRadius: 22,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  )
-                : null,
-            child: ElevatedButton(
-              onPressed: widget.canReset ? () {} : null,
-              style: ElevatedButton.styleFrom(
-                elevation: 0,
-                backgroundColor: widget.canReset ? AppColors.accentGreen : const Color(0xFF2D2D2D),
-                foregroundColor: widget.canReset ? Colors.black : Colors.white.withValues(alpha: 0.5),
-                disabledBackgroundColor: const Color(0xFF1A1A1A),
-                disabledForegroundColor: Colors.white.withValues(alpha: 0.2),
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(
-                    color: widget.canReset
-                        ? AppColors.accentGreen.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
-              child: const Text(
-                'Send Reset Code',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CountryPicker extends StatelessWidget {
-  const _CountryPicker({required this.isCompact});
+class _HeroText extends StatelessWidget {
+  const _HeroText({required this.isCompact});
   final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(2),
-          child: SizedBox(
-            width: 20,
-            height: 14,
-            child: Stack(
-              children: [
-                Column(
-                  children: [
-                    Expanded(child: Container(color: const Color(0xFF0038A8))),
-                    Expanded(child: Container(color: const Color(0xFFCE1126))),
-                  ],
-                ),
-                Container(
-                  width: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
+        Text(
+          'Build your farm.',
+          style: GoogleFonts.instrumentSerif(
+            fontSize: isCompact ? 32 : 40,
+            color: Colors.white,
+            height: 1.1,
+          ),
+        ),
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [AppColors.accentGreen, AppColors.golden],
+          ).createShader(bounds),
+          child: Text(
+            'Grow your flock.',
+            style: GoogleFonts.instrumentSerif(
+              fontSize: isCompact ? 32 : 40,
+              color: Colors.white,
+              height: 1.1,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        const Text(
-          '+63',
-          style: TextStyle(
+        Text(
+          'Own your community.',
+          style: GoogleFonts.instrumentSerif(
+            fontSize: isCompact ? 32 : 40,
             color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
+            height: 1.1,
           ),
         ),
       ],
@@ -822,66 +379,17 @@ class _CountryPicker extends StatelessWidget {
   }
 }
 
-class _FooterLinks extends StatelessWidget {
-  const _FooterLinks();
+class _CopyrightText extends StatelessWidget {
+  const _CopyrightText();
 
   @override
   Widget build(BuildContext context) {
-    const links = [
-      'Privacy',
-      'Terms',
-      'Community',
-      'Disclaimer',
-      'Ambassador',
-      'Age 18+',
-    ];
-
-    return Center(
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final link in links)
-            Text(
-              link,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.62),
-                fontSize: 11.5,
-              ),
-            ),
-        ],
+    return Text(
+      '© 2026 FarmBuzz. All rights reserved.',
+      style: TextStyle(
+        color: Colors.white.withValues(alpha: 0.4),
+        fontSize: 11,
       ),
     );
   }
-}
-
-class _GridLayer extends StatelessWidget {
-  const _GridLayer();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(child: CustomPaint(painter: _GridPainter()));
-  }
-}
-
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.045)
-      ..strokeWidth = 1;
-
-    const step = 34.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
