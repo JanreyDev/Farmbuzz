@@ -70,14 +70,423 @@ class _DashboardViewState extends State<_DashboardView> {
               selectedIndex: _selectedTabIndex,
               onChanged: (index) => setState(() => _selectedTabIndex = index),
             ),
+            const SizedBox(height: 16),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _selectedTabIndex == 0 
-                ? const _GetStartedCard() 
+                ? Column(
+                    children: const [
+                      _GetStartedCard(),
+                      SizedBox(height: 24),
+                      _PerformanceSection(),
+                      SizedBox(height: 24),
+                      _LifecycleSection(),
+                      SizedBox(height: 24),
+                      _QualitySection(),
+                      SizedBox(height: 24),
+                      _HealthSection(),
+                      SizedBox(height: 32),
+                    ],
+                  )
                 : const SizedBox.shrink(),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PerformanceSection extends StatelessWidget {
+  const _PerformanceSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          label: 'BREEDING PERFORMANCE',
+          title: 'Are your cycles working?',
+          subtitle: 'Every 21-day cycle tells you which pairs produce and which don\'t.',
+          actionLabel: 'Go to Breeding',
+          onAction: () {},
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.4,
+          children: const [
+            _StatCard(
+              title: 'FERTILITY RATE',
+              icon: Icons.egg_outlined,
+              color: Color(0xFF16A34A),
+              iconBg: Color(0xFFE9F6EE),
+              description: 'Candle your first cycle to see this.',
+            ),
+            _StatCard(
+              title: 'HATCH RATE',
+              icon: Icons.auto_awesome_rounded,
+              color: Color(0xFF16A34A),
+              iconBg: Color(0xFFE9F6EE),
+              description: 'Complete a full 21-day cycle to see.',
+            ),
+            _StatCard(
+              title: 'SETTLING LOSS',
+              icon: Icons.favorite_border_rounded,
+              color: Color(0xFF16A34A),
+              iconBg: Color(0xFFE9F6EE),
+              description: 'Needs one completed cycle with candling.',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _LifecycleSection extends StatelessWidget {
+  const _LifecycleSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          label: 'FLOCK LIFECYCLE',
+          title: 'Who makes it to the next stage?',
+          subtitle: 'The first 8 weeks are the deadliest. After that, most deaths are preventable.',
+          actionLabel: 'Go to Flock',
+          onAction: () {},
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.4,
+          children: const [
+            _StatCard(
+              title: 'BROODING MORTALITY',
+              icon: Icons.home_outlined,
+              color: Color(0xFF9A3412),
+              iconBg: Color(0xFFFFF7ED),
+              description: 'Record first chick cohort to see.',
+            ),
+            _StatCard(
+              title: 'STAGE SURVIVAL',
+              icon: Icons.show_chart_rounded,
+              color: Color(0xFF1E40AF),
+              iconBg: Color(0xFFEFF6FF),
+              description: 'Log your first stage transition.',
+            ),
+            _StatCard(
+              title: 'CULL RATE',
+              icon: Icons.content_cut_rounded,
+              color: Color(0xFF854D0E),
+              iconBg: Color(0xFFFEFCE8),
+              description: 'Needs birds to reach assessment.',
+            ),
+            _StatCard(
+              title: 'TIME TO MATURITY',
+              icon: Icons.timer_outlined,
+              color: Color(0xFF475569),
+              iconBg: Color(0xFFF1F5F9),
+              description: 'Needs full lifecycle completion.',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _QualitySection extends StatelessWidget {
+  const _QualitySection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          label: 'QUALITY & SELECTION',
+          title: 'How good is your breeding program?',
+          subtitle: 'The real test isn\'t how many you raise — it\'s how many make the cut.',
+          actionLabel: 'Go to Flock',
+          onAction: () {},
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.4,
+          children: const [
+            _StatCard(
+              title: 'BULL STAG RATE',
+              icon: Icons.military_tech_outlined,
+              color: Color(0xFFB48634),
+              iconBg: Color(0xFFFEFCE8),
+              description: 'Needs stags graded in your farm.',
+            ),
+            _StatCard(
+              title: 'BROOD PROMOTION RATE',
+              icon: Icons.workspace_premium_outlined,
+              color: Color(0xFFB48634),
+              iconBg: Color(0xFFFEFCE8),
+              description: 'Needs birds promoted to brood.',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _HealthSection extends StatelessWidget {
+  const _HealthSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+          label: 'HEALTH & COMPLIANCE',
+          title: 'Is the flock protected?',
+          subtitle: 'Vaccination discipline and early disease detection keep your brooding mortality low.',
+          actionLabel: 'See in Reports',
+          onAction: () {},
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.4,
+          children: const [
+            _StatCard(
+              title: 'VACCINATION RATE',
+              icon: Icons.medical_services_outlined,
+              color: Color(0xFF16A34A),
+              iconBg: Color(0xFFE9F6EE),
+              description: 'Log a vaccination event to see.',
+            ),
+            _StatCard(
+              title: 'DISEASE INCIDENCE',
+              icon: Icons.bug_report_outlined,
+              color: Color(0xFF16A34A),
+              iconBg: Color(0xFFE9F6EE),
+              description: 'Log first health event to track.',
+            ),
+            _StatCard(
+              title: 'AVG WEIGHT GAIN',
+              icon: Icons.fitness_center_outlined,
+              color: Color(0xFF16A34A),
+              iconBg: Color(0xFFE9F6EE),
+              description: 'Log weight events to see the curve.',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.label,
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  final String label;
+  final String title;
+  final String subtitle;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 12,
+              height: 2,
+              color: const Color(0xFF16A34A),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF16A34A),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: onAction,
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: const StadiumBorder(),
+                side: BorderSide(color: Colors.grey[200]!),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    actionLabel,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF16A34A),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.arrow_forward_rounded, size: 12, color: Color(0xFF16A34A)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[500],
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.description,
+    this.iconBg,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color color;
+  final String description;
+  final Color? iconBg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[100]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 2,
+            child: Container(color: color),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: iconBg ?? Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(icon, size: 14, color: color),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.grey[700],
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.info_outline_rounded, size: 12, color: Colors.grey[300]),
+                  ],
+                ),
+                const Spacer(),
+                Container(
+                  width: 20,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Colors.black,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
