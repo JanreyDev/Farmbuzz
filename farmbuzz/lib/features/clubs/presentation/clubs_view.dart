@@ -4,6 +4,7 @@ import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'widgets/clubs_search_bar.dart';
 import 'widgets/club_card.dart';
 import 'widgets/empty_state_card.dart';
+import 'widgets/create_club_modal.dart';
 
 class ClubsView extends StatefulWidget {
   const ClubsView({super.key});
@@ -15,6 +16,43 @@ class ClubsView extends StatefulWidget {
 class _ClubsViewState extends State<ClubsView> {
   String selectedCategory = 'All';
   final List<String> categories = ['All', 'Bloodline', 'Regional', 'Community', 'Education'];
+
+  // State-managed list of my clubs
+  final List<Map<String, dynamic>> _myClubs = [
+    {
+      'title': 'Elite Gamefowl Breeders',
+      'role': ClubRole.founder,
+      'memberCount': 154,
+      'postCount': 12,
+      'imageUrl': 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?q=80&w=1000&auto=format&fit=crop',
+    },
+    {
+      'title': 'Backyard Poultry PH',
+      'role': ClubRole.member,
+      'memberCount': 2450,
+      'postCount': 89,
+      'imageUrl': 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=1000&auto=format&fit=crop',
+    },
+    {
+      'title': 'Egg Production Experts',
+      'role': ClubRole.member,
+      'memberCount': 78,
+      'postCount': 5,
+      'imageUrl': 'https://images.unsplash.com/photo-1598965402089-897ce52e8355?q=80&w=1000&auto=format&fit=crop',
+    },
+  ];
+
+  void _addNewClub(Map<String, dynamic> data) {
+    setState(() {
+      _myClubs.insert(0, {
+        'title': data['title'],
+        'role': ClubRole.founder,
+        'memberCount': 1,
+        'postCount': 0,
+        'imageUrl': data['imageUrl'], 
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +76,7 @@ class _ClubsViewState extends State<ClubsView> {
                   ),
                 ),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => CreateClubModal.show(context, onClubCreated: _addNewClub),
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Create Club'),
                   style: ElevatedButton.styleFrom(
@@ -69,26 +107,20 @@ class _ClubsViewState extends State<ClubsView> {
               onSeeAll: () {},
             ),
             const SizedBox(height: 16),
-            const ClubCard(
-              title: 'Elite Gamefowl Breeders',
-              role: ClubRole.founder,
-              memberCount: 154,
-              postCount: 12,
-              imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?q=80&w=1000&auto=format&fit=crop',
-            ),
-            const ClubCard(
-              title: 'Backyard Poultry PH',
-              role: ClubRole.member,
-              memberCount: 2450,
-              postCount: 89,
-              imageUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=1000&auto=format&fit=crop',
-            ),
-            const ClubCard(
-              title: 'Egg Production Experts',
-              role: ClubRole.member,
-              memberCount: 78,
-              postCount: 5,
-              imageUrl: 'https://images.unsplash.com/photo-1598965402089-897ce52e8355?q=80&w=1000&auto=format&fit=crop',
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _myClubs.length,
+              itemBuilder: (context, index) {
+                final club = _myClubs[index];
+                return ClubCard(
+                  title: club['title'],
+                  role: club['role'],
+                  memberCount: club['memberCount'],
+                  postCount: club['postCount'],
+                  imageUrl: club['imageUrl'],
+                );
+              },
             ),
             const SizedBox(height: 32),
             

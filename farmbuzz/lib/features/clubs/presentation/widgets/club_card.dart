@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
@@ -5,6 +6,7 @@ import '../club_detail_screen.dart';
 
 enum ClubRole { founder, member }
 
+/// A premium club card that supports both network and local file images.
 class ClubCard extends StatelessWidget {
   final String title;
   final ClubRole role;
@@ -23,6 +25,8 @@ class ClubCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isLocal = imageUrl != null && !imageUrl!.startsWith('http');
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -60,7 +64,9 @@ class ClubCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 image: imageUrl != null
                     ? DecorationImage(
-                        image: NetworkImage(imageUrl!),
+                        image: isLocal 
+                            ? FileImage(File(imageUrl!)) as ImageProvider
+                            : NetworkImage(imageUrl!),
                         fit: BoxFit.cover,
                       )
                     : null,
