@@ -8,6 +8,7 @@ import 'package:farmbuzz/features/messages/presentation/messages_screen.dart';
 import 'package:farmbuzz/features/notifications/presentation/notifications_screen.dart';
 
 import 'package:farmbuzz/features/clubs/presentation/clubs_view.dart';
+import 'package:farmbuzz/features/leaderboard/presentation/leaderboard_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const MyFarmView(),
     const BantayAiView(),
     const ClubsView(),
-    const Center(child: Text('Leaderboard', style: TextStyle(color: Colors.white))),
+    const LeaderboardView(),
   ];
 
   @override
