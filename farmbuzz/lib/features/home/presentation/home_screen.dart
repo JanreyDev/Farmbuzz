@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'widgets/home_feed_view.dart';
 import 'widgets/home_drawer.dart';
 import 'widgets/my_farm_view.dart';
@@ -29,6 +30,81 @@ class _HomeScreenState extends State<HomeScreen> {
     const ClubsView(),
     const LeaderboardView(),
   ];
+
+  void _showAiMenu(BuildContext context) {
+    // This replicates the history menu functionality
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  Text(
+                    'Bantay AI Menu',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                children: [
+                  _menuItem(Icons.history_rounded, 'Conversation History', 'Access your past chats'),
+                  _menuItem(Icons.settings_suggest_outlined, 'AI Settings', 'Customize Bantay\'s persona'),
+                  _menuItem(Icons.info_outline_rounded, 'How to Use', 'Tips for better AI results'),
+                  _menuItem(Icons.delete_outline_rounded, 'Clear Current Chat', 'Start a fresh session', isDestructive: true),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _menuItem(IconData icon, String title, String subtitle, {bool isDestructive = false}) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDestructive ? Colors.red[50] : Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: isDestructive ? Colors.red : Colors.grey[700], size: 20),
+      ),
+      title: Text(title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14)),
+      subtitle: Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500])),
+      onTap: () => Navigator.pop(context),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       body: _pages[_selectedIndex],
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: _selectedIndex == 2 ? null : FloatingActionButton(
         onPressed: () => setState(() => _selectedIndex = 2),
         backgroundColor: const Color(0xFFD97706), // Bantay AI Amber
         elevation: 4,
@@ -132,16 +208,38 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        height: 65,
+        height: 70, // Slightly taller for better alignment
         color: Colors.white,
-        shape: const CircularNotchedRectangle(),
+        shape: _selectedIndex == 2 ? null : const CircularNotchedRectangle(),
         notchMargin: 8,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             Expanded(child: _bottomNavItem(0, Icons.home_filled, 'Home')),
             Expanded(child: _bottomNavItem(1, Icons.agriculture, 'My Farm')),
-            const SizedBox(width: 70), // Increased space for the large FAB
+            
+            // The "Normal Menu" Sparkle Button for AI View
+            if (_selectedIndex == 2)
+              GestureDetector(
+                onTap: () => _showAiMenu(context),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD97706),
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+                    ),
+                  ),
+                  child: const Icon(Icons.grid_view_rounded, color: Colors.white, size: 24),
+                ),
+              )
+            else
+              const SizedBox(width: 70), 
+              
             Expanded(child: _bottomNavItem(3, Icons.groups, 'Clubs')),
             Expanded(child: _bottomNavItem(4, Icons.leaderboard, 'Rank')),
           ],
