@@ -15,61 +15,17 @@ class ProfileHeader extends StatelessWidget {
           children: [
             // Cover Photo
             Container(
-              height: 180,
+              height: 200,
               width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                image: const DecorationImage(
-                  image: NetworkImage('https://images.unsplash.com/photo-1500382017468-9049fee74a62?q=80&w=1000'),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F5F5),
+                image: DecorationImage(
+                  image: AssetImage('assets/images/cover_photo.png'),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
             
-            // Mayor Samuel S. Co Card Overlay
-            Positioned(
-              right: 20,
-              bottom: 20,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Mayor Samuel S. Co',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF1E40AF),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E40AF),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'Pagadian City',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
             // Profile Avatar
             Positioned(
               left: 20,
@@ -84,7 +40,7 @@ class ProfileHeader extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: CircleAvatar(
-                      radius: 45,
+                      radius: 50,
                       backgroundColor: Colors.grey[200],
                       backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=janrey'),
                     ),
@@ -104,27 +60,27 @@ class ProfileHeader extends StatelessWidget {
               ),
             ),
 
-            // Edit Cover Photo Button
+            // Edit Cover Photo Button (Now Inside)
             Positioned(
               right: 20,
-              bottom: -40,
+              bottom: 20,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.black.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: Colors.white30),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.camera_alt_outlined, size: 16, color: Colors.black87),
+                    const Icon(Icons.camera_alt_outlined, size: 16, color: Colors.white),
                     const SizedBox(width: 8),
                     Text(
                       'Edit cover photo',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black87,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -133,7 +89,7 @@ class ProfileHeader extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 50),
+        const SizedBox(height: 45),
 
         // Action Buttons Row
         Padding(
@@ -141,26 +97,15 @@ class ProfileHeader extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              _buildActionButton(
-                icon: Icons.settings_outlined,
-                label: 'Edit Profile',
-                color: AppColors.premiumGreen,
-                textColor: Colors.white,
-              ),
+              _buildIconButton(Icons.edit_outlined, color: AppColors.premiumGreen, iconColor: Colors.white),
               const SizedBox(width: 8),
-              _buildActionButton(
-                icon: Icons.agriculture_outlined,
-                label: 'My Farm',
-                color: Colors.white,
-                textColor: Colors.black87,
-                borderColor: Colors.grey[200],
-              ),
+              _buildIconButton(Icons.agriculture_outlined),
               const SizedBox(width: 8),
               _buildIconButton(Icons.more_horiz),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 4),
 
         // User Bio Info
         Padding(
@@ -262,15 +207,23 @@ class ProfileHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildIconButton(IconData icon) {
+  Widget _buildIconButton(IconData icon, {Color? color, Color? iconColor}) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        color: color ?? Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: color == null ? Border.all(color: Colors.grey[200]!) : null,
+        boxShadow: [
+          if (color != null)
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+        ],
       ),
-      child: Icon(icon, size: 18, color: Colors.black87),
+      child: Icon(icon, size: 20, color: iconColor ?? Colors.black87),
     );
   }
 }
