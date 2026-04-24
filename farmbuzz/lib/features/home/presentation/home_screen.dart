@@ -4,6 +4,10 @@ import 'widgets/home_drawer.dart';
 import 'widgets/my_farm_view.dart';
 import 'widgets/bantay_ai_view.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/features/messages/presentation/messages_screen.dart';
+import 'package:farmbuzz/features/notifications/presentation/notifications_screen.dart';
+
+import 'package:farmbuzz/features/clubs/presentation/clubs_view.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const HomeFeedView(),
     const MyFarmView(),
     const BantayAiView(),
-    const Center(child: Text('Clubs', style: TextStyle(color: Colors.white))),
+    const ClubsView(),
     const Center(child: Text('Leaderboard', style: TextStyle(color: Colors.white))),
   ];
 
@@ -56,7 +60,11 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: Colors.redAccent,
               child: Icon(Icons.chat_bubble_outline, color: Colors.black87),
             ),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MessagesScreen()),
+              );
+            },
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
@@ -65,7 +73,11 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: Colors.redAccent,
               child: Icon(Icons.notifications_outlined, color: Colors.black87),
             ),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12, left: 4),
