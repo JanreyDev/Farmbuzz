@@ -99,7 +99,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      drawer: const HomeDrawer(),
+      drawer: HomeDrawer(
+        selectedIndex: _selectedIndex,
+        onSelectItem: (index) {
+          setState(() => _selectedIndex = index);
+          Navigator.pop(context); // Close drawer
+        },
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
