@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
-import 'widgets/tier_card.dart';
-import 'widgets/achievement_banner.dart';
-import 'widgets/xp_growth_chart.dart';
-import 'widgets/highlights_grid.dart';
+import 'widgets/my_journey_tab_view.dart';
+import 'widgets/region_tab_view.dart';
+import 'widgets/bloodlines_tab_view.dart';
+import 'widgets/clubs_tab_view.dart';
+import 'widgets/shoutouts_tab_view.dart';
+import 'widgets/awards_tab_view.dart';
 
 class LeaderboardView extends StatefulWidget {
   const LeaderboardView({super.key});
@@ -71,18 +73,31 @@ class _LeaderboardViewState extends State<LeaderboardView> {
             ),
             const SizedBox(height: 32),
             
-            // Content
-            const TierCard(),
-            const SizedBox(height: 16),
-            const AchievementBanner(),
-            const SizedBox(height: 16),
-            const XpGrowthChart(),
-            const SizedBox(height: 16),
-            const HighlightsGrid(),
+            // Content based on selected tab
+            _buildTabContent(),
             const SizedBox(height: 40),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildTabContent() {
+    switch (selectedTab) {
+      case 'My Journey':
+        return const MyJourneyTabView();
+      case 'Region':
+        return const RegionTabView();
+      case 'Bloodlines':
+        return const BloodlinesTabView();
+      case 'Clubs':
+        return const ClubsTabView();
+      case 'Shoutouts':
+        return const ShoutoutsTabView();
+      case 'Awards':
+        return const AwardsTabView();
+      default:
+        return const MyJourneyTabView();
+    }
   }
 }
