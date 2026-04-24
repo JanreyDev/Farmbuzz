@@ -28,7 +28,7 @@ class BantayAiView extends StatelessWidget {
                       color: Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(
@@ -112,28 +112,23 @@ class _AiHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          OutlinedButton.icon(
+          IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.history_rounded, size: 16),
-            label: const Text('History'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey[700],
-              side: BorderSide(color: Colors.grey[200]!),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            icon: const Icon(Icons.history_rounded, size: 20, color: Colors.grey),
+            tooltip: 'History',
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.grey[100],
+              padding: const EdgeInsets.all(8),
             ),
           ),
           const SizedBox(width: 8),
-          ElevatedButton.icon(
+          IconButton(
             onPressed: () {},
-            icon: const Icon(Icons.add_rounded, size: 16),
-            label: const Text('New'),
-            style: ElevatedButton.styleFrom(
+            icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+            tooltip: 'New Chat',
+            style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFD97706),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.all(8),
             ),
           ),
         ],
@@ -179,7 +174,7 @@ class _PromptGrid extends StatelessWidget {
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 2.2,
+      childAspectRatio: 1.6,
       children: const [
         _PromptCard(
           icon: Icons.monitor_heart_outlined,

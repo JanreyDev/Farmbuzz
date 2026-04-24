@@ -126,7 +126,9 @@ class FarmSettingsHero extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       FarmSettingsBadge(
                         label: 'Gamefowl',
@@ -134,14 +136,12 @@ class FarmSettingsHero extends StatelessWidget {
                         color: Colors.orange[800]!,
                         bgColor: Colors.orange[50]!,
                       ),
-                      const SizedBox(width: 8),
                       FarmSettingsBadge(
                         label: 'Palawan · Est. 2026',
                         icon: Icons.location_on_rounded,
                         color: Colors.grey[600]!,
                         bgColor: Colors.grey[100]!,
                       ),
-                      const SizedBox(width: 8),
                       const FarmSettingsBadge(
                         label: 'PRIMARY',
                         icon: Icons.bolt_rounded,
@@ -187,12 +187,15 @@ class FarmSettingsBadge extends StatelessWidget {
         children: [
           Icon(icon, size: 10, color: color),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
-              color: color,
+          Flexible(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

@@ -192,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   
                   // Sections based on tab or all
                   if (_selectedTab == 'Account' || _selectedTab == 'All') ...[
-                    _buildSectionHeader(Icons.person_outline, 'ACCOUNT', 'Basic information visible on your profile'),
+                    _buildSectionHeader(Icons.person_outlined, 'ACCOUNT', 'Basic information visible on your profile'),
                     const SizedBox(height: 12),
                     _buildSettingsContainer([
                       const SettingTile(title: 'Name', subtitle: 'Janrey'),
@@ -207,7 +207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
 
                   if (_selectedTab == 'Security' || _selectedTab == 'All') ...[
-                    _buildSectionHeader(Icons.lock_outline, 'SECURITY', 'Security and login settings'),
+                    _buildSectionHeader(Icons.lock_outlined, 'SECURITY', 'Security and login settings'),
                     const SizedBox(height: 12),
                     _buildSettingsContainer([
                       const SettingTile(title: 'Password', subtitle: 'Last changed 47 days ago'),
@@ -476,7 +476,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 32),
                   
-                  _buildSectionHeader(Icons.help_outline, 'HELP & SUPPORT', 'Get assistance and information'),
+                  _buildSectionHeader(Icons.help_outlined, 'HELP & SUPPORT', 'Get assistance and information'),
                   const SizedBox(height: 12),
                   _buildSettingsContainer([
                     const SettingTile(title: 'Contact support', subtitle: 'Email us or start a chat'),
@@ -529,12 +529,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final bool isSelected = _selectedTab == label;
     IconData? icon;
     switch (label) {
-      case 'Account': icon = Icons.person_outline; break;
-      case 'Security': icon = Icons.lock_outline; break;
+      case 'Account': icon = Icons.person_outlined; break;
+      case 'Security': icon = Icons.lock_outlined; break;
       case 'Subscription': icon = Icons.card_membership_outlined; break;
       case 'Notifications': icon = Icons.notifications_none_outlined; break;
       case 'Privacy': icon = Icons.visibility_outlined; break;
-      case 'Messages': icon = Icons.chat_bubble_outline; break;
+      case 'Messages': icon = Icons.chat_bubble_outlined; break;
       case 'Content': icon = Icons.grid_view_outlined; break;
     }
     

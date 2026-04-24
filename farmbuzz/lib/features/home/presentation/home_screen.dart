@@ -107,21 +107,70 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: AppColors.accentGreen,
-        unselectedItemColor: Colors.grey,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.agriculture), label: 'My Farm'),
-          BottomNavigationBarItem(icon: Icon(Icons.auto_awesome), label: 'Bantay AI'),
-          BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Clubs'),
-          BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Rank'),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => setState(() => _selectedIndex = 2),
+        backgroundColor: const Color(0xFFD97706), // Bantay AI Amber
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFFF59E0B),
+                const Color(0xFFD97706),
+              ],
+            ),
+          ),
+          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 28),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        height: 65,
+        color: Colors.white,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            Expanded(child: _bottomNavItem(0, Icons.home_filled, 'Home')),
+            Expanded(child: _bottomNavItem(1, Icons.agriculture, 'My Farm')),
+            const SizedBox(width: 70), // Increased space for the large FAB
+            Expanded(child: _bottomNavItem(3, Icons.groups, 'Clubs')),
+            Expanded(child: _bottomNavItem(4, Icons.leaderboard, 'Rank')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _bottomNavItem(int index, IconData icon, String label) {
+    final isSelected = _selectedIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? AppColors.accentGreen : Colors.grey,
+            size: 24,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? AppColors.accentGreen : Colors.grey,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );

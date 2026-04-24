@@ -92,16 +92,16 @@ class _PinLoginCardState extends State<PinLoginCard> {
             onTap: (val) {
               if (_pin.length < 6) {
                 setState(() => _pin += val);
+                
+                // Navigate only when exactly 6 digits are entered
                 if (_pin.length == 6) {
-                  // Simulate login success
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  );
-                } else {
-                  // Simulate registration success
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  );
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    if (mounted) {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (context) => const HomeScreen()),
+                      );
+                    }
+                  });
                 }
               }
             },

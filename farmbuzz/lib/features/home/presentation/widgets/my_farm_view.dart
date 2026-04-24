@@ -147,9 +147,12 @@ class _BreedingViewState extends State<_BreedingView> {
         const SizedBox(height: 24),
 
         // Sub-tabs: Full-width with Gaps
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
                 label: 'Collection',
                 icon: Icons.inventory_2_outlined,
@@ -158,8 +161,8 @@ class _BreedingViewState extends State<_BreedingView> {
                 onTap: () => setState(() => _subTabIndex = 0),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
                 label: 'Incubating',
                 icon: Icons.timer_outlined,
@@ -167,8 +170,8 @@ class _BreedingViewState extends State<_BreedingView> {
                 onTap: () => setState(() => _subTabIndex = 1),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
                 label: 'Archive',
                 icon: Icons.archive_outlined,
@@ -230,7 +233,7 @@ class _PerformanceSection extends StatelessWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.4,
+          childAspectRatio: 0.9,
           children: const [
             FarmStatCard(
               title: 'FERTILITY RATE',
@@ -285,7 +288,7 @@ class _LifecycleSection extends StatelessWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.4,
+          childAspectRatio: 0.9,
           children: const [
             FarmStatCard(
               title: 'BROODING MORTALITY',
@@ -348,7 +351,7 @@ class _QualitySection extends StatelessWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.4,
+          childAspectRatio: 0.9,
           children: const [
             FarmStatCard(
               title: 'BULL STAG RATE',
@@ -395,7 +398,7 @@ class _HealthSection extends StatelessWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.4,
+          childAspectRatio: 0.9,
           children: const [
             FarmStatCard(
               title: 'VACCINATION RATE',
@@ -439,7 +442,7 @@ class _BreedingStats extends StatelessWidget {
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.4,
+      childAspectRatio: 0.9,
       children: const [
         FarmStatCard(
           title: 'EGGS INCUBATING',
@@ -483,49 +486,54 @@ class _BreedingTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
-        children: [
-          // Background Line
-          Positioned(
-            top: 6,
-            left: 40,
-            right: 40,
-            child: Container(
-              height: 1.5,
-              color: Colors.grey[200],
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
-              _TimelineStep(
-                label: 'Candling',
-                days: 'DAY 1-10',
-                icon: Icons.lightbulb_outline_rounded,
-                color: Color(0xFFFB923C),
-                iconBg: Color(0xFFFFF7ED),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 400),
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              Positioned(
+                top: 6,
+                left: 40,
+                right: 40,
+                child: Container(
+                  height: 1.5,
+                  color: Colors.grey[200],
+                ),
               ),
-              _TimelineStep(
-                label: 'Settling',
-                days: 'DAY 11-18',
-                icon: Icons.settings_input_component_rounded,
-                color: Color(0xFF475569),
-                iconBg: Color(0xFFF1F5F9),
-              ),
-              _TimelineStep(
-                label: 'Hatch',
-                days: 'DAY 19-21',
-                icon: Icons.egg_outlined,
-                color: Color(0xFF16A34A),
-                iconBg: Color(0xFFF0FDF4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: const [
+                  _TimelineStep(
+                    label: 'Candling',
+                    days: 'DAY 1-10',
+                    icon: Icons.lightbulb_outline_rounded,
+                    color: Color(0xFFFB923C),
+                    iconBg: Color(0xFFFFF7ED),
+                  ),
+                  _TimelineStep(
+                    label: 'Settling',
+                    days: 'DAY 11-18',
+                    icon: Icons.settings_input_component_rounded,
+                    color: Color(0xFF475569),
+                    iconBg: Color(0xFFF1F5F9),
+                  ),
+                  _TimelineStep(
+                    label: 'Hatch',
+                    days: 'DAY 19-21',
+                    icon: Icons.egg_outlined,
+                    color: Color(0xFF16A34A),
+                    iconBg: Color(0xFFF0FDF4),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -652,12 +660,16 @@ class _SubTabItem extends StatelessWidget {
               color: isActive ? Colors.white : Colors.grey[500],
             ),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: isActive ? Colors.white : Colors.grey[500],
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: isActive ? Colors.white : Colors.grey[500],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (count != null) ...[
@@ -1491,12 +1503,15 @@ class _BannerChip extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: iconColor),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: Colors.black,
+          Flexible(
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -2016,19 +2031,23 @@ class _FeatureCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: Colors.white, size: 24),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.accentGreen.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.accentGreen.withOpacity(0.2), width: 0.5),
-                ),
-                child: Text(
-                  badge,
-                  style: const TextStyle(
-                    color: AppColors.accentGreen,
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.accentGreen.withOpacity(0.2), width: 0.5),
+                  ),
+                  child: Text(
+                    badge,
+                    style: const TextStyle(
+                      color: AppColors.accentGreen,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
@@ -2655,9 +2674,12 @@ class _FlockViewState extends State<_FlockView> {
         const SizedBox(height: 24),
 
         // Category Sub-tabs
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            Expanded(
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
                 label: 'Batch',
                 icon: Icons.layers_outlined,
@@ -2666,8 +2688,8 @@ class _FlockViewState extends State<_FlockView> {
                 onTap: () => setState(() => _categoryTabIndex = 0),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
                 label: 'Stag / Cock',
                 icon: Icons.military_tech_outlined,
@@ -2676,8 +2698,8 @@ class _FlockViewState extends State<_FlockView> {
                 onTap: () => setState(() => _categoryTabIndex = 1),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
+            SizedBox(
+              width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
                 label: 'Pullet / Hen',
                 icon: Icons.female_rounded,
@@ -2756,7 +2778,7 @@ class _FlockStats extends StatelessWidget {
       crossAxisCount: 2,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.4,
+      childAspectRatio: 0.9,
       children: const [
         FarmStatCard(
           title: 'MY FLOCK',
@@ -2900,12 +2922,16 @@ class _StageFilter extends StatelessWidget {
               color: isActive ? AppColors.premiumGreen : Colors.grey[400],
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: isActive ? AppColors.premiumGreen : Colors.grey[600],
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isActive ? AppColors.premiumGreen : Colors.grey[600],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 8),

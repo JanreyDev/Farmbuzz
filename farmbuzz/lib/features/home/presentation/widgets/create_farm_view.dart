@@ -235,7 +235,7 @@ class _CreateFarmViewState extends State<CreateFarmView> {
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 0.85,
+            childAspectRatio: 0.72,
           ),
           itemCount: _farmTypes.length,
           itemBuilder: (context, index) {

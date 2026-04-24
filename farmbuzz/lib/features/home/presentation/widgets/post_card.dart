@@ -143,14 +143,12 @@ class PostCard extends StatelessWidget {
 
           // Action Buttons
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _PostAction(icon: Icons.thumb_up_outlined, label: 'Like'),
-                _PostAction(icon: Icons.chat_bubble_outline, label: 'Comment'),
-                _PostAction(icon: Icons.share_outlined, label: 'Share'),
-                _PostAction(icon: Icons.bookmark_outline, label: 'Save'),
+                Expanded(child: _PostAction(icon: Icons.thumb_up_outlined, label: 'Like')),
+                Expanded(child: _PostAction(icon: Icons.chat_bubble_outline, label: 'Comment')),
+                Expanded(child: _PostAction(icon: Icons.share_outlined, label: 'Share')),
               ],
             ),
           ),

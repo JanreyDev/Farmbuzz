@@ -68,28 +68,6 @@ class ChatDetailView extends StatelessWidget {
           ),
         ),
         
-        // Reconnecting Bar (Optional, from image)
-        if (chatId == '1') // Just for demonstration
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            color: const Color(0xFFFEF3C7),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'Reconnecting...',
-                  style: TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-          ),
 
         // Message List
         Expanded(

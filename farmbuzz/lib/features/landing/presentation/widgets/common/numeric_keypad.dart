@@ -22,22 +22,26 @@ class NumericKeypad extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                for (var key in row)
-                  KeyButton(label: key, onTap: () => onTap(key)),
+                for (var key in row) ...[
+                  Expanded(child: KeyButton(label: key, onTap: () => onTap(key))),
+                  if (key != row.last) const SizedBox(width: 12),
+                ],
               ],
             ),
           ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const SizedBox(width: 100), // Space for alignment
-            KeyButton(label: '0', onTap: () => onTap('0')),
-            KeyButton(
-              icon: Icons.backspace_outlined,
-              onTap: onDelete,
-              isSpecial: true,
+            const Expanded(child: SizedBox()), // Placeholder for empty space
+            const SizedBox(width: 12),
+            Expanded(child: KeyButton(label: '0', onTap: () => onTap('0'))),
+            const SizedBox(width: 12),
+            Expanded(
+              child: KeyButton(
+                icon: Icons.backspace_outlined,
+                onTap: onDelete,
+                isSpecial: true,
+              ),
             ),
           ],
         ),
@@ -65,7 +69,6 @@ class KeyButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 100,
         height: 54,
         decoration: BoxDecoration(
           color: isSpecial ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.9),
@@ -73,7 +76,7 @@ class KeyButton extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: icon != null
-            ? Icon(icon, color: Colors.black54, size: 20)
+            ? Icon(icon, color: isSpecial ? Colors.white70 : Colors.black54, size: 20)
             : Text(
                 label!,
                 style: const TextStyle(

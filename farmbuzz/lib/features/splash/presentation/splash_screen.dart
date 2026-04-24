@@ -9,13 +9,32 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  Timer? _timer;
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(seconds: 2), () {
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutBack,
+    );
+
+    _opacityAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
+
+    _controller.forward();
+
+    Timer(const Duration(seconds: 3), () {
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/landing');
     });
@@ -23,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -35,64 +54,84 @@ class _SplashScreenState extends State<SplashScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0D2F1E), Color(0xFF15442B)],
+            colors: [Color(0xFF08180F), Color(0xFF0D2F1E)],
           ),
         ),
         child: Stack(
           children: [
-            Positioned(
-              top: -80,
-              right: -40,
-              child: _GlowOrb(
-                size: 220,
-                color: Colors.greenAccent.withValues(alpha: 0.08),
-              ),
-            ),
-            Positioned(
-              bottom: -100,
-              left: -60,
-              child: _GlowOrb(
-                size: 260,
-                color: Colors.yellow.withValues(alpha: 0.06),
-              ),
-            ),
             Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Text(
-                    'FB',
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFFF6C148),
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Opacity(
+                      opacity: _opacityAnimation.value,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.greenAccent.withOpacity(0.2),
+                                  blurRadius: 30,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              height: 120,
+                              errorBuilder: (context, error, stackTrace) => const Icon(
+                                Icons.agriculture_rounded,
+                                size: 80,
+                                color: Color(0xFFD97706),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            'FarmBuzz',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '2026 Vision',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.greenAccent.withOpacity(0.6),
+                              letterSpacing: 4,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'FarmBuzz',
-                    style: TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFFE6F6EA),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-            const Positioned(
+            Positioned(
+              bottom: 50,
               left: 0,
               right: 0,
-              bottom: 44,
               child: Center(
                 child: SizedBox(
-                  width: 140,
-                  child: LinearProgressIndicator(
-                    minHeight: 4,
-                    borderRadius: BorderRadius.all(Radius.circular(999)),
-                    backgroundColor: Color(0x3D66BB6A),
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Color(0xFF8BEA9A),
+                      Colors.greenAccent.withOpacity(0.3),
                     ),
                   ),
                 ),

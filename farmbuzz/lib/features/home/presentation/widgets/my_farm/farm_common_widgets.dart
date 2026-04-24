@@ -129,17 +129,23 @@ class FarmStatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.grey[400],
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.grey[400],
+                    letterSpacing: 0.5,
+                  ),
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -159,7 +165,7 @@ class FarmStatCard extends StatelessWidget {
               color: Colors.black,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 8),
           Text(
             description,
             style: GoogleFonts.inter(
@@ -213,7 +219,7 @@ class FarmBenchmarkAction extends StatelessWidget {
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 14, color: Colors.black),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
               ],
               Flexible(
                 child: Text(
