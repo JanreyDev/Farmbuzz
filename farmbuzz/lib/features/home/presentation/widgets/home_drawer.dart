@@ -5,6 +5,7 @@ import 'package:farmbuzz/features/profile/presentation/profile_screen.dart';
 import 'package:farmbuzz/features/messages/presentation/messages_screen.dart';
 import 'package:farmbuzz/features/notifications/presentation/notifications_screen.dart';
 import 'package:farmbuzz/features/activity/presentation/activity_screen.dart';
+import 'package:farmbuzz/features/saved/presentation/saved_screen.dart';
 
 class HomeDrawer extends StatelessWidget {
   final int selectedIndex;
@@ -109,7 +110,10 @@ class HomeDrawer extends StatelessWidget {
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ActivityScreen()));
                 }),
-                _buildNavItem(context, Icons.bookmark_border_outlined, 'Saved', onTap: () => Navigator.pop(context)),
+                _buildNavItem(context, Icons.bookmark_border_outlined, 'Saved', onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedScreen()));
+                }),
                 _buildNavItem(context, Icons.settings_outlined, 'Settings', onTap: () => Navigator.pop(context)),
                 
                 const SizedBox(height: 40),
