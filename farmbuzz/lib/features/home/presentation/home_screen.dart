@@ -10,6 +10,8 @@ import 'package:farmbuzz/features/notifications/presentation/notifications_scree
 import 'package:farmbuzz/features/clubs/presentation/clubs_view.dart';
 import 'package:farmbuzz/features/leaderboard/presentation/leaderboard_view.dart';
 
+import 'package:farmbuzz/features/profile/presentation/profile_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -80,12 +82,19 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12, left: 4),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey[200],
-              backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=janrey'),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 12, left: 4),
+              child: CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=janrey'),
+              ),
             ),
           ),
         ],
