@@ -5,6 +5,7 @@ import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'post_card.dart';
 import 'story_view_screen.dart';
 import 'create_story_modal.dart';
+import 'create_post_modal.dart';
 
 class HomeFeedView extends StatefulWidget {
   const HomeFeedView({super.key});
@@ -14,7 +15,16 @@ class HomeFeedView extends StatefulWidget {
 }
 
 class _HomeFeedViewState extends State<HomeFeedView> {
-  final List<Map<String, String>> _posts = const [
+  final ScrollController _scrollController = ScrollController();
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // Post state
+  final List<Map<String, dynamic>> _posts = [
     {
       'userName': 'TRIXIE',
       'userAvatar': 'https://i.pravatar.cc/150?u=trixie',
@@ -33,24 +43,6 @@ class _HomeFeedViewState extends State<HomeFeedView> {
       'likesCount': '24',
       'commentsCount': '8',
     },
-    {
-      'userName': 'JOHN DEE',
-      'userAvatar': 'https://i.pravatar.cc/150?u=john',
-      'timeAgo': '5h',
-      'postText': 'Checking the fertility rate of the current batch. Bantay AI says we are at 85%!🔥',
-      'postImageUrl': 'https://images.unsplash.com/photo-1582515073490-39981397c445?w=600',
-      'likesCount': '45',
-      'commentsCount': '15',
-    },
-    {
-      'userName': 'FARM MASTER',
-      'userAvatar': 'https://i.pravatar.cc/150?u=master',
-      'timeAgo': '1d',
-      'postText': 'Anyone else seeing a dip in egg production with the recent weather change?',
-      'postImageUrl': 'https://images.unsplash.com/photo-1569254994521-ddbb54af5ae8?w=600',
-      'likesCount': '89',
-      'commentsCount': '32',
-    },
   ];
 
   // Dynamic stories state
@@ -61,19 +53,45 @@ class _HomeFeedViewState extends State<HomeFeedView> {
       _dynamicStories.insert(0, {
         'name': 'Janrey',
         'time': 'Just now',
-        'imagePath': imagePath, // Use the actual path
+        'imagePath': imagePath,
         'avatarUrl': 'https://i.pravatar.cc/150?u=janrey',
       });
+    });
+  }
+
+  void _addNewPost(String text, List<String> imagePaths) {
+    setState(() {
+      _posts.insert(0, {
+        'userName': 'Janrey',
+        'userAvatar': 'https://i.pravatar.cc/150?u=janrey',
+        'timeAgo': 'Just now',
+        'postText': text,
+        'localImagePaths': imagePaths,
+        'likesCount': '0',
+        'commentsCount': '0',
+      });
+    });
+    
+    // Scroll to top to show the new post
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutQuart,
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: _scrollController,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _StatusUpdateBox(),
+          _StatusUpdateBox(onTap: () => CreatePostModal.show(context, onPostCreated: _addNewPost)),
           _StoriesSection(
             dynamicStories: _dynamicStories,
             onAddStory: _addNewStory,
@@ -86,13 +104,14 @@ class _HomeFeedViewState extends State<HomeFeedView> {
             itemBuilder: (context, index) {
               final post = _posts[index];
               return PostCard(
-                userName: post['userName']!,
-                userAvatar: post['userAvatar']!,
-                timeAgo: post['timeAgo']!,
-                postText: post['postText']!,
-                postImageUrl: post['postImageUrl']!,
-                likesCount: post['likesCount']!,
-                commentsCount: post['commentsCount']!,
+                userName: post['userName'],
+                userAvatar: post['userAvatar'],
+                timeAgo: post['timeAgo'],
+                postText: post['postText'],
+                postImageUrl: post['postImageUrl'],
+                localImagePaths: post['localImagePaths'],
+                likesCount: post['likesCount'],
+                commentsCount: post['commentsCount'],
               );
             },
           ),
@@ -104,7 +123,8 @@ class _HomeFeedViewState extends State<HomeFeedView> {
 }
 
 class _StatusUpdateBox extends StatelessWidget {
-  const _StatusUpdateBox();
+  const _StatusUpdateBox({required this.onTap});
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -130,24 +150,33 @@ class _StatusUpdateBox extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                "What's happening on your farm?",
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            child: GestureDetector(
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "What's happening on your farm?",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
               ),
             ),
           ),
           const SizedBox(width: 12),
           Row(
             children: [
-              Icon(Icons.image_outlined, color: AppColors.accentGreen, size: 20),
+              GestureDetector(
+                onTap: onTap,
+                child: Icon(Icons.image_outlined, color: AppColors.accentGreen, size: 20),
+              ),
               const SizedBox(width: 10),
-              Icon(Icons.videocam_outlined, color: Colors.blueAccent, size: 20),
+              GestureDetector(
+                onTap: onTap,
+                child: Icon(Icons.videocam_outlined, color: Colors.blueAccent, size: 20),
+              ),
             ],
           ),
         ],
@@ -178,7 +207,7 @@ class _StoriesSection extends StatelessWidget {
           ...dynamicStories.map((story) => _StoryCard(
                 name: story['name']!,
                 time: story['time']!,
-                imageUrl: story['imagePath']!, // Passing path here
+                imageUrl: story['imagePath']!,
                 avatarUrl: story['avatarUrl']!,
                 isNew: true,
                 isLocal: true,
@@ -194,12 +223,6 @@ class _StoriesSection extends StatelessWidget {
             time: '19h ago',
             imageUrl: 'https://images.unsplash.com/photo-1516733725897-1aa73b87c8e8?w=400',
             avatarUrl: 'https://i.pravatar.cc/150?u=trixie',
-          ),
-          const _StoryCard(
-            name: 'John Doe',
-            time: '2h ago',
-            imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400',
-            avatarUrl: 'https://i.pravatar.cc/150?u=john',
           ),
         ],
       ),
@@ -431,7 +454,7 @@ class _FilterTabs extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: [
+          children: const [
             _FilterChip(label: 'For You', icon: Icons.auto_awesome, isActive: true),
             _FilterChip(label: 'Following', icon: Icons.person_outline),
             _FilterChip(label: 'Reels', icon: Icons.play_circle_outline),

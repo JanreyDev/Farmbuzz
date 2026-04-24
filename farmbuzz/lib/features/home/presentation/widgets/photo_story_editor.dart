@@ -246,6 +246,7 @@ class _PhotoStoryEditorState extends State<PhotoStoryEditor> {
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
+            textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
               hintText: 'Type your text...',
               hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey[400]),
@@ -394,9 +395,7 @@ class _PhotoStoryEditorState extends State<PhotoStoryEditor> {
             flex: 2,
             child: ElevatedButton(
               onPressed: () {
-                // Call the callback with the local image path
                 widget.onStoryCreated?.call(widget.imageFile.path);
-                
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -556,9 +555,7 @@ class _MusicSelectionDialog extends StatelessWidget {
           const SizedBox(height: 12),
           _buildTabs(),
           const Divider(height: 24),
-          const Expanded(
-            child: _MusicList(),
-          ),
+          const Expanded(child: _MusicList()),
         ],
       ),
     );
@@ -787,7 +784,7 @@ class _PrivacyDialogState extends State<_PrivacyDialog> {
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF22C55E), // Vibrant Green
+                      backgroundColor: AppColors.accentGreen,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: 0,
@@ -828,80 +825,33 @@ class _PrivacyOption extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF22C55E) : Colors.grey[200]!,
-            width: isSelected ? 2 : 1,
-          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? AppColors.accentGreen : Colors.grey[100]!),
         ),
         child: Row(
           children: [
-            _RadioCircle(isSelected: isSelected),
-            const SizedBox(width: 16),
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF22C55E).withOpacity(0.1) : Colors.grey[50],
-                borderRadius: BorderRadius.circular(10),
+                color: isSelected ? Colors.white : Colors.grey[50],
+                shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon, 
-                size: 22, 
-                color: isSelected ? const Color(0xFF22C55E) : Colors.orange[300] ?? Colors.orange
-              ),
+              child: Icon(icon, size: 20, color: isSelected ? AppColors.accentGreen : Colors.grey[600]),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title, 
-                    style: GoogleFonts.plusJakartaSans(
-                      fontWeight: FontWeight.w800, 
-                      fontSize: 15,
-                      color: isSelected ? const Color(0xFF166534) : Colors.black
-                    )
-                  ),
-                  Text(
-                    subtitle, 
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11, 
-                      color: isSelected ? const Color(0xFF166534).withOpacity(0.7) : Colors.grey[500]
-                    )
-                  ),
+                  Text(title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13)),
+                  Text(subtitle, style: GoogleFonts.plusJakartaSans(color: Colors.grey[500], fontSize: 11)),
                 ],
               ),
             ),
+            if (isSelected) const Icon(Icons.check_circle, color: AppColors.accentGreen, size: 20),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _RadioCircle extends StatelessWidget {
-  const _RadioCircle({required this.isSelected});
-  final bool isSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 18,
-      height: 18,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: isSelected ? const Color(0xFF22C55E) : Colors.grey[400]!, width: 2),
-      ),
-      child: isSelected
-          ? Center(
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
-              ),
-            )
-          : null,
     );
   }
 }
