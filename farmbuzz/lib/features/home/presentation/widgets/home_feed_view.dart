@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'post_card.dart';
 
 class HomeFeedView extends StatelessWidget {
   const HomeFeedView({super.key});
@@ -25,7 +26,15 @@ class HomeFeedView extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: 5,
-            itemBuilder: (context, index) => const _PostCard(),
+            itemBuilder: (context, index) => const PostCard(
+              userName: 'TRIXIE',
+              userAvatar: 'https://i.pravatar.cc/150?u=trixie',
+              timeAgo: '1h',
+              postText: 'OPEN FOR BIDDING GUYS\n2 KIND OF BREEDING NARIN MGA BOSS\nGET NYO NA :>\nPM IS THE KEY',
+              postImageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600',
+              likesCount: '12',
+              commentsCount: '4',
+            ),
           ),
           
           const SizedBox(height: 20),
@@ -388,158 +397,4 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _PostCard extends StatelessWidget {
-  const _PostCard();
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Post Header
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=trixie'),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'TRIXIE',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          '1h • ',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                        ),
-                        Icon(Icons.public, size: 10, color: Colors.grey[600]),
-                        Text(
-                          ' • Edited',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-          
-          // Post Text
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(
-              'OPEN FOR BIDDING GUYS\n2 KIND OF BREEDING NARIN MGA BOSS\nGET NYO NA :>\nPM IS THE KEY',
-              style: TextStyle(fontSize: 14, height: 1.4),
-            ),
-          ),
-
-          // Post Image
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: Image.network(
-                'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600',
-                width: double.infinity,
-                height: 250,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-
-          // Engagement Stats
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.accentGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.thumb_up, size: 10, color: Colors.white),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '2',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-                const Spacer(),
-                Text(
-                  '4 comments',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 1, thickness: 0.5, indent: 16, endIndent: 16),
-
-          // Action Buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _PostAction(icon: Icons.thumb_up_outlined, label: 'Like'),
-                _PostAction(icon: Icons.chat_bubble_outline, label: 'Comment'),
-                _PostAction(icon: Icons.share_outlined, label: 'Share'),
-                _PostAction(icon: Icons.bookmark_outline, label: 'Save'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PostAction extends StatelessWidget {
-  const _PostAction({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton.icon(
-      onPressed: () {},
-      icon: Icon(icon, size: 18, color: Colors.grey[700]),
-      label: Text(
-        label,
-        style: TextStyle(color: Colors.grey[700], fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-      style: TextButton.styleFrom(
-        foregroundColor: Colors.grey[200],
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-      ),
-    );
-  }
-}
