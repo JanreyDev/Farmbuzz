@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 
@@ -5,12 +6,14 @@ class StoryViewScreen extends StatefulWidget {
   final String userName;
   final String avatarUrl;
   final String imageUrl;
+  final bool isLocal;
 
   const StoryViewScreen({
     super.key,
     required this.userName,
     required this.avatarUrl,
     required this.imageUrl,
+    this.isLocal = false,
   });
 
   @override
@@ -26,10 +29,15 @@ class _StoryViewScreenState extends State<StoryViewScreen> {
         children: [
           // Background Image
           Positioned.fill(
-            child: Image.network(
-              widget.imageUrl,
-              fit: BoxFit.cover,
-            ),
+            child: widget.isLocal
+                ? Image.file(
+                    File(widget.imageUrl),
+                    fit: BoxFit.cover,
+                  )
+                : Image.network(
+                    widget.imageUrl,
+                    fit: BoxFit.cover,
+                  ),
           ),
 
           // Top Gradient Overlay

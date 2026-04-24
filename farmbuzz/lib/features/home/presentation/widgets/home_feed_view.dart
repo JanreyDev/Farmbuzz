@@ -1,12 +1,19 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'post_card.dart';
 import 'story_view_screen.dart';
+import 'create_story_modal.dart';
 
-class HomeFeedView extends StatelessWidget {
+class HomeFeedView extends StatefulWidget {
   const HomeFeedView({super.key});
 
+  @override
+  State<HomeFeedView> createState() => _HomeFeedViewState();
+}
+
+class _HomeFeedViewState extends State<HomeFeedView> {
   final List<Map<String, String>> _posts = const [
     {
       'userName': 'TRIXIE',
@@ -46,6 +53,20 @@ class HomeFeedView extends StatelessWidget {
     },
   ];
 
+  // Dynamic stories state
+  final List<Map<String, String>> _dynamicStories = [];
+
+  void _addNewStory(String imagePath) {
+    setState(() {
+      _dynamicStories.insert(0, {
+        'name': 'Janrey',
+        'time': 'Just now',
+        'imagePath': imagePath, // Use the actual path
+        'avatarUrl': 'https://i.pravatar.cc/150?u=janrey',
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -53,7 +74,10 @@ class HomeFeedView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _StatusUpdateBox(),
-          const _StoriesSection(),
+          _StoriesSection(
+            dynamicStories: _dynamicStories,
+            onAddStory: _addNewStory,
+          ),
           const _FilterTabs(),
           ListView.builder(
             shrinkWrap: true,
@@ -133,7 +157,13 @@ class _StatusUpdateBox extends StatelessWidget {
 }
 
 class _StoriesSection extends StatelessWidget {
-  const _StoriesSection();
+  const _StoriesSection({
+    required this.dynamicStories,
+    required this.onAddStory,
+  });
+
+  final List<Map<String, String>> dynamicStories;
+  final ValueChanged<String> onAddStory;
 
   @override
   Widget build(BuildContext context) {
@@ -143,21 +173,29 @@ class _StoriesSection extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: const [
-          _AddStoryCard(),
-          _StoryCard(
+        children: [
+          _AddStoryCard(onAddStory: onAddStory),
+          ...dynamicStories.map((story) => _StoryCard(
+                name: story['name']!,
+                time: story['time']!,
+                imageUrl: story['imagePath']!, // Passing path here
+                avatarUrl: story['avatarUrl']!,
+                isNew: true,
+                isLocal: true,
+              )),
+          const _StoryCard(
             name: 'Alyssa Rose',
             time: '1 new • 10m ago',
             imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400',
             avatarUrl: 'https://i.pravatar.cc/150?u=alyssa',
           ),
-          _StoryCard(
+          const _StoryCard(
             name: 'TRIXIE',
             time: '19h ago',
             imageUrl: 'https://images.unsplash.com/photo-1516733725897-1aa73b87c8e8?w=400',
             avatarUrl: 'https://i.pravatar.cc/150?u=trixie',
           ),
-          _StoryCard(
+          const _StoryCard(
             name: 'John Doe',
             time: '2h ago',
             imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400',
@@ -170,100 +208,106 @@ class _StoriesSection extends StatelessWidget {
 }
 
 class _AddStoryCard extends StatelessWidget {
-  const _AddStoryCard();
+  const _AddStoryCard({required this.onAddStory});
+
+  final ValueChanged<String> onAddStory;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 6,
-            child: Container(
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-                image: DecorationImage(
-                  image: NetworkImage('https://i.pravatar.cc/150?u=janrey'),
-                  fit: BoxFit.cover,
+    return InkWell(
+      onTap: () => CreateStoryModal.show(context, onStoryCreated: onAddStory),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 100,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              flex: 6,
+              child: Container(
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                  image: DecorationImage(
+                    image: NetworkImage('https://i.pravatar.cc/150?u=janrey'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
+            Expanded(
+              flex: 4,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 12),
+                        Text(
+                          'Create story',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 12),
-                      Text(
-                        'Create story',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: -16,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
+                  Positioned(
+                    top: -16,
+                    left: 0,
+                    right: 0,
+                    child: Center(
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(2),
                         decoration: const BoxDecoration(
-                          color: AppColors.accentGreen,
+                          color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 20,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppColors.accentGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -275,12 +319,16 @@ class _StoryCard extends StatelessWidget {
     required this.time,
     required this.imageUrl,
     required this.avatarUrl,
+    this.isNew = false,
+    this.isLocal = false,
   });
 
   final String name;
   final String time;
   final String imageUrl;
   final String avatarUrl;
+  final bool isNew;
+  final bool isLocal;
 
   @override
   Widget build(BuildContext context) {
@@ -293,6 +341,7 @@ class _StoryCard extends StatelessWidget {
               userName: name,
               avatarUrl: avatarUrl,
               imageUrl: imageUrl,
+              isLocal: isLocal,
             ),
           ),
         );
@@ -303,7 +352,9 @@ class _StoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           image: DecorationImage(
-            image: NetworkImage(imageUrl),
+            image: isLocal 
+              ? FileImage(File(imageUrl)) as ImageProvider
+              : NetworkImage(imageUrl),
             fit: BoxFit.cover,
           ),
         ),
@@ -327,8 +378,8 @@ class _StoryCard extends StatelessWidget {
               left: 8,
               child: Container(
                 padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: AppColors.accentGreen,
+                decoration: BoxDecoration(
+                  color: isNew ? AppColors.accentGreen : Colors.white.withOpacity(0.5),
                   shape: BoxShape.circle,
                 ),
                 child: CircleAvatar(
@@ -445,5 +496,3 @@ class _FilterChip extends StatelessWidget {
     );
   }
 }
-
-
