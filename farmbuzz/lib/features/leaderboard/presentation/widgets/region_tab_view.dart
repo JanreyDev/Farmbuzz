@@ -190,8 +190,12 @@ class RegionTabView extends StatelessWidget {
     Color? initialsColor,
     String? imageUrl,
   }) {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: isUser ? const Color(0xFFF0FDF4) : Colors.transparent,
+        borderRadius: isUser ? BorderRadius.circular(12) : null,
+      ),
       child: Row(
         children: [
           CircleAvatar(
@@ -246,7 +250,7 @@ class RegionTabView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: isUser ? const Color(0xFFFEF3C7) : Colors.grey[100],
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -254,7 +258,7 @@ class RegionTabView extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: Colors.grey[500],
+                          color: isUser ? const Color(0xFFD97706) : Colors.grey[500],
                         ),
                       ),
                     ),
@@ -264,7 +268,7 @@ class RegionTabView extends StatelessWidget {
                   subtitle,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: Colors.grey[500],
+                    color: isUser ? const Color(0xFF92400E).withOpacity(0.7) : Colors.grey[500],
                   ),
                 ),
               ],
@@ -275,7 +279,7 @@ class RegionTabView extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: AppColors.premiumGreen,
+              color: isUser ? const Color(0xFFD97706) : AppColors.premiumGreen,
             ),
           ),
         ],
