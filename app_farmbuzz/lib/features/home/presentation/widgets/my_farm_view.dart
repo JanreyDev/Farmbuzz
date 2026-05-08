@@ -1403,16 +1403,6 @@ class _OnboardingStep extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Completion Indicator (Circle)
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey[300]!, width: 2),
-            ),
-          ),
-          const SizedBox(width: 16),
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(

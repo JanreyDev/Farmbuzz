@@ -561,7 +561,7 @@ class _PromptGrid extends StatelessWidget {
         _PromptCard(
           icon: Icons.scale_outlined,
           title: 'Weight targets by age',
-          subtitle: 'Weekly milestones, per bloodline',
+          subtitle: 'Weekly milestones, per flock line',
           iconColor: AppColors.aiAmberText,
           bgColor: AppColors.aiAmberBg,
           onTap: () => onPromptTap('Weight targets by age'),
