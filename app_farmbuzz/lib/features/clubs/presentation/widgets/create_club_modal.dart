@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:farmbuzz/features/clubs/data/club_api.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// A premium modal for creating new clubs.
-/// Features cover photo upload, bloodline selection, privacy toggles, and membership requirements.
+/// Features cover photo upload, focus tags, privacy toggles, and membership requirements.
 class CreateClubModal extends StatefulWidget {
   const CreateClubModal({super.key, this.onClubCreated});
 
@@ -27,22 +29,34 @@ class CreateClubModal extends StatefulWidget {
 }
 
 class _CreateClubModalState extends State<CreateClubModal> {
+  final ClubApi _clubApi = ClubApi();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _minBirdsController = TextEditingController(text: '0');
+  final TextEditingController _regionController = TextEditingController();
   
   XFile? _coverImage;
   final ImagePicker _picker = ImagePicker();
 
   bool _isPublic = true;
   bool _isVerifiedOnly = false;
+  bool _isSubmitting = false;
   bool _canCreate = false;
   String _selectedCategory = 'Community';
-  final Set<String> _selectedBloodlines = {};
+  final Set<String> _selectedFocusTags = {};
 
-  final List<String> _bloodlines = [
-    'Kelso', 'Sweater', 'Hatch', 'Roundhead', 'Albany', 'Lemon', 
-    'Grey', 'Radio', 'Claret', 'Butcher', 'Other'
+  final List<String> _focusTags = [
+    'Native Poultry',
+    'Layer',
+    'Broiler',
+    'Free-range',
+    'Farm Management',
+    'Health & Vaccination',
+    'Feeds & Nutrition',
+    'Hatchery',
+    'Egg Production',
+    'Market & Sales',
+    'Other',
   ];
 
   @override
@@ -57,6 +71,7 @@ class _CreateClubModalState extends State<CreateClubModal> {
     _nameController.dispose();
     _descriptionController.dispose();
     _minBirdsController.dispose();
+    _regionController.dispose();
     super.dispose();
   }
 
@@ -106,7 +121,7 @@ class _CreateClubModalState extends State<CreateClubModal> {
                   _buildPhotoUpload(),
                   const SizedBox(height: 24),
                   _buildLabel('CLUB NAME', isRequired: true),
-                  _buildTextField(_nameController, hint: 'e.g. Pampanga Breeders Alliance'),
+                  _buildTextField(_nameController, hint: 'e.g. Pampanga Poultry Farmers Network'),
                   const SizedBox(height: 20),
                   _buildLabel('DESCRIPTION'),
                   _buildTextField(_descriptionController, hint: 'What is this club about?', maxLines: 4),
@@ -114,11 +129,11 @@ class _CreateClubModalState extends State<CreateClubModal> {
                   _buildLabel('CATEGORY', isRequired: true),
                   _buildDropdown(_selectedCategory, (val) => setState(() => _selectedCategory = val!)),
                   const SizedBox(height: 20),
-                  _buildLabel('BLOODLINE FOCUS'),
-                  _buildBloodlineChips(),
+                  _buildLabel('POULTRY FOCUS'),
+                  _buildFocusTagChips(),
                   const SizedBox(height: 20),
                   _buildLabel('REGION'),
-                  _buildTextField(TextEditingController(), hint: 'Select region', readOnly: true, suffix: Icons.arrow_drop_down),
+                  _buildTextField(_regionController, hint: 'e.g. Pampanga'),
                   const SizedBox(height: 20),
                   _buildLabel('PRIVACY'),
                   _buildPrivacySelector(),
@@ -295,19 +310,19 @@ class _CreateClubModalState extends State<CreateClubModal> {
     );
   }
 
-  Widget _buildBloodlineChips() {
+  Widget _buildFocusTagChips() {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _bloodlines.map((bloodline) {
-        final isSelected = _selectedBloodlines.contains(bloodline);
+      children: _focusTags.map((focusTag) {
+        final isSelected = _selectedFocusTags.contains(focusTag);
         return GestureDetector(
           onTap: () {
             setState(() {
               if (isSelected) {
-                _selectedBloodlines.remove(bloodline);
+                _selectedFocusTags.remove(focusTag);
               } else {
-                _selectedBloodlines.add(bloodline);
+                _selectedFocusTags.add(focusTag);
               }
             });
           },
@@ -321,7 +336,7 @@ class _CreateClubModalState extends State<CreateClubModal> {
               ),
             ),
             child: Text(
-              bloodline,
+              focusTag,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
@@ -425,7 +440,7 @@ class _CreateClubModalState extends State<CreateClubModal> {
               ),
               const SizedBox(width: 12),
               Text(
-                'Verified breeders only',
+                'Verified members only',
                 style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.grey[700], fontWeight: FontWeight.w600),
               ),
             ],
@@ -444,13 +459,13 @@ class _CreateClubModalState extends State<CreateClubModal> {
         child: ElevatedButton(
           onPressed: _canCreate ? _handleCreate : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor: _canCreate ? AppColors.accentGreen : Colors.grey[100],
-            foregroundColor: _canCreate ? Colors.white : Colors.grey[400],
+            backgroundColor: _canCreate && !_isSubmitting ? AppColors.accentGreen : Colors.grey[100],
+            foregroundColor: _canCreate && !_isSubmitting ? Colors.white : Colors.grey[400],
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           child: Text(
-            'Create Club',
+            _isSubmitting ? 'Creating...' : 'Create Club',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -461,28 +476,84 @@ class _CreateClubModalState extends State<CreateClubModal> {
     );
   }
 
-  void _handleCreate() {
-    final clubData = {
-      'title': _nameController.text.trim(),
-      'description': _descriptionController.text.trim(),
-      'category': _selectedCategory,
-      'bloodlines': _selectedBloodlines.toList(),
-      'isPublic': _isPublic,
-      'minBirds': int.tryParse(_minBirdsController.text) ?? 0,
-      'verifiedOnly': _isVerifiedOnly,
-      'imageUrl': _coverImage?.path,
-    };
-    
-    widget.onClubCreated?.call(clubData);
-    Navigator.pop(context);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Club created successfully! waiting for admin approval'),
-        backgroundColor: AppColors.accentGreen,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  Future<void> _handleCreate() async {
+    if (_isSubmitting || !_canCreate) {
+      return;
+    }
+
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login again before creating a club.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final created = await _clubApi.createClub(
+        mobileNumber: mobileNumber.trim(),
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        category: _selectedCategory,
+        region: _regionController.text.trim().isEmpty
+            ? null
+            : _regionController.text.trim(),
+        focusTags: _selectedFocusTags.toList(),
+        isPublic: _isPublic,
+        minBirds: int.tryParse(_minBirdsController.text) ?? 0,
+        verifiedOnly: _isVerifiedOnly,
+        coverImageUrl: _coverImage?.path,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      widget.onClubCreated?.call(created);
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Club created successfully.'),
+          backgroundColor: AppColors.accentGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on ClubApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to create club. Please try again.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 }
 

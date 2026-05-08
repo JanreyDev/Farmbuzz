@@ -13,6 +13,9 @@ class ClubCard extends StatelessWidget {
   final int memberCount;
   final int postCount;
   final String? imageUrl;
+  final String? region;
+  final bool isPublic;
+  final bool isJoined;
 
   const ClubCard({
     super.key,
@@ -21,6 +24,9 @@ class ClubCard extends StatelessWidget {
     this.memberCount = 0,
     this.postCount = 0,
     this.imageUrl,
+    this.region,
+    this.isPublic = true,
+    this.isJoined = true,
   });
 
   @override
@@ -35,6 +41,12 @@ class ClubCard extends StatelessWidget {
             builder: (context) => ClubDetailScreen(
               title: title,
               coverUrl: imageUrl,
+              memberCount: memberCount,
+              postCount: postCount,
+              region: region,
+              isPublic: isPublic,
+              role: role == ClubRole.founder ? 'founder' : 'member',
+              isJoined: isJoined,
             ),
           ),
         );

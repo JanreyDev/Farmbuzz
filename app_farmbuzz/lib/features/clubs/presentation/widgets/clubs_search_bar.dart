@@ -21,7 +21,7 @@ class ClubsSearchBar extends StatelessWidget {
           Expanded(
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search clubs by name, region, bloodline...',
+                hintText: 'Search clubs by name, region, or focus...',
                 hintStyle: GoogleFonts.inter(
                   color: Colors.grey[400],
                   fontSize: 14,

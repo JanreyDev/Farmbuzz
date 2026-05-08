@@ -116,7 +116,7 @@ class _LandingScreenState extends State<LandingScreen> {
                               _HeroText(isCompact: isCompact),
                               const SizedBox(height: 20),
                               Text(
-                                'Connect with breeders, manage your farm, and grow your network on FarmBuzz.',
+                                'Connect with farmers, manage your farm, and grow your network on FarmBuzz.',
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.5),
                                   fontSize: isCompact ? 14 : 16,
@@ -343,7 +343,7 @@ class _Badge extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            'The Breeder\'s Network',
+            'The Farmers\' Network',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: isCompact ? 10 : 12,

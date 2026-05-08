@@ -11,7 +11,7 @@ class FooterLinks extends StatelessWidget {
       'Community',
       'Disclaimer',
       'Ambassador',
-      'Age 18+',
+      'Safety',
     ];
 
     return Center(

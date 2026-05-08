@@ -224,15 +224,16 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
-        widget.isCompact ? 12 : 16,
-        widget.isCompact ? 14 : 18,
-        widget.isCompact ? 12 : 16,
-        widget.isCompact ? 16 : 20,
+        widget.isCompact ? 14 : 20,
+        widget.isCompact ? 16 : 22,
+        widget.isCompact ? 14 : 20,
+        widget.isCompact ? 18 : 24,
       ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(30),
         border: Border.all(
-          color: AppColors.accentGreen.withValues(alpha: 0.15),
+          color: AppColors.accentGreen.withValues(alpha: 0.2),
+          width: 1.2,
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -245,8 +246,8 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
+            blurRadius: 44,
+            offset: const Offset(0, 22),
           ),
         ],
       ),
@@ -281,27 +282,15 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
   Widget _buildInfoStep() {
     return Column(
       children: [
-        Text(
-          'Create a new account',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.instrumentSerif(
-            fontSize: widget.isCompact ? 20 : 22,
-            color: const Color(0xFFEAF7ED),
-          ),
+        _StepIntro(
+          title: 'Create your account',
+          subtitle: 'Set up your FarmBuzz profile in a few quick steps.',
+          isCompact: widget.isCompact,
         ),
-        const SizedBox(height: 6),
-        Text(
-          "It's quick and easy.",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppColors.textGrey,
-            fontSize: widget.isCompact ? 12 : 13,
-          ),
-        ),
-        SizedBox(height: widget.isCompact ? 18 : 22),
+        SizedBox(height: widget.isCompact ? 20 : 24),
         CustomTextField(
           controller: widget.nameController,
-          hintText: 'Full name',
+          hintText: 'Full name (required)',
           onChanged: (_) => widget.onChanged(),
         ),
         const SizedBox(height: 12),
@@ -324,14 +313,15 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
                 fontSize: widget.isCompact ? 11 : 12,
               ),
               children: const [
-                TextSpan(text: 'I confirm I am at least '),
+                TextSpan(text: 'I confirm I meet the '),
                 TextSpan(
-                  text: '18 years old.',
+                  text: 'minimum legal age',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
+                TextSpan(text: ' in my region.'),
               ],
             ),
           ),
@@ -352,7 +342,7 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
               children: [
                 const TextSpan(text: 'I agree to the '),
                 const TextSpan(
-                  text: 'Terms and Conditions.',
+                  text: 'Terms and Privacy Policy.',
                   style: TextStyle(
                     color: AppColors.accentGreen,
                     fontWeight: FontWeight.w600,
@@ -364,7 +354,7 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
         ),
         const SizedBox(height: 24),
         ActionButton(
-          label: _isLoading ? 'Please wait...' : 'Sign Up',
+          label: _isLoading ? 'Please wait...' : 'Continue',
           isEnabled: _canSignUp && !_isLoading,
           onPressed: _startRegistration,
         ),
@@ -372,7 +362,7 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
         TextButton(
           onPressed: widget.onLogin,
           child: const Text(
-            'Already have an account?',
+            'I already have an account',
             style: TextStyle(
               color: AppColors.accentGreen,
               fontWeight: FontWeight.w600,
@@ -387,27 +377,18 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
   Widget _buildMobileStep() {
     return Column(
       children: [
-        const SizedBox(height: 10),
-        Text(
-          'Mobile number',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.instrumentSerif(
-            fontSize: 22,
-            color: const Color(0xFFEAF7ED),
-          ),
+        const SizedBox(height: 8),
+        _StepIntro(
+          title: 'Verify your mobile number',
+          subtitle: "We'll send a one-time code to secure your account.",
+          isCompact: widget.isCompact,
         ),
-        const SizedBox(height: 6),
-        const Text(
-          "We'll send a verification code",
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textGrey, fontSize: 13),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         MobileInput(
           controller: widget.mobileController,
           onChanged: (_) => widget.onChanged(),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         ActionButton(
           label: _isLoading ? 'Sending...' : 'Send Code',
           isEnabled: widget.canSendCode && !_isLoading,
@@ -420,24 +401,15 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
   Widget _buildVerifyStep() {
     return Column(
       children: [
-        const SizedBox(height: 10),
-        Text(
-          'Verify your number',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.instrumentSerif(
-            fontSize: 22,
-            color: const Color(0xFFEAF7ED),
-          ),
+        const SizedBox(height: 8),
+        _StepIntro(
+          title: 'Enter verification code',
+          subtitle: 'Code sent to ${_maskedPhone()}',
+          isCompact: widget.isCompact,
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Code sent to ${_maskedPhone()}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.textGrey, fontSize: 13),
-        ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 26),
         OtpInput(onChanged: (value) => setState(() => _otp = value)),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         TextButton(
           onPressed: _isLoading ? null : _sendOtp,
           child: const Text(
@@ -448,7 +420,7 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
             ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         ActionButton(
           label: _isLoading ? 'Verifying...' : 'Verify',
           isEnabled: _canVerifyOtp && !_isLoading,
@@ -466,24 +438,15 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
 
     return Column(
       children: [
-        const SizedBox(height: 10),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.instrumentSerif(
-            fontSize: 22,
-            color: const Color(0xFFEAF7ED),
-          ),
+        const SizedBox(height: 8),
+        _StepIntro(
+          title: title,
+          subtitle: subtitle,
+          isCompact: widget.isCompact,
         ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.textGrey, fontSize: 13),
-        ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 24),
         PinDots(count: _pin.length),
-        const SizedBox(height: 30),
+        const SizedBox(height: 24),
         NumericKeypad(
           onTap: (val) {
             if (!_canEnterPin || _isLoading) {
@@ -521,7 +484,7 @@ class _StepsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const steps = ['INFO', 'MOBILE', 'VERIFY', 'PIN'];
+    const steps = ['PROFILE', 'MOBILE', 'CODE', 'PIN'];
 
     return Column(
       children: [
@@ -549,12 +512,51 @@ class _StepsHeader extends StatelessWidget {
               steps[index],
               style: TextStyle(
                 color: isActive ? AppColors.accentGreen : Colors.white24,
-                fontSize: 9,
+                fontSize: 9.5,
                 fontWeight: isActive ? FontWeight.w800 : FontWeight.w500,
                 letterSpacing: 0.5,
               ),
             );
           }),
+        ),
+      ],
+    );
+  }
+}
+
+class _StepIntro extends StatelessWidget {
+  const _StepIntro({
+    required this.title,
+    required this.subtitle,
+    required this.isCompact,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.instrumentSerif(
+            fontSize: isCompact ? 20 : 24,
+            color: const Color(0xFFEAF7ED),
+            height: 1.15,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.textGrey,
+            fontSize: isCompact ? 12 : 13,
+            height: 1.4,
+          ),
         ),
       ],
     );
