@@ -1,3 +1,5 @@
+import 'package:farmbuzz/core/session/app_session.dart';
+import 'package:farmbuzz/features/messages/data/message_api.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
@@ -21,29 +23,24 @@ class ChatDetailView extends StatefulWidget {
 }
 
 class _ChatDetailViewState extends State<ChatDetailView> {
+  final MessageApi _messageApi = MessageApi();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  late List<ChatMessage> _messages;
-  late ChatPreview _chatPreview;
+  List<ChatMessage> _messages = [];
+  ChatPreview _chatPreview = ChatPreview(
+    id: '',
+    name: 'Loading...',
+    lastMessage: '',
+    time: '',
+    avatarUrl: '',
+    type: 'Direct',
+  );
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _chatPreview = mockChats.isNotEmpty
-        ? mockChats.firstWhere(
-            (c) => c.id == widget.chatId,
-            orElse: () => mockChats.first,
-          )
-        : ChatPreview(
-            id: widget.chatId,
-            name: 'Chat',
-            lastMessage: '',
-            time: '',
-            avatarUrl: '',
-            type: 'Direct',
-          );
-    // Create a local copy of messages to allow mutations
-    _messages = List<ChatMessage>.from(mockConversations[widget.chatId] ?? []);
+    _loadMessages();
   }
 
   @override
@@ -53,9 +50,73 @@ class _ChatDetailViewState extends State<ChatDetailView> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _loadMessages() async {
+    final mobile = AppSession.mobileNumber;
+    if (mobile == null || mobile.trim().isEmpty) return;
+
+    try {
+      final convId = int.tryParse(widget.chatId);
+      if (convId == null) return;
+
+      // First, find the conversation in the list to get user details
+      final conversations = await _messageApi.getConversations(mobileNumber: mobile);
+      final conversation = conversations.firstWhere((c) => c['id'].toString() == widget.chatId);
+
+      final messages = await _messageApi.getMessages(
+        mobileNumber: mobile,
+        conversationId: convId,
+      );
+
+      if (mounted) {
+        setState(() {
+          _chatPreview = ChatPreview(
+            id: widget.chatId,
+            name: conversation['other_user_name'] ?? 'User',
+            lastMessage: conversation['last_message'] ?? '',
+            time: '',
+            avatarUrl: conversation['other_user_avatar'] ?? '',
+            type: 'Direct',
+          );
+          _messages = messages.map((m) {
+            return ChatMessage(
+              text: m['content'],
+              isMe: m['is_me'] == true,
+              time: _formatTime(m['time']),
+            );
+          }).toList();
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _formatTime(String? iso) {
+    if (iso == null) return '';
+    try {
+      final date = DateTime.parse(iso);
+      final hour = date.hour > 12 ? date.hour - 12 : date.hour;
+      final ampm = date.hour >= 12 ? 'PM' : 'AM';
+      final minute = date.minute.toString().padLeft(2, '0');
+      return '$hour:$minute $ampm';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  void _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+
+    final mobile = AppSession.mobileNumber;
+    if (mobile == null) return;
+
+    final convId = int.tryParse(widget.chatId);
+    if (convId == null) return;
 
     setState(() {
       _messages.add(ChatMessage(
@@ -68,30 +129,19 @@ class _ChatDetailViewState extends State<ChatDetailView> {
 
     _scrollToBottom();
 
-    // Simulate a simple automated response for "interactivity"
-    _simulateResponse(text);
-  }
-
-  void _simulateResponse(String userText) {
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return;
-      
-      String response = "Got it! Let me check on that.";
-      if (userText.toLowerCase().contains('hi') || userText.toLowerCase().contains('hello')) {
-        response = "Hello! How can I help you today?";
-      } else if (userText.toLowerCase().contains('price') || userText.toLowerCase().contains('magkano')) {
-        response = "I'll send the price list in a moment. Hold on!";
+    try {
+      await _messageApi.sendMessage(
+        mobileNumber: mobile,
+        conversationId: convId,
+        content: text,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send message: $e')),
+        );
       }
-
-      setState(() {
-        _messages.add(ChatMessage(
-          text: response,
-          isMe: false,
-          time: _getCurrentTime(),
-        ));
-      });
-      _scrollToBottom();
-    });
+    }
   }
 
   String _getCurrentTime() {

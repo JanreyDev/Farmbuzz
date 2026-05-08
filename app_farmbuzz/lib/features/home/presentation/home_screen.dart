@@ -9,10 +9,9 @@ import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:farmbuzz/features/messages/presentation/messages_screen.dart';
 import 'package:farmbuzz/features/notifications/presentation/notifications_screen.dart';
 import 'package:farmbuzz/features/landing/presentation/landing_screen.dart';
-
 import 'package:farmbuzz/features/clubs/presentation/clubs_view.dart';
 import 'package:farmbuzz/features/leaderboard/presentation/leaderboard_view.dart';
-
+import 'package:farmbuzz/features/messages/data/notification_api.dart';
 import 'package:farmbuzz/features/profile/presentation/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,6 +23,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  final NotificationApi _notificationApi = NotificationApi();
+  int _unreadMessages = 0;
+  int _unreadNotifications = 0;
 
   final List<Widget> _pages = [
     const HomeFeedView(),
@@ -33,8 +35,28 @@ class _HomeScreenState extends State<HomeScreen> {
     const LeaderboardView(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    final mobile = AppSession.mobileNumber;
+    if (mobile == null || mobile.trim().isEmpty) return;
+
+    try {
+      final counts = await _notificationApi.getCounts(mobileNumber: mobile);
+      if (mounted) {
+        setState(() {
+          _unreadMessages = counts['messages'] ?? 0;
+          _unreadNotifications = counts['notifications'] ?? 0;
+        });
+      }
+    } catch (_) {}
+  }
+
   void _showAiMenu(BuildContext context) {
-    // This replicates the history menu functionality
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -144,12 +166,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _handleLogout() async {
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     AppSession.clear();
-
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),
       (route) => false,
@@ -162,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final hasAvatar = _hasValidAvatarUrl(avatarUrl);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Refined light grey background
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
@@ -187,35 +205,37 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Badge(
-              label: Text('3', style: TextStyle(fontSize: 10)),
+            icon: Badge(
+              label: Text(_unreadMessages.toString(), style: const TextStyle(fontSize: 10)),
               backgroundColor: Colors.redAccent,
-              child: Icon(Icons.chat_bubble_outline, color: Colors.black87),
+              isLabelVisible: _unreadMessages > 0,
+              child: const Icon(Icons.chat_bubble_outline, color: Colors.black87),
             ),
             onPressed: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const MessagesScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MessagesScreen()),
+              ).then((_) => _loadCounts());
             },
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Badge(
-              label: Text('5', style: TextStyle(fontSize: 10)),
+            icon: Badge(
+              label: Text(_unreadNotifications.toString(), style: const TextStyle(fontSize: 10)),
               backgroundColor: Colors.redAccent,
-              child: Icon(Icons.notifications_outlined, color: Colors.black87),
+              isLabelVisible: _unreadNotifications > 0,
+              child: const Icon(Icons.notifications_outlined, color: Colors.black87),
             ),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-              );
+              ).then((_) => _loadCounts());
             },
           ),
           InkWell(
             onTap: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
             },
             child: Padding(
               padding: const EdgeInsets.only(right: 12, left: 4),
@@ -241,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedIndex: _selectedIndex,
         onSelectItem: (index) {
           setState(() => _selectedIndex = index);
-          Navigator.pop(context); // Close drawer
+          Navigator.pop(context);
         },
         onLogout: () {
           Navigator.pop(context);
@@ -253,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? null
           : FloatingActionButton(
               onPressed: () => setState(() => _selectedIndex = 2),
-              backgroundColor: const Color(0xFFD97706), // Bantay AI Amber
+              backgroundColor: const Color(0xFFD97706),
               elevation: 4,
               shape: const CircleBorder(),
               child: Container(
@@ -277,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        height: 70, // Slightly taller for better alignment
+        height: 70,
         color: Colors.white,
         shape: _selectedIndex == 2 ? null : const CircularNotchedRectangle(),
         notchMargin: 8,
@@ -286,8 +306,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: <Widget>[
             Expanded(child: _bottomNavItem(0, Icons.home_filled, 'Home')),
             Expanded(child: _bottomNavItem(1, Icons.agriculture, 'My Farm')),
-
-            // The "Normal Menu" Sparkle Button for AI View
             if (_selectedIndex == 2)
               GestureDetector(
                 onTap: () => _showAiMenu(context),
@@ -300,10 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFFF59E0B),
-                        const Color(0xFFD97706),
-                      ],
+                      colors: [const Color(0xFFF59E0B), const Color(0xFFD97706)],
                     ),
                   ),
                   child: const Icon(
@@ -315,7 +330,6 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             else
               const SizedBox(width: 70),
-
             Expanded(child: _bottomNavItem(3, Icons.groups, 'Clubs')),
             Expanded(child: _bottomNavItem(4, Icons.leaderboard, 'Rank')),
           ],
@@ -352,18 +366,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _hasValidAvatarUrl(String value) {
     final trimmed = value.trim();
-    if (trimmed.isEmpty) {
-      return false;
-    }
+    if (trimmed.isEmpty) return false;
     final uri = Uri.tryParse(trimmed);
     return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
   }
 
   String _initial() {
     final name = AppSession.userName.trim();
-    if (name.isEmpty) {
-      return 'U';
-    }
+    if (name.isEmpty) return 'U';
     return name.substring(0, 1).toUpperCase();
   }
 }

@@ -1,3 +1,5 @@
+import 'package:farmbuzz/core/session/app_session.dart';
+import 'package:farmbuzz/features/messages/data/message_api.dart';
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'chat_mock_data.dart';
@@ -19,14 +21,66 @@ class ChatListView extends StatefulWidget {
 }
 
 class _ChatListViewState extends State<ChatListView> {
+  final MessageApi _messageApi = MessageApi();
   String selectedFilter = 'All';
+  List<ChatPreview> _chats = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConversations();
+  }
+
+  Future<void> _loadConversations() async {
+    final mobile = AppSession.mobileNumber;
+    if (mobile == null || mobile.trim().isEmpty) return;
+
+    try {
+      final conversations = await _messageApi.getConversations(mobileNumber: mobile);
+      if (mounted) {
+        setState(() {
+          _chats = conversations.map((c) {
+            return ChatPreview(
+              id: c['id'].toString(),
+              name: c['other_user_name'] ?? 'User',
+              lastMessage: c['last_message'] ?? '',
+              time: _formatTime(c['last_message_time']),
+              avatarUrl: c['other_user_avatar'] ?? '',
+              type: 'Direct',
+              isUnread: c['is_unread'] == true,
+            );
+          }).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _formatTime(String? iso) {
+    if (iso == null) return '';
+    try {
+      final date = DateTime.parse(iso);
+      final now = DateTime.now();
+      if (date.year == now.year && date.month == now.month && date.day == now.day) {
+        return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      }
+      return '${date.month}/${date.day}';
+    } catch (_) {
+      return '';
+    }
+  }
 
   List<ChatPreview> get filteredChats {
-    if (selectedFilter == 'All') return mockChats;
-    if (selectedFilter == 'Unread') return mockChats.where((c) => c.isUnread).toList();
-    if (selectedFilter == 'Direct') return mockChats.where((c) => c.type == 'Direct').toList();
-    if (selectedFilter == 'Clubs') return mockChats.where((c) => c.type == 'Club').toList();
-    return mockChats;
+    if (selectedFilter == 'All') return _chats;
+    if (selectedFilter == 'Unread') return _chats.where((c) => c.isUnread).toList();
+    if (selectedFilter == 'Direct') return _chats.where((c) => c.type == 'Direct').toList();
+    if (selectedFilter == 'Clubs') return _chats.where((c) => c.type == 'Club').toList();
+    return _chats;
   }
 
   @override
@@ -107,14 +161,16 @@ class _ChatListViewState extends State<ChatListView> {
         
         // Chat List
         Expanded(
-          child: filteredChats.isEmpty
-              ? const Center(
-                  child: Text(
-                    'No chats yet.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                )
-              : ListView.separated(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : filteredChats.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No chats yet.',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  : ListView.separated(
                   itemCount: filteredChats.length,
                   separatorBuilder: (context, index) => const Divider(
                     height: 1,

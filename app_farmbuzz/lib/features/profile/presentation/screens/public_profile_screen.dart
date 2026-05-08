@@ -3,6 +3,7 @@ import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
 import 'package:farmbuzz/features/home/presentation/widgets/post_card.dart';
 import 'package:farmbuzz/features/profile/data/social_api.dart';
+import 'package:farmbuzz/features/messages/presentation/messages_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -206,6 +207,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
                           ),
                         ),
+                        if (!_isOwner) ...[
+                          const SizedBox(width: 8),
+                          _buildMessageButton(),
+                        ],
                       ],
                     ),
                   ),
@@ -326,6 +331,33 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildMessageButton() {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => MessagesScreen(
+              initialChatId: widget.userName,
+            ),
+          ),
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.premiumGreen,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: Text(
+        'Message',
+        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+      ),
     );
   }
 }
