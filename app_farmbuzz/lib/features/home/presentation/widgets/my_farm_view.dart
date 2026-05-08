@@ -115,7 +115,17 @@ class _MyFarmViewState extends State<MyFarmView> {
     }
 
     if (_hasFarm) {
-      return _DashboardView(farmData: _farmData ?? <String, dynamic>{});
+      return _DashboardView(
+        farmData: _farmData ?? <String, dynamic>{},
+        onFarmSaved: (farm) => setState(() {
+          _farmData = farm;
+          _hasFarm = true;
+        }),
+        onFarmDeleted: () => setState(() {
+          _farmData = null;
+          _hasFarm = false;
+        }),
+      );
     }
 
     return Container(
@@ -135,9 +145,15 @@ class _MyFarmViewState extends State<MyFarmView> {
 }
 
 class _DashboardView extends StatefulWidget {
-  const _DashboardView({required this.farmData});
+  const _DashboardView({
+    required this.farmData,
+    required this.onFarmSaved,
+    required this.onFarmDeleted,
+  });
 
   final Map<String, dynamic> farmData;
+  final ValueChanged<Map<String, dynamic>> onFarmSaved;
+  final VoidCallback onFarmDeleted;
 
   @override
   State<_DashboardView> createState() => _DashboardViewState();
@@ -146,6 +162,22 @@ class _DashboardView extends StatefulWidget {
 class _DashboardViewState extends State<_DashboardView> {
   int _selectedTabIndex = 0;
 
+  Future<void> _openFarmSettings() async {
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _FarmSettingsScreen(
+          farmData: widget.farmData,
+          onFarmSaved: widget.onFarmSaved,
+          onFarmDeleted: widget.onFarmDeleted,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -153,7 +185,10 @@ class _DashboardViewState extends State<_DashboardView> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            _DashboardBanner(farmData: widget.farmData),
+            _DashboardBanner(
+              farmData: widget.farmData,
+              onOpenSettings: _openFarmSettings,
+            ),
             const SizedBox(height: 12),
             _DashboardTabs(
               selectedIndex: _selectedTabIndex,
@@ -161,7 +196,6 @@ class _DashboardViewState extends State<_DashboardView> {
                 _selectedTabIndex = index;
                 _selectedSubTabIndex = 0; // Reset sub-tab when main tab changes
               }),
-              hasSettings: true,
             ),
             const SizedBox(height: 16),
             Padding(
@@ -201,11 +235,61 @@ class _DashboardViewState extends State<_DashboardView> {
         return const _TeamView();
       case 4:
         return const _ReportsView();
-      case 5:
-        return const FarmSettingsView();
       default:
         return const SizedBox.shrink();
     }
+  }
+}
+
+class _FarmSettingsScreen extends StatelessWidget {
+  const _FarmSettingsScreen({
+    required this.farmData,
+    required this.onFarmSaved,
+    required this.onFarmDeleted,
+  });
+
+  final Map<String, dynamic> farmData;
+  final ValueChanged<Map<String, dynamic>> onFarmSaved;
+  final VoidCallback onFarmDeleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Farm Settings',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: Colors.black,
+          ),
+        ),
+        centerTitle: false,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: FarmSettingsView(
+          farmData: farmData,
+          onSaved: (updated) {
+            onFarmSaved(updated);
+          },
+          onDeleted: () {
+            onFarmDeleted();
+            if (context.mounted) {
+              Navigator.pop(context);
+            }
+          },
+        ),
+      ),
+    );
   }
 }
 
@@ -1371,9 +1455,13 @@ class _OnboardingStep extends StatelessWidget {
 }
 
 class _DashboardBanner extends StatelessWidget {
-  const _DashboardBanner({required this.farmData});
+  const _DashboardBanner({
+    required this.farmData,
+    required this.onOpenSettings,
+  });
 
   final Map<String, dynamic> farmData;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -1413,36 +1501,26 @@ class _DashboardBanner extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey[200]!),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.accentGreen,
-                        shape: BoxShape.circle,
-                      ),
+              // Settings button (top-left)
+              Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: onOpenSettings,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey[200]!),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'FARMBUZZ - MY FARM',
-                      style: GoogleFonts.inter(
-                        color: Colors.black,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
+                    child: const Icon(
+                      Icons.settings_rounded,
+                      color: AppColors.premiumGreen,
+                      size: 20,
                     ),
-                  ],
+                  ),
                 ),
               ),
               
@@ -1621,12 +1699,10 @@ class _DashboardTabs extends StatelessWidget {
   const _DashboardTabs({
     required this.selectedIndex,
     required this.onChanged,
-    this.hasSettings = false,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onChanged;
-  final bool hasSettings;
 
   final List<Map<String, dynamic>> tabs = const [
     {'label': 'Home', 'icon': Icons.home_filled},
@@ -1634,7 +1710,6 @@ class _DashboardTabs extends StatelessWidget {
     {'label': 'Flock', 'icon': Icons.flutter_dash_rounded},
     {'label': 'Team', 'icon': Icons.people_alt_rounded},
     {'label': 'Reports', 'icon': Icons.bar_chart_rounded},
-    {'label': 'Settings', 'icon': Icons.settings_rounded},
   ];
 
   @override

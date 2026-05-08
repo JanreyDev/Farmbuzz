@@ -68,6 +68,23 @@ class FarmApi {
     return payload;
   }
 
+  Future<void> deleteFarm({required String mobileNumber}) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/farm'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+      }),
+    );
+
+    final data = _decode(response.body);
+    if (response.statusCode >= 400) {
+      throw FarmApiException(
+        _extractMessage(data, fallback: 'Failed to delete farm.'),
+      );
+    }
+  }
+
   static Map<String, dynamic> _decode(String body) {
     if (body.trim().isEmpty) {
       return <String, dynamic>{};
