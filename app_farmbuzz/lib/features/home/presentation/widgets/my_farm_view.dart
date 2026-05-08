@@ -4,6 +4,7 @@ import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:farmbuzz/features/home/data/breeding_api.dart';
 import 'package:farmbuzz/features/home/data/farm_api.dart';
+import 'package:farmbuzz/features/home/data/farm_ops_api.dart';
 
 import 'create_farm_view.dart';
 import 'my_farm/farm_common_widgets.dart';
@@ -308,6 +309,12 @@ class _BreedingViewState extends State<_BreedingView> {
   int _subTabIndex = 0;
   bool _isLoadingCollections = true;
   List<Map<String, dynamic>> _collections = const [];
+  List<Map<String, dynamic>> get _freshCollections => _collections
+      .where((item) => (item['status'] ?? 'fresh').toString().toLowerCase() == 'fresh')
+      .toList();
+  List<Map<String, dynamic>> get _incubatingCollections => _collections
+      .where((item) => (item['status'] ?? '').toString().toLowerCase() == 'incubating')
+      .toList();
 
   @override
   void initState() {
@@ -452,6 +459,72 @@ class _BreedingViewState extends State<_BreedingView> {
     }
   }
 
+  Future<void> _startIncubating(Map<String, dynamic> item) async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      await _breedingApi.updateCollection(
+        mobileNumber: mobileNumber,
+        id: (item['id'] as num).toInt(),
+        batchName: (item['batch_name'] ?? '').toString(),
+        eggCount: ((item['egg_count'] ?? 0) as num).toInt(),
+        collectedOn: (item['collected_on'] ?? '').toString(),
+        note: item['note']?.toString(),
+        status: 'incubating',
+      );
+      await _loadCollections();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Moved to incubating.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
+  }
+
+  Future<void> _pickCollectionToIncubate() async {
+    if (_freshCollections.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No fresh collection available to incubate.')),
+      );
+      return;
+    }
+
+    final picked = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => SimpleDialog(
+        title: const Text('Start incubating'),
+        children: [
+          for (final item in _freshCollections)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(item),
+              child: Text(
+                '${(item['batch_name'] ?? 'Batch').toString()} - ${((item['egg_count'] ?? 0) as num).toInt()} eggs',
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (picked == null) {
+      return;
+    }
+    await _startIncubating(picked);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -474,7 +547,7 @@ class _BreedingViewState extends State<_BreedingView> {
               child: _SubTabItem(
                 label: 'Collection',
                 icon: Icons.inventory_2_outlined,
-                count: _collections.length,
+                count: _freshCollections.length,
                 isActive: _subTabIndex == 0,
                 onTap: () => setState(() => _subTabIndex = 0),
               ),
@@ -484,6 +557,7 @@ class _BreedingViewState extends State<_BreedingView> {
               child: _SubTabItem(
                 label: 'Incubating',
                 icon: Icons.timer_outlined,
+                count: _incubatingCollections.length,
                 isActive: _subTabIndex == 1,
                 onTap: () => setState(() => _subTabIndex = 1),
               ),
@@ -513,6 +587,8 @@ class _BreedingViewState extends State<_BreedingView> {
                   onTap: () {
                     if (_subTabIndex == 0) {
                       _openCollectionEditor();
+                    } else if (_subTabIndex == 1) {
+                      _pickCollectionToIncubate();
                     }
                   },
                 ),
@@ -526,12 +602,17 @@ class _BreedingViewState extends State<_BreedingView> {
         if (_subTabIndex == 0)
           _CollectionGrid(
             isLoading: _isLoadingCollections,
-            collections: _collections,
+            collections: _freshCollections,
             onAdd: () => _openCollectionEditor(),
             onEdit: (item) => _openCollectionEditor(existing: item),
             onDelete: _deleteCollection,
+            onIncubate: _startIncubating,
           ),
-        if (_subTabIndex == 1) const _IncubatingGrid(),
+        if (_subTabIndex == 1)
+          _IncubatingGrid(
+            isLoading: _isLoadingCollections,
+            collections: _incubatingCollections,
+          ),
         if (_subTabIndex == 2) const _ArchiveView(),
         
         const SizedBox(height: 32),
@@ -570,11 +651,11 @@ class _PerformanceSection extends StatelessWidget {
               icon: Icons.egg_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
-              description: 'Well below average â€” troubleshoot.',
+              description: 'Well below average - troubleshoot.',
             ),
             FarmStatCard(
               title: 'HATCH RATE',
-              value: 'â€”',
+              value: '-',
               icon: Icons.auto_awesome_rounded,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -582,7 +663,7 @@ class _PerformanceSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'SETTLING LOSS',
-              value: 'â€”',
+              value: '-',
               icon: Icons.favorite_border_rounded,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -621,7 +702,7 @@ class _LifecycleSection extends StatelessWidget {
           children: const [
             FarmStatCard(
               title: 'BROODING MORTALITY',
-              value: 'â€”',
+              value: '-',
               icon: Icons.home_outlined,
               color: Color(0xFF9A3412),
               iconBg: Color(0xFFFFF7ED),
@@ -629,7 +710,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'STAGE SURVIVAL',
-              value: 'â€”',
+              value: '-',
               icon: Icons.show_chart_rounded,
               color: Color(0xFF1E40AF),
               iconBg: Color(0xFFEFF6FF),
@@ -637,7 +718,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'CULL RATE',
-              value: 'â€”',
+              value: '-',
               icon: Icons.content_cut_rounded,
               color: Color(0xFF854D0E),
               iconBg: Color(0xFFFEFCE8),
@@ -645,7 +726,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'TIME TO MATURITY',
-              value: 'â€”',
+              value: '-',
               icon: Icons.timer_outlined,
               color: Color(0xFF475569),
               iconBg: Color(0xFFF1F5F9),
@@ -669,7 +750,7 @@ class _QualitySection extends StatelessWidget {
         FarmSectionHeader(
           label: 'QUALITY & SELECTION',
           title: 'How good is your breeding program?',
-          subtitle: 'The real test isn\'t how many you raise â€” it\'s how many make the cut.',
+          subtitle: 'The real test isn\'t how many you raise - it\'s how many make the cut.',
           actionLabel: 'Go to Flock',
           onAction: () {},
         ),
@@ -684,7 +765,7 @@ class _QualitySection extends StatelessWidget {
           children: const [
             FarmStatCard(
               title: 'ROOSTER QUALITY RATE',
-              value: 'â€”',
+              value: '-',
               icon: Icons.military_tech_outlined,
               color: Color(0xFFB48634),
               iconBg: Color(0xFFFEFCE8),
@@ -692,7 +773,7 @@ class _QualitySection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'BROOD PROMOTION RATE',
-              value: 'â€”',
+              value: '-',
               icon: Icons.workspace_premium_outlined,
               color: Color(0xFFB48634),
               iconBg: Color(0xFFFEFCE8),
@@ -731,7 +812,7 @@ class _HealthSection extends StatelessWidget {
           children: const [
             FarmStatCard(
               title: 'VACCINATION RATE',
-              value: 'â€”',
+              value: '-',
               icon: Icons.medical_services_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -739,7 +820,7 @@ class _HealthSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'DISEASE INCIDENCE',
-              value: 'â€”',
+              value: '-',
               icon: Icons.bug_report_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -747,7 +828,7 @@ class _HealthSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'AVG WEIGHT GAIN',
-              value: 'â€”',
+              value: '-',
               icon: Icons.fitness_center_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -787,11 +868,11 @@ class _BreedingStats extends StatelessWidget {
           icon: Icons.analytics_outlined,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
-          description: 'Well below average â€” troubleshoot.',
+          description: 'Well below average - troubleshoot.',
         ),
         FarmStatCard(
           title: 'AVG YIELD',
-          value: 'â€”',
+          value: '-',
           icon: Icons.auto_awesome_rounded,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
@@ -799,7 +880,7 @@ class _BreedingStats extends StatelessWidget {
         ),
         FarmStatCard(
           title: 'CHICK QUALITY',
-          value: 'â€”',
+          value: '-',
           icon: Icons.star_outline_rounded,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
@@ -1130,6 +1211,7 @@ class _CollectionGrid extends StatelessWidget {
     required this.onAdd,
     required this.onEdit,
     required this.onDelete,
+    required this.onIncubate,
   });
 
   final bool isLoading;
@@ -1137,6 +1219,7 @@ class _CollectionGrid extends StatelessWidget {
   final VoidCallback onAdd;
   final ValueChanged<Map<String, dynamic>> onEdit;
   final ValueChanged<Map<String, dynamic>> onDelete;
+  final ValueChanged<Map<String, dynamic>> onIncubate;
 
   @override
   Widget build(BuildContext context) {
@@ -1191,6 +1274,7 @@ class _CollectionGrid extends StatelessWidget {
             item: collections[index],
             onEdit: () => onEdit(collections[index]),
             onDelete: () => onDelete(collections[index]),
+            onIncubate: () => onIncubate(collections[index]),
           ),
           if (index != collections.length - 1) const SizedBox(height: 12),
         ],
@@ -1204,11 +1288,13 @@ class _CollectionCard extends StatelessWidget {
     required this.item,
     required this.onEdit,
     required this.onDelete,
+    required this.onIncubate,
   });
 
   final Map<String, dynamic> item;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onIncubate;
 
   @override
   Widget build(BuildContext context) {
@@ -1357,7 +1443,7 @@ class _CollectionCard extends StatelessWidget {
                   child: Material(
                     color: AppColors.premiumGreen,
                     child: InkWell(
-                      onTap: () {},
+                      onTap: onIncubate,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         alignment: Alignment.center,
@@ -1642,7 +1728,7 @@ class _GetStartedCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Each step unlocks a layer of the dashboard â€” vitals, Bantay AI recommendations, milestones, and benchmarks all feed off this foundation.',
+                  'Each step unlocks a layer of the dashboard - vitals, Bantay AI recommendations, milestones, and benchmarks all feed off this foundation.',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[500],
@@ -1655,7 +1741,7 @@ class _GetStartedCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      '0 / 4 â€¢ 0%',
+                      '0 / 4 • 0%',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1903,7 +1989,7 @@ class _DashboardBanner extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Thursday, April 23 â€¢ Week 17',
+              'Thursday, April 23 • Week 17',
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey[500],
@@ -1934,7 +2020,7 @@ class _DashboardBanner extends StatelessWidget {
                 const SizedBox(width: 8),
                 _BannerChip(
                   icon: Icons.wb_sunny_rounded,
-                  label: '29Â°C',
+                label: '29°C',
                   color: Colors.transparent,
                   iconColor: const Color(0xFFF59E0B),
                   hasBorder: false,
@@ -2393,7 +2479,7 @@ class _CommitmentSectionState extends State<_CommitmentSection> {
                         ],
                       ),
                       Text(
-                        'â€¢',
+                        '•',
                         style: TextStyle(color: Colors.grey[400], fontSize: 12),
                       ),
                       GestureDetector(
@@ -2685,7 +2771,7 @@ class _HeroBanner extends StatelessWidget {
                 
                 // Subtext
                 Text(
-                  'The serious side of FarmBuzz. Record every cycle, track each flock line, measure every outcome â€” in one private record you actually own.',
+                  'The serious side of FarmBuzz. Record every cycle, track each flock line, measure every outcome - in one private record you actually own.',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.6),
                     fontSize: 13,
@@ -2702,50 +2788,114 @@ class _HeroBanner extends StatelessWidget {
 }
 
 class _IncubatingGrid extends StatelessWidget {
-  const _IncubatingGrid();
+  const _IncubatingGrid({
+    required this.isLoading,
+    required this.collections,
+  });
+
+  final bool isLoading;
+  final List<Map<String, dynamic>> collections;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (collections.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[100]!),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.timer_outlined, size: 28, color: Color(0xFF94A3B8)),
+            const SizedBox(height: 8),
+            Text(
+              'No incubating batches yet',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF334155),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Use Start incubating to move a collection batch here.',
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
-      children: const [
-        _IncubatingCard(
-          batchName: 'Apr 2026 â€¢ Barako Ã— Inahin',
-          subLabel: 'Barako Ã— Inahin',
-          day: 1,
-          totalDays: 21,
-          setCount: 31,
-          fertileCount: 10,
-          fertilePercent: '32%',
-          hatchedCount: 0,
-          status: 'CANDLING WINDOW',
-          statusColor: Color(0xFFFB923C),
-        ),
-        SizedBox(height: 16),
-        _IncubatingCard(
-          batchName: 'Apr 2026 â€¢ Lalaki',
-          subLabel: 'Lalaki',
-          day: 1,
-          totalDays: 21,
-          setCount: 9,
-          fertileCount: 0,
-          hatchedCount: 0,
-          status: 'CANDLING WINDOW',
-          statusColor: Color(0xFFFB923C),
-        ),
-        SizedBox(height: 16),
-        _IncubatingCard(
-          batchName: 'Apr 2026 â€¢ Stag Ã— Pullet',
-          subLabel: 'Stag Ã— Pullet',
-          day: 1,
-          totalDays: 21,
-          setCount: 10,
-          fertileCount: 0,
-          hatchedCount: 0,
-          status: 'CANDLING WINDOW',
-          statusColor: Color(0xFFFB923C),
-        ),
+      children: [
+        for (var index = 0; index < collections.length; index++) ...[
+          _IncubatingCard(
+            batchName: _batchName(collections[index]),
+            subLabel: (collections[index]['batch_name'] ?? 'Batch').toString(),
+            day: _incubationDay(collections[index]),
+            totalDays: 21,
+            setCount: ((collections[index]['egg_count'] ?? 0) as num).toInt(),
+            fertileCount: 0,
+            hatchedCount: 0,
+            status: _incubationStatus(collections[index]),
+            statusColor: _incubationDay(collections[index]) <= 10
+                ? const Color(0xFFFB923C)
+                : _incubationDay(collections[index]) <= 18
+                    ? const Color(0xFF475569)
+                    : const Color(0xFF16A34A),
+          ),
+          if (index != collections.length - 1) const SizedBox(height: 16),
+        ],
       ],
     );
+  }
+
+  static int _incubationDay(Map<String, dynamic> item) {
+    final collectedRaw = item['collected_on']?.toString();
+    final collected = collectedRaw == null ? null : DateTime.tryParse(collectedRaw);
+    if (collected == null) {
+      return 1;
+    }
+    final diff = DateTime.now().difference(collected).inDays + 1;
+    if (diff < 1) {
+      return 1;
+    }
+    if (diff > 21) {
+      return 21;
+    }
+    return diff;
+  }
+
+  static String _incubationStatus(Map<String, dynamic> item) {
+    final day = _incubationDay(item);
+    if (day <= 10) {
+      return 'CANDLING WINDOW';
+    }
+    if (day <= 18) {
+      return 'SETTLING WINDOW';
+    }
+    return 'HATCH WINDOW';
+  }
+
+  static String _batchName(Map<String, dynamic> item) {
+    final raw = item['collected_on']?.toString();
+    final parsed = raw == null ? null : DateTime.tryParse(raw);
+    if (parsed == null) {
+      return (item['batch_name'] ?? 'Batch').toString();
+    }
+    const months = <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final month = months[parsed.month - 1];
+    return '$month ${parsed.year} - ${(item['batch_name'] ?? 'Batch').toString()}';
   }
 }
 class _IncubatingCard extends StatelessWidget {
@@ -2932,7 +3082,7 @@ class _IncubatingCard extends StatelessWidget {
                       subValue: fertilePercent,
                     ),
                     const SizedBox(width: 10),
-                    _IncStat(label: 'HATCHED', value: hatchedCount.toString(), subValue: 'â€”'),
+                    _IncStat(label: 'HATCHED', value: hatchedCount.toString(), subValue: '-'),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -3145,15 +3295,144 @@ class _FlockView extends StatefulWidget {
 }
 
 class _FlockViewState extends State<_FlockView> {
+  final FarmOpsApi _farmOpsApi = FarmOpsApi();
   int _categoryTabIndex = 0;
   int _stageTabIndex = 0;
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _flockItems = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFlock();
+  }
+
+  Future<void> _loadFlock() async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      setState(() {
+        _flockItems = const [];
+        _isLoading = false;
+      });
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final items = await _farmOpsApi.getFlock(mobileNumber: mobileNumber);
+      if (!mounted) return;
+      var nextCategoryTab = _categoryTabIndex;
+      var nextStageTab = _stageTabIndex;
+
+      if (items.isNotEmpty) {
+        final hasCurrentSelection = items.any((item) {
+          final category = switch (_categoryTabIndex) {
+            1 => 'rooster',
+            2 => 'hen',
+            _ => 'batch',
+          };
+          final stage = switch (_stageTabIndex) {
+            1 => 'range',
+            2 => 'archive',
+            _ => 'brooder',
+          };
+          return (item['category'] ?? '').toString().toLowerCase() == category &&
+              (item['stage'] ?? '').toString().toLowerCase() == stage;
+        });
+
+        if (!hasCurrentSelection) {
+          final first = items.first;
+          final firstCategory = (first['category'] ?? 'batch').toString().toLowerCase();
+          final firstStage = (first['stage'] ?? 'brooder').toString().toLowerCase();
+          nextCategoryTab = firstCategory == 'rooster' ? 1 : (firstCategory == 'hen' ? 2 : 0);
+          nextStageTab = firstStage == 'range' ? 1 : (firstStage == 'archive' ? 2 : 0);
+        }
+      }
+
+      setState(() {
+        _flockItems = items;
+        _categoryTabIndex = nextCategoryTab;
+        _stageTabIndex = nextStageTab;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredItems {
+    final category = switch (_categoryTabIndex) {
+      1 => 'rooster',
+      2 => 'hen',
+      _ => 'batch',
+    };
+    final stage = switch (_stageTabIndex) {
+      1 => 'range',
+      2 => 'archive',
+      _ => 'brooder',
+    };
+    return _flockItems.where((item) {
+      final itemCategory = (item['category'] ?? 'batch').toString().toLowerCase();
+      final itemStage = (item['stage'] ?? 'brooder').toString().toLowerCase();
+      return itemCategory == category && itemStage == stage;
+    }).toList();
+  }
+
+  Future<void> _addFlockBatch() async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) return;
+
+    final data = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => const _FlockBatchDialog(),
+    );
+    if (data == null) return;
+
+    try {
+      await _farmOpsApi.addFlock(
+        mobileNumber: mobileNumber,
+        name: data['name'] as String,
+        category: data['category'] as String,
+        stage: data['stage'] as String,
+        count: data['count'] as int,
+        startedOn: data['started_on'] as String,
+        note: data['note'] as String?,
+      );
+      if (!mounted) return;
+      setState(() {
+        final category = (data['category'] as String).toLowerCase();
+        final stage = (data['stage'] as String).toLowerCase();
+        _categoryTabIndex = category == 'rooster' ? 1 : (category == 'hen' ? 2 : 0);
+        _stageTabIndex = stage == 'range' ? 1 : (stage == 'archive' ? 2 : 0);
+      });
+      await _loadFlock();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _deleteFlockBatch(Map<String, dynamic> item) async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) return;
+    try {
+      await _farmOpsApi.deleteFlock(
+        mobileNumber: mobileNumber,
+        id: ((item['id'] ?? 0) as num).toInt(),
+      );
+      await _loadFlock();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Flock Stats
-        const _FlockStats(),
+        _FlockStatsDynamic(items: _flockItems),
         const SizedBox(height: 24),
 
         // Lifecycle Timeline
@@ -3170,7 +3449,7 @@ class _FlockViewState extends State<_FlockView> {
               child: _SubTabItem(
                 label: 'Batch',
                 icon: Icons.layers_outlined,
-                count: 0,
+                count: _flockItems.where((item) => (item['category'] ?? '').toString().toLowerCase() == 'batch').length,
                 isActive: _categoryTabIndex == 0,
                 onTap: () => setState(() => _categoryTabIndex = 0),
               ),
@@ -3180,7 +3459,7 @@ class _FlockViewState extends State<_FlockView> {
               child: _SubTabItem(
                 label: 'Rooster',
                 icon: Icons.military_tech_outlined,
-                count: 0,
+                count: _flockItems.where((item) => (item['category'] ?? '').toString().toLowerCase() == 'rooster').length,
                 isActive: _categoryTabIndex == 1,
                 onTap: () => setState(() => _categoryTabIndex = 1),
               ),
@@ -3190,7 +3469,7 @@ class _FlockViewState extends State<_FlockView> {
               child: _SubTabItem(
                 label: 'Hen',
                 icon: Icons.female_rounded,
-                count: 0,
+                count: _flockItems.where((item) => (item['category'] ?? '').toString().toLowerCase() == 'hen').length,
                 isActive: _categoryTabIndex == 2,
                 onTap: () => setState(() => _categoryTabIndex = 2),
               ),
@@ -3207,7 +3486,7 @@ class _FlockViewState extends State<_FlockView> {
               _StageFilter(
                 label: 'Brooder',
                 icon: Icons.fireplace_rounded,
-                count: 0,
+                count: _flockItems.where((item) => (item['stage'] ?? '').toString().toLowerCase() == 'brooder').length,
                 isActive: _stageTabIndex == 0,
                 onTap: () => setState(() => _stageTabIndex = 0),
               ),
@@ -3215,7 +3494,7 @@ class _FlockViewState extends State<_FlockView> {
               _StageFilter(
                 label: 'Range',
                 icon: Icons.terrain_rounded,
-                count: 0,
+                count: _flockItems.where((item) => (item['stage'] ?? '').toString().toLowerCase() == 'range').length,
                 isActive: _stageTabIndex == 1,
                 onTap: () => setState(() => _stageTabIndex = 1),
               ),
@@ -3223,7 +3502,7 @@ class _FlockViewState extends State<_FlockView> {
               _StageFilter(
                 label: 'Archive',
                 icon: Icons.inventory_2_rounded,
-                count: 0,
+                count: _flockItems.where((item) => (item['stage'] ?? '').toString().toLowerCase() == 'archive').length,
                 isActive: _stageTabIndex == 2,
                 onTap: () => setState(() => _stageTabIndex = 2),
               ),
@@ -3240,14 +3519,56 @@ class _FlockViewState extends State<_FlockView> {
             _ActionButton(
               label: 'Add batch',
               icon: Icons.add,
-              onTap: () {},
+              onTap: _addFlockBatch,
             ),
           ],
         ),
         const SizedBox(height: 24),
 
-        // Empty State
-        const _FlockEmptyState(),
+        if (_isLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (_filteredItems.isEmpty)
+          const _FlockEmptyState()
+        else
+          Column(
+            children: _filteredItems
+                .map(
+                  (item) => Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey[100]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (item['name'] ?? 'Batch').toString(),
+                                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${(item['count'] ?? 0)} birds • ${(item['stage'] ?? '').toString().toUpperCase()}',
+                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _deleteFlockBatch(item),
+                          icon: const Icon(Icons.delete_outline_rounded),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
         const SizedBox(height: 32),
       ],
     );
@@ -3277,7 +3598,7 @@ class _FlockStats extends StatelessWidget {
         ),
         FarmStatCard(
           title: 'SURVIVABILITY (30D)',
-          value: 'â€”',
+          value: '-',
           icon: Icons.shield_outlined,
           color: Color(0xFF16A34A),
           iconBg: Color(0xFFF0FDF4),
@@ -3285,11 +3606,131 @@ class _FlockStats extends StatelessWidget {
         ),
         FarmStatCard(
           title: 'MORTALITY (30D)',
-          value: 'â€”',
+          value: '-',
           icon: Icons.show_chart_rounded,
           color: Color(0xFF64748B),
           iconBg: Color(0xFFF8FAFC),
           description: 'nothing to measure yet',
+        ),
+      ],
+    );
+  }
+}
+
+class _FlockStatsDynamic extends StatelessWidget {
+  const _FlockStatsDynamic({required this.items});
+
+  final List<Map<String, dynamic>> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final birds = items.fold<int>(0, (sum, item) => sum + (((item['count'] ?? 0) as num).toInt()));
+    final brooder = items.where((item) => (item['stage'] ?? '').toString().toLowerCase() == 'brooder').length;
+    final range = items.where((item) => (item['stage'] ?? '').toString().toLowerCase() == 'range').length;
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 0.9,
+      children: [
+        FarmStatCard(
+          title: 'MY FLOCK',
+          value: birds.toString(),
+          icon: Icons.groups_rounded,
+          color: const Color(0xFF16A34A),
+          iconBg: const Color(0xFFF0FDF4),
+          description: '$brooder brooder batches',
+        ),
+        FarmStatCard(
+          title: 'RANGE BATCHES',
+          value: range.toString(),
+          icon: Icons.terrain_rounded,
+          color: const Color(0xFF16A34A),
+          iconBg: const Color(0xFFF0FDF4),
+          description: 'Active growing groups',
+        ),
+      ],
+    );
+  }
+}
+
+class _FlockBatchDialog extends StatefulWidget {
+  const _FlockBatchDialog();
+
+  @override
+  State<_FlockBatchDialog> createState() => _FlockBatchDialogState();
+}
+
+class _FlockBatchDialogState extends State<_FlockBatchDialog> {
+  final _name = TextEditingController();
+  final _count = TextEditingController();
+  final _note = TextEditingController();
+  String _category = 'batch';
+  String _stage = 'brooder';
+  DateTime _date = DateTime.now();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _count.dispose();
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add batch'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: _name, decoration: const InputDecoration(labelText: 'Batch name')),
+            TextField(controller: _count, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Bird count')),
+            DropdownButtonFormField<String>(
+              value: _category,
+              items: const [
+                DropdownMenuItem(value: 'batch', child: Text('Batch')),
+                DropdownMenuItem(value: 'rooster', child: Text('Rooster')),
+                DropdownMenuItem(value: 'hen', child: Text('Hen')),
+              ],
+              onChanged: (v) => setState(() => _category = v ?? 'batch'),
+              decoration: const InputDecoration(labelText: 'Category'),
+            ),
+            DropdownButtonFormField<String>(
+              value: _stage,
+              items: const [
+                DropdownMenuItem(value: 'brooder', child: Text('Brooder')),
+                DropdownMenuItem(value: 'range', child: Text('Range')),
+                DropdownMenuItem(value: 'archive', child: Text('Archive')),
+              ],
+              onChanged: (v) => setState(() => _stage = v ?? 'brooder'),
+              decoration: const InputDecoration(labelText: 'Stage'),
+            ),
+            TextField(controller: _note, decoration: const InputDecoration(labelText: 'Note (optional)')),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () {
+            final count = int.tryParse(_count.text.trim()) ?? 0;
+            if (_name.text.trim().isEmpty || count < 0) return;
+            final mm = _date.month.toString().padLeft(2, '0');
+            final dd = _date.day.toString().padLeft(2, '0');
+            Navigator.pop(context, {
+              'name': _name.text.trim(),
+              'count': count,
+              'category': _category,
+              'stage': _stage,
+              'started_on': '${_date.year}-$mm-$dd',
+              'note': _note.text.trim().isEmpty ? null : _note.text.trim(),
+            });
+          },
+          child: const Text('Save'),
         ),
       ],
     );
@@ -3496,302 +3937,239 @@ class _FlockEmptyState extends StatelessWidget {
   }
 }
 
-class _TeamView extends StatelessWidget {
+class _TeamView extends StatefulWidget {
   const _TeamView();
+
+  @override
+  State<_TeamView> createState() => _TeamViewState();
+}
+
+class _TeamViewState extends State<_TeamView> {
+  final FarmOpsApi _farmOpsApi = FarmOpsApi();
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _members = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMembers();
+  }
+
+  Future<void> _loadMembers() async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _members = const [];
+      });
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final list = await _farmOpsApi.getTeam(mobileNumber: mobileNumber);
+      if (!mounted) return;
+      setState(() {
+        _members = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _addMember() async {
+    final ownerMobile = AppSession.mobileNumber;
+    if (ownerMobile == null || ownerMobile.trim().isEmpty) return;
+
+    List<Map<String, dynamic>> candidates = const [];
+    try {
+      candidates = await _farmOpsApi.getTeamInviteCandidates(mobileNumber: ownerMobile);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      return;
+    }
+
+    if (!mounted) return;
+    if (candidates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No eligible contacts. Invite is limited to friends/followers/following.')),
+      );
+      return;
+    }
+
+    final data = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (_) => _TeamMemberDialog(candidates: candidates),
+    );
+    if (data == null) return;
+
+    try {
+      await _farmOpsApi.saveTeamMember(
+        ownerMobileNumber: ownerMobile,
+        name: data['name'] ?? '',
+        memberMobile: data['mobile_number'] ?? '',
+        role: data['role'] ?? 'caretaker',
+      );
+      await _loadMembers();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _deleteMember(Map<String, dynamic> item) async {
+    final ownerMobile = AppSession.mobileNumber;
+    if (ownerMobile == null || ownerMobile.trim().isEmpty) return;
+    try {
+      await _farmOpsApi.deleteTeamMember(
+        ownerMobileNumber: ownerMobile,
+        id: ((item['id'] ?? 0) as num).toInt(),
+      );
+      await _loadMembers();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Team Header Card
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFFFAF5), Color(0xFFFFF4EB)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFFFE4D1)),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFB923C).withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Team members',
+                style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800),
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
+            ),
+            _ActionButton(
+              label: 'Invite member',
+              icon: Icons.person_add_alt_1_rounded,
+              onTap: _addMember,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_isLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (_members.isEmpty)
+          const _FlockEmptyState()
+        else
+          Column(
+            children: _members
+                .map(
+                  (m) => Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFBD805F),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.person_add_rounded,
                       color: Colors.white,
-                      size: 28,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[100]!),
                     ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFEDD5),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'TEAM MANAGEMENT',
-                            style: GoogleFonts.inter(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFF64748B),
-                              letterSpacing: 1.2,
-                            ),
+                        const CircleAvatar(child: Icon(Icons.person_outline_rounded)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text((m['name'] ?? '').toString(), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+                              Text('${(m['role'] ?? '').toString()} • ${(m['mobile_number'] ?? '').toString()}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Just you for now',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.black,
-                            letterSpacing: -0.5,
-                          ),
+                        IconButton(
+                          onPressed: () => _deleteMember(m),
+                          icon: const Icon(Icons.delete_outline_rounded),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
+                )
+                .toList(),
+          ),
+      ],
+    );
+  }
+}
+
+class _TeamMemberDialog extends StatefulWidget {
+  const _TeamMemberDialog({required this.candidates});
+
+  final List<Map<String, dynamic>> candidates;
+
+  @override
+  State<_TeamMemberDialog> createState() => _TeamMemberDialogState();
+}
+
+class _TeamMemberDialogState extends State<_TeamMemberDialog> {
+  Map<String, dynamic>? _selectedCandidate;
+  String _role = 'caretaker';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Invite member'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonFormField<String>(
+            value: _selectedCandidate?['mobile_number']?.toString(),
+            items: widget.candidates
+                .map(
+                  (candidate) => DropdownMenuItem<String>(
+                    value: candidate['mobile_number']?.toString() ?? '',
                     child: Text(
-                      'Invite by phone â€” we SMS them a join link. No email needed.',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: Colors.grey[500],
-                        height: 1.5,
-                      ),
+                      '${candidate['name'] ?? ''} • ${candidate['mobile_number'] ?? ''}',
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  _ActionButton(
-                    label: 'Invite member',
-                    icon: Icons.add_circle_outline_rounded,
-                    onTap: () {},
-                  ),
-                ],
-              ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                _selectedCandidate = widget.candidates.firstWhere(
+                  (candidate) => candidate['mobile_number']?.toString() == value,
+                  orElse: () => <String, dynamic>{},
+                );
+              });
+            },
+            decoration: const InputDecoration(labelText: 'Select contact'),
+          ),
+          DropdownButtonFormField<String>(
+            value: _role,
+            items: const [
+              DropdownMenuItem(value: 'caretaker', child: Text('Caretaker')),
+              DropdownMenuItem(value: 'manager', child: Text('Manager')),
+              DropdownMenuItem(value: 'veterinarian', child: Text('Veterinarian')),
             ],
+            onChanged: (v) => setState(() => _role = v ?? 'caretaker'),
+            decoration: const InputDecoration(labelText: 'Role'),
           ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          onPressed: () {
+            final candidate = _selectedCandidate;
+            if (candidate == null || candidate.isEmpty) return;
+            Navigator.pop(context, {
+              'name': (candidate['name'] ?? '').toString(),
+              'mobile_number': (candidate['mobile_number'] ?? '').toString(),
+              'role': _role,
+            });
+          },
+          child: const Text('Save'),
         ),
-        const SizedBox(height: 32),
-
-        // Members Section
-        Text(
-          'Members',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Invite hands, your manager, and your vet. SMS-first â€” no email required.',
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[500],
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Empty State
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFAF8F4),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.grey[100]!),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.people_outline_rounded,
-                  size: 32,
-                  color: Color(0xFF16A34A),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Invite your first teammate',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Hand keepers log daily food. Managers run the farm. Your vet writes health records. An accountant sees only the numbers. Each role sees only what they need.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: Colors.grey[500],
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 24),
-              _ActionButton(
-                label: 'Send first invite',
-                icon: Icons.send_rounded,
-                onTap: () {},
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 40),
-
-        // Permission Matrix
-        Text(
-          'Permission matrix',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'What each role can do. Tap any cell to see the rule.',
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[500],
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        // Matrix Table
-        const _MatrixHeader(),
-        const _MatrixRow(label: 'SCOPE', values: ['OWNER', 'MANAGER', 'CARETAKER', 'VETERINARIAN', 'VIEWER'], isHeader: true),
-        const Divider(height: 1),
-        const _MatrixRow(label: 'Farm Settings', values: ['Full', 'Full', 'None', 'None', 'Read']),
-        const _MatrixRow(label: 'Breeding Logic', values: ['Full', 'Full', 'Read', 'None', 'Read']),
-        const _MatrixRow(label: 'Flock Records', values: ['Full', 'Full', 'Full', 'Read', 'Read']),
-        const _MatrixRow(label: 'Health Logs', values: ['Full', 'Full', 'Full', 'Full', 'Read']),
-        const _MatrixRow(label: 'Financials', values: ['Full', 'Read', 'None', 'None', 'Read']),
-        const _MatrixRow(label: 'Team Mgmt', values: ['Full', 'None', 'None', 'None', 'None']),
-        const SizedBox(height: 40),
-
-        // Recent Activity
-        Text(
-          'Recent activity',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Every change on this farm, traceable to a person.',
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[500],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Activity Groups
-        const _ActivityGroupHeader(label: 'TODAY'),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[100]!),
-          ),
-          child: Column(
-            children: const [
-              _ActivityItem(
-                userName: 'Janrey',
-                action: 'created a hatch batch',
-                time: '2:21 PM',
-                icon: Icons.access_time_rounded,
-                isGreen: true,
-              ),
-              Divider(height: 1),
-              _ActivityItem(
-                userName: 'Janrey',
-                action: 'candled a hatch batch',
-                time: '2:00 PM',
-                icon: Icons.access_time_rounded,
-                isGreen: true,
-              ),
-              Divider(height: 1),
-              _ActivityItem(
-                userName: 'Janrey',
-                action: 'collection logged',
-                time: '1:58 PM',
-                icon: Icons.access_time_rounded,
-              ),
-              Divider(height: 1),
-              _ActivityItem(
-                userName: 'Janrey',
-                action: 'collection logged',
-                time: '1:31 PM',
-                icon: Icons.access_time_rounded,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        const _ActivityGroupHeader(label: 'YESTERDAY'),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[100]!),
-          ),
-          child: const _ActivityItem(
-            userName: 'Janrey',
-            action: 'created the farm',
-            time: '11:48 AM',
-            icon: Icons.access_time_rounded,
-          ),
-        ),
-        const SizedBox(height: 32),
-
-        // Audit Trail Banner
-        const _AuditTrailBanner(),
-        
-        const SizedBox(height: 60),
       ],
     );
   }
@@ -3934,7 +4312,7 @@ class _AuditTrailBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'When you remove a team member, their access revokes immediately. Everything they logged before removal stays â€” you can\'t delete history. That\'s what makes the record trustworthy to vets, buyers, and registries.',
+                  'When you remove a team member, their access revokes immediately. Everything they logged before removal stays - you can\'t delete history. That\'s what makes the record trustworthy to vets, buyers, and registries.',
                   style: TextStyle(
                     fontSize: 11,
                     color: const Color(0xFF15803D).withOpacity(0.8),
@@ -4077,8 +4455,41 @@ class _ReportsView extends StatefulWidget {
 }
 
 class _ReportsViewState extends State<_ReportsView> {
+  final FarmOpsApi _farmOpsApi = FarmOpsApi();
   int _categoryIndex = 0;
   int _scopeIndex = 0;
+  bool _isLoading = true;
+  Map<String, dynamic> _summary = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSummary();
+  }
+
+  Future<void> _loadSummary() async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _summary = const {};
+      });
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final data = await _farmOpsApi.getReportSummary(mobileNumber: mobileNumber);
+      if (!mounted) return;
+      setState(() {
+        _summary = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -4145,7 +4556,7 @@ class _ReportsViewState extends State<_ReportsView> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Farm name Â· Poultry metrics',
+                          '${(_summary['farm_name'] ?? 'Farm')} · Poultry metrics',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -4273,7 +4684,7 @@ class _ReportsViewState extends State<_ReportsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Production Â· 6 metrics',
+                    'Production - 6 metrics',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -4281,7 +4692,7 @@ class _ReportsViewState extends State<_ReportsView> {
                     ),
                   ),
                   Text(
-                    'What your farm produces â€” birds, eggs, hatches.',
+                    'What your farm produces - birds, eggs, hatches.',
                     style: TextStyle(fontSize: 11, color: const Color(0xFF15803D).withOpacity(0.8)),
                   ),
                 ],
@@ -4291,6 +4702,8 @@ class _ReportsViewState extends State<_ReportsView> {
         ),
         const SizedBox(height: 24),
 
+        if (_isLoading) const Center(child: CircularProgressIndicator()),
+        if (!_isLoading) ...[
         // Metric Grid
         GridView.count(
           shrinkWrap: true,
@@ -4299,39 +4712,46 @@ class _ReportsViewState extends State<_ReportsView> {
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
           childAspectRatio: 0.8,
-          children: const [
+          children: [
             _MetricCard(
               title: 'FERTILITY RATE',
               badge: 'FARM',
-              formula: 'Fertile eggs Ã· eggs set',
+              formula: 'Fertile eggs / eggs set',
+              value: _summary['hatch_rate'] == null ? '—' : '${_summary['hatch_rate']}%',
             ),
             _MetricCard(
-              title: 'HATCH RATE',
+              title: 'EGGS COLLECTED',
               badge: 'BATCH',
-              formula: 'Chicks hatched Ã· fertile eggs',
+              formula: 'Total eggs recorded',
+              value: '${_summary['eggs_collected'] ?? 0}',
             ),
             _MetricCard(
-              title: 'CHICK SURVIVAL (8WK)',
+              title: 'INCUBATING',
               badge: 'BATCH',
-              formula: 'Chicks surviving to 8 weeks',
+              formula: 'Batches currently incubating',
+              value: '${_summary['incubating_batches'] ?? 0}',
             ),
             _MetricCard(
-              title: 'STAG â†’ COCK RATE',
+              title: 'FLOCK BATCHES',
               badge: 'FARM',
-              formula: 'Young roosters reaching mature rooster stage',
+              formula: 'Total flock batches',
+              value: '${_summary['flock_batches'] ?? 0}',
             ),
             _MetricCard(
-              title: 'PEDIGREE DEPTH',
+              title: 'TOTAL BIRDS',
               badge: 'FARM',
-              formula: 'Average documented generations',
+              formula: 'Birds tracked in flock',
+              value: '${_summary['birds_count'] ?? 0}',
             ),
             _MetricCard(
-              title: 'AUTHENTICATED FLOCK',
+              title: 'TEAM MEMBERS',
               badge: 'FARM',
-              formula: 'Birds with active QR certificates',
+              formula: 'Members with access',
+              value: '${_summary['team_members'] ?? 0}',
             ),
           ],
         ),
+        ],
         
         const SizedBox(height: 40),
         
@@ -4393,7 +4813,7 @@ class _ReportsViewState extends State<_ReportsView> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'We aggregate numbers across PH farms of your type and share anonymized percentile comparisons. Your individual numbers are never shared â€” only medians and top-10% bands. Opt out anytime from Settings.',
+                          'We aggregate numbers across PH farms of your type and share anonymized percentile comparisons. Your individual numbers are never shared - only medians and top-10% bands. Opt out anytime from Settings.',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -4550,7 +4970,7 @@ class _MetricCard extends StatelessWidget {
     required this.title,
     required this.badge,
     required this.formula,
-    this.value = 'â€”',
+    this.value = '-',
   });
 
   final String title;
@@ -4644,7 +5064,7 @@ class _MetricCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    'â€” 30d',
+                    '- 30d',
                     style: GoogleFonts.inter(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,

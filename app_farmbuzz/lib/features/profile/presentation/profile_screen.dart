@@ -5,6 +5,7 @@ import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
 import 'package:farmbuzz/features/home/presentation/widgets/post_card.dart';
 import 'package:farmbuzz/features/profile/data/profile_api.dart';
+import 'package:farmbuzz/features/profile/data/social_api.dart';
 import 'package:farmbuzz/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'widgets/profile_header.dart';
@@ -21,6 +22,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final PostApi _postApi = PostApi();
   final ProfileApi _profileApi = ProfileApi();
+  final SocialApi _socialApi = SocialApi();
   final ImagePicker _imagePicker = ImagePicker();
 
   bool _isLoading = true;
@@ -28,6 +30,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isUploadingAvatar = false;
   bool _isUploadingCover = false;
   List<Map<String, dynamic>> _myPosts = [];
+  int _followersCount = 0;
+  int _followingCount = 0;
   String? _localAvatarPath;
   String? _localCoverPath;
 
@@ -43,6 +47,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         reactorName: AppSession.userName,
         authorName: AppSession.userName,
       );
+      final mobileNumber = AppSession.mobileNumber;
+      Map<String, dynamic> counts = const {};
+      if (mobileNumber != null && mobileNumber.trim().isNotEmpty) {
+        counts = await _socialApi.getCounts(mobileNumber: mobileNumber);
+      }
 
       if (!mounted) {
         return;
@@ -50,6 +59,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() {
         _myPosts = posts;
+        _followersCount = ((counts['followers_count'] ?? 0) as num).toInt();
+        _followingCount = ((counts['following_count'] ?? 0) as num).toInt();
         _isLoading = false;
         _hasError = false;
       });
@@ -408,8 +419,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       ProfileStats(
-                        followersCount: 0,
-                        followingCount: 0,
+                        followersCount: _followersCount,
+                        followingCount: _followingCount,
                         postsCount: postsCount,
                         birdsCount: 0,
                       ),

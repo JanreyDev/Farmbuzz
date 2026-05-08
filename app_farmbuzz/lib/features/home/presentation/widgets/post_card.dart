@@ -1,9 +1,11 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
+import 'package:farmbuzz/features/profile/presentation/profile_screen.dart';
+import 'package:farmbuzz/features/profile/presentation/screens/public_profile_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'comments_sheet.dart';
@@ -310,46 +312,52 @@ class _PostCardState extends State<PostCard> {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: const Color(0xFFE8F5E9),
-            backgroundImage: hasAvatar ? NetworkImage(resolvedAvatar) : null,
-            child: hasAvatar
-                ? null
-                : Text(
-                    _ownerInitial(),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1B5E20),
+          GestureDetector(
+            onTap: _openProfileFromPost,
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: const Color(0xFFE8F5E9),
+              backgroundImage: hasAvatar ? NetworkImage(resolvedAvatar) : null,
+              child: hasAvatar
+                  ? null
+                  : Text(
+                      _ownerInitial(),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1B5E20),
+                      ),
                     ),
-                  ),
+            ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.userName,
-                style: GoogleFonts.plusJakartaSans(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    '${widget.timeAgo} • ',
-                    style: GoogleFonts.inter(
-                      color: Colors.grey[600],
-                      fontSize: 11,
-                    ),
+          GestureDetector(
+            onTap: _openProfileFromPost,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.userName,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: Colors.black,
                   ),
-                  Icon(Icons.public, size: 10, color: Colors.grey[600]),
-                ],
-              ),
-            ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      '${widget.timeAgo} • ',
+                      style: GoogleFonts.inter(
+                        color: Colors.grey[600],
+                        fontSize: 11,
+                      ),
+                    ),
+                    Icon(Icons.public, size: 10, color: Colors.grey[600]),
+                  ],
+                ),
+              ],
+            ),
           ),
           const Spacer(),
           IconButton(
@@ -589,6 +597,23 @@ class _PostCardState extends State<PostCard> {
     );
   }
 
+  void _openProfileFromPost() {
+    final isOwner =
+        widget.userName.trim().toLowerCase() ==
+        AppSession.userName.trim().toLowerCase();
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => isOwner
+            ? const ProfileScreen()
+            : PublicProfileScreen(
+                userName: widget.userName,
+                userAvatar: widget.userAvatar,
+              ),
+      ),
+    );
+  }
+
   Widget _buildReactionOverlay() {
     return Positioned(
       bottom: 44,
@@ -718,3 +743,5 @@ class _PostAction extends StatelessWidget {
     );
   }
 }
+
+

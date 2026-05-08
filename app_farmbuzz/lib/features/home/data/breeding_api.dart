@@ -79,6 +79,7 @@ class BreedingApi {
     required int eggCount,
     required String collectedOn,
     String? note,
+    String? status,
   }) async {
     final response = await http.put(
       Uri.parse('$_baseUrl/breeding/collections/$id'),
@@ -89,6 +90,7 @@ class BreedingApi {
         'egg_count': eggCount,
         'collected_on': collectedOn,
         'note': note,
+        'status': status,
       }),
     );
 
