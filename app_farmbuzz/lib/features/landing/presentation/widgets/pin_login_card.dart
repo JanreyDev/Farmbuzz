@@ -47,6 +47,8 @@ class _PinLoginCardState extends State<PinLoginCard> {
       AppSession.setUser(
         userName: user.name,
         mobileNumber: user.mobileNumber,
+        avatarUrl: user.avatarUrl,
+        coverPhotoUrl: user.coverPhotoUrl,
       );
 
       if (!mounted) {

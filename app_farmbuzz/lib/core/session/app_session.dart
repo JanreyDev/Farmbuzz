@@ -45,11 +45,11 @@ class AppSession {
   }
 
   static void setProfileMedia({String? avatarUrl, String? coverPhotoUrl}) {
-    if (avatarUrl != null) {
-      _avatarUrl = avatarUrl;
+    if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
+      _avatarUrl = avatarUrl.trim();
     }
-    if (coverPhotoUrl != null) {
-      _coverPhotoUrl = coverPhotoUrl;
+    if (coverPhotoUrl != null && coverPhotoUrl.trim().isNotEmpty) {
+      _coverPhotoUrl = coverPhotoUrl.trim();
     }
   }
 

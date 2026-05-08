@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/features/home/data/farm_api.dart';
 
 import 'create_farm_view.dart';
 import 'my_farm/farm_common_widgets.dart';
@@ -14,23 +16,106 @@ class MyFarmView extends StatefulWidget {
 }
 
 class _MyFarmViewState extends State<MyFarmView> {
+  final FarmApi _farmApi = FarmApi();
   bool _isCreatingFarm = false;
-  bool _hasFarm = false; // Set to true after creation to show dashboard
+  bool _hasFarm = false;
+  bool _isLoading = true;
+  Map<String, dynamic>? _farmData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFarm();
+  }
+
+  Future<void> _loadFarm() async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _hasFarm = false;
+        _farmData = null;
+      });
+      return;
+    }
+
+    try {
+      final farm = await _farmApi.getFarm(mobileNumber: mobileNumber);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _farmData = farm;
+        _hasFarm = farm != null;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _hasFarm = false;
+      });
+    }
+  }
+
+  Future<void> _createFarm(Map<String, dynamic> payload) async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login again to create a farm.')),
+      );
+      return;
+    }
+
+    try {
+      final farm = await _farmApi.saveFarm(
+        mobileNumber: mobileNumber,
+        name: (payload['name'] ?? '').toString(),
+        farmType: payload['farm_type']?.toString(),
+        city: payload['city']?.toString(),
+        startedYear: payload['started_year'] as int?,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _farmData = farm;
+        _isCreatingFarm = false;
+        _hasFarm = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Farm created successfully.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     if (_isCreatingFarm) {
       return CreateFarmView(
         onBack: () => setState(() => _isCreatingFarm = false),
-        onCreated: () => setState(() {
-          _isCreatingFarm = false;
-          _hasFarm = true;
-        }),
+        onCreated: _createFarm,
       );
     }
 
     if (_hasFarm) {
-      return _DashboardView();
+      return _DashboardView(farmData: _farmData ?? <String, dynamic>{});
     }
 
     return Container(
@@ -50,7 +135,9 @@ class _MyFarmViewState extends State<MyFarmView> {
 }
 
 class _DashboardView extends StatefulWidget {
-  const _DashboardView();
+  const _DashboardView({required this.farmData});
+
+  final Map<String, dynamic> farmData;
 
   @override
   State<_DashboardView> createState() => _DashboardViewState();
@@ -66,7 +153,7 @@ class _DashboardViewState extends State<_DashboardView> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            const _DashboardBanner(),
+            _DashboardBanner(farmData: widget.farmData),
             const SizedBox(height: 12),
             _DashboardTabs(
               selectedIndex: _selectedTabIndex,
@@ -1284,10 +1371,20 @@ class _OnboardingStep extends StatelessWidget {
 }
 
 class _DashboardBanner extends StatelessWidget {
-  const _DashboardBanner();
+  const _DashboardBanner({required this.farmData});
+
+  final Map<String, dynamic> farmData;
 
   @override
   Widget build(BuildContext context) {
+    final farmName = (farmData['name'] ?? 'My Farm').toString();
+    final farmType = (farmData['farm_type'] ?? 'Farm').toString();
+    final city = (farmData['city'] ?? 'Philippines').toString();
+    final ownerName = (farmData['owner_name'] ?? AppSession.userName).toString();
+    final ownerInitial = ownerName.trim().isEmpty
+        ? 'F'
+        : ownerName.trim().substring(0, 1).toUpperCase();
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(24),
@@ -1365,9 +1462,9 @@ class _DashboardBanner extends StatelessWidget {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'T',
+                          ownerInitial,
                           style: TextStyle(
                             color: Color(0xFF16A34A),
                             fontSize: 8,
@@ -1377,8 +1474,8 @@ class _DashboardBanner extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Test',
+                    Text(
+                      farmName,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -1405,7 +1502,7 @@ class _DashboardBanner extends StatelessWidget {
               children: [
                 const TextSpan(text: 'Magandang hapon, '),
                 TextSpan(
-                  text: 'asdad.',
+                  text: '$ownerName.',
                   style: TextStyle(color: AppColors.accentGreen),
                 ),
               ],
@@ -1430,14 +1527,14 @@ class _DashboardBanner extends StatelessWidget {
               children: [
                 _BannerChip(
                   icon: Icons.auto_awesome_rounded,
-                  label: 'Gamefowl',
+                  label: farmType,
                   color: const Color(0xFFFB923C).withOpacity(0.1),
                   iconColor: const Color(0xFFFB923C),
                 ),
                 const SizedBox(width: 8),
                 _BannerChip(
                   icon: Icons.location_on_rounded,
-                  label: 'Palawan',
+                  label: city,
                   color: Colors.grey[100]!,
                   iconColor: Colors.grey[400]!,
                 ),

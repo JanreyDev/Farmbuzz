@@ -10,7 +10,7 @@ class CreateFarmView extends StatefulWidget {
   });
 
   final VoidCallback onBack;
-  final VoidCallback onCreated;
+  final ValueChanged<Map<String, dynamic>> onCreated;
 
   @override
   State<CreateFarmView> createState() => _CreateFarmViewState();
@@ -91,7 +91,14 @@ class _CreateFarmViewState extends State<CreateFarmView> {
     // Show toast for 2 seconds then navigate
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
-      widget.onCreated();
+      widget.onCreated({
+        'name': _farmNameController.text.trim(),
+        'farm_type': _selectedTypeIndex != null
+            ? (_farmTypes[_selectedTypeIndex!]['title'] as String)
+            : null,
+        'city': _cityController.text.trim(),
+        'started_year': int.tryParse(_yearController.text.trim()),
+      });
     }
   }
 

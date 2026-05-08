@@ -168,7 +168,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       AppSession.setProfileMedia(
         avatarUrl: media['avatar_url'],
-        coverPhotoUrl: media['cover_photo_url'],
       );
 
       if (!mounted) {
@@ -236,7 +235,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       AppSession.setProfileMedia(
-        avatarUrl: media['avatar_url'],
         coverPhotoUrl: media['cover_photo_url'],
       );
 
