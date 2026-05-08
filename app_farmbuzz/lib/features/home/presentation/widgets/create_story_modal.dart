@@ -7,9 +7,9 @@ import 'photo_story_editor.dart';
 class CreateStoryModal extends StatelessWidget {
   const CreateStoryModal({super.key, this.onStoryCreated});
 
-  final void Function(String)? onStoryCreated;
+  final Future<void> Function(String)? onStoryCreated;
 
-  static Future<void> show(BuildContext context, {void Function(String)? onStoryCreated}) {
+  static Future<void> show(BuildContext context, {Future<void> Function(String)? onStoryCreated}) {
     return showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

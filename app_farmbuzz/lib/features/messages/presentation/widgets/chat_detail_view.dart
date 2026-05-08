@@ -29,10 +29,19 @@ class _ChatDetailViewState extends State<ChatDetailView> {
   @override
   void initState() {
     super.initState();
-    _chatPreview = mockChats.firstWhere(
-      (c) => c.id == widget.chatId, 
-      orElse: () => mockChats.first
-    );
+    _chatPreview = mockChats.isNotEmpty
+        ? mockChats.firstWhere(
+            (c) => c.id == widget.chatId,
+            orElse: () => mockChats.first,
+          )
+        : ChatPreview(
+            id: widget.chatId,
+            name: 'Chat',
+            lastMessage: '',
+            time: '',
+            avatarUrl: '',
+            type: 'Direct',
+          );
     // Create a local copy of messages to allow mutations
     _messages = List<ChatMessage>.from(mockConversations[widget.chatId] ?? []);
   }
@@ -146,7 +155,12 @@ class _ChatDetailViewState extends State<ChatDetailView> {
             CircleAvatar(
               radius: 20,
               backgroundColor: Colors.grey[100],
-              backgroundImage: NetworkImage(_chatPreview.avatarUrl),
+              backgroundImage: _chatPreview.avatarUrl.trim().isNotEmpty
+                  ? NetworkImage(_chatPreview.avatarUrl)
+                  : null,
+              child: _chatPreview.avatarUrl.trim().isEmpty
+                  ? const Icon(Icons.person, color: Colors.grey)
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(

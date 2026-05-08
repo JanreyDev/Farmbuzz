@@ -107,22 +107,29 @@ class _ChatListViewState extends State<ChatListView> {
         
         // Chat List
         Expanded(
-          child: ListView.separated(
-            itemCount: filteredChats.length,
-            separatorBuilder: (context, index) => const Divider(
-              height: 1,
-              indent: 80,
-              color: AppColors.borderLight,
-            ),
-            itemBuilder: (context, index) {
-              final chat = filteredChats[index];
-              return ChatListItem(
-                chat: chat,
-                isSelected: widget.selectedChatId == chat.id,
-                onTap: () => widget.onChatSelected(chat.id),
-              );
-            },
-          ),
+          child: filteredChats.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No chats yet.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              : ListView.separated(
+                  itemCount: filteredChats.length,
+                  separatorBuilder: (context, index) => const Divider(
+                    height: 1,
+                    indent: 80,
+                    color: AppColors.borderLight,
+                  ),
+                  itemBuilder: (context, index) {
+                    final chat = filteredChats[index];
+                    return ChatListItem(
+                      chat: chat,
+                      isSelected: widget.selectedChatId == chat.id,
+                      onTap: () => widget.onChatSelected(chat.id),
+                    );
+                  },
+                ),
         ),
       ],
     );

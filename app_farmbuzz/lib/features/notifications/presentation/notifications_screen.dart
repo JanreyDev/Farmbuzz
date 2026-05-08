@@ -16,6 +16,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final visibleNotifications = mockNotifications.where((notification) {
+      final mainOk = selectedMainFilter == 'All' ||
+          notification.category == selectedMainFilter;
+      final subOk = selectedSubFilter != 'Unread' || notification.isUnread;
+      return mainOk && subOk;
+    }).toList();
+    final unreadCount =
+        visibleNotifications.where((notification) => notification.isUnread).length;
+    final todayNotifications = visibleNotifications
+        .where((notification) => notification.group == 'TODAY')
+        .toList();
+    final thisWeekNotifications = visibleNotifications
+        .where((notification) => notification.group == 'THIS WEEK')
+        .toList();
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -44,9 +59,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        '6 new',
-                        style: TextStyle(color: AppColors.accentGreen, fontWeight: FontWeight.w600),
+                      Text(
+                        unreadCount > 0 ? '$unreadCount new' : 'No new notifications',
+                        style: const TextStyle(
+                          color: AppColors.accentGreen,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       ElevatedButton.icon(
                         onPressed: () {},
@@ -75,19 +93,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     children: [
                       _FilterChip(
                         label: 'All',
-                        count: 6,
+                        count: visibleNotifications.length,
                         isActive: selectedMainFilter == 'All',
                         onTap: () => setState(() => selectedMainFilter = 'All'),
                       ),
                       _FilterChip(
                         label: 'Social',
-                        count: 6,
+                        count: visibleNotifications
+                            .where((notification) => notification.category == 'Social')
+                            .length,
                         isActive: selectedMainFilter == 'Social',
                         onTap: () => setState(() => selectedMainFilter = 'Social'),
                       ),
                       _FilterChip(
                         label: 'System',
-                        count: 0,
+                        count: visibleNotifications
+                            .where((notification) => notification.category == 'System')
+                            .length,
                         isActive: selectedMainFilter == 'System',
                         onTap: () => setState(() => selectedMainFilter = 'System'),
                       ),
@@ -104,7 +126,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         onTap: () => setState(() => selectedSubFilter = 'All'),
                       ),
                       _SubFilterChip(
-                        label: 'Unread - 5',
+                        label: 'Unread - $unreadCount',
                         isActive: selectedSubFilter == 'Unread',
                         onTap: () => setState(() => selectedSubFilter = 'Unread'),
                       ),
@@ -114,17 +136,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ),
 
-            // Today Notifications
-            const SectionHeader(title: 'TODAY'),
-            NotificationsGroup(
-              notifications: mockNotifications.where((n) => n.group == 'TODAY').toList(),
-            ),
-
-            // This Week Notifications
-            const SectionHeader(title: 'THIS WEEK'),
-            NotificationsGroup(
-              notifications: mockNotifications.where((n) => n.group == 'THIS WEEK').toList(),
-            ),
+            if (visibleNotifications.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+                child: Center(
+                  child: Text(
+                    'No notifications yet.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else ...[
+              if (todayNotifications.isNotEmpty) ...[
+                const SectionHeader(title: 'TODAY'),
+                NotificationsGroup(notifications: todayNotifications),
+              ],
+              if (thisWeekNotifications.isNotEmpty) ...[
+                const SectionHeader(title: 'THIS WEEK'),
+                NotificationsGroup(notifications: thisWeekNotifications),
+              ],
+            ],
             
             const SizedBox(height: 32),
           ],

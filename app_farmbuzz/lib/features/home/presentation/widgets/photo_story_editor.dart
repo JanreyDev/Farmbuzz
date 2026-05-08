@@ -10,10 +10,10 @@ class PhotoStoryEditor extends StatefulWidget {
   const PhotoStoryEditor({super.key, required this.imageFile, this.onStoryCreated});
 
   final XFile imageFile;
-  final void Function(String)? onStoryCreated;
+  final Future<void> Function(String)? onStoryCreated;
 
   /// Utility method to show the editor as a bottom sheet.
-  static void show(BuildContext context, XFile imageFile, {void Function(String)? onStoryCreated}) {
+  static void show(BuildContext context, XFile imageFile, {Future<void> Function(String)? onStoryCreated}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -394,8 +394,11 @@ class _PhotoStoryEditorState extends State<PhotoStoryEditor> {
           Expanded(
             flex: 2,
             child: ElevatedButton(
-              onPressed: () {
-                widget.onStoryCreated?.call(widget.imageFile.path);
+              onPressed: () async {
+                await widget.onStoryCreated?.call(widget.imageFile.path);
+                if (!mounted) {
+                  return;
+                }
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

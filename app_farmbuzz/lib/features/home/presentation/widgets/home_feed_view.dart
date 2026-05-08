@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
+import 'package:farmbuzz/features/home/data/story_api.dart';
 import 'post_card.dart';
 import 'story_view_screen.dart';
 import 'create_story_modal.dart';
@@ -18,6 +19,7 @@ class HomeFeedView extends StatefulWidget {
 class _HomeFeedViewState extends State<HomeFeedView> {
   final ScrollController _scrollController = ScrollController();
   final PostApi _postApi = PostApi();
+  final StoryApi _storyApi = StoryApi();
   bool _isLoadingPosts = true;
   bool _hasPostLoadError = false;
 
@@ -25,6 +27,7 @@ class _HomeFeedViewState extends State<HomeFeedView> {
   void initState() {
     super.initState();
     _loadPosts();
+    _loadStories();
   }
 
   @override
@@ -62,17 +65,48 @@ class _HomeFeedViewState extends State<HomeFeedView> {
   }
 
   // Dynamic stories state
-  final List<Map<String, String>> _dynamicStories = [];
+  List<Map<String, dynamic>> _dynamicStories = [];
 
-  void _addNewStory(String imagePath) {
-    setState(() {
-        _dynamicStories.insert(0, {
-        'name': AppSession.userName,
-        'time': 'Just now',
-        'imagePath': imagePath,
-        'avatarUrl': AppSession.avatarUrl,
+  Future<void> _loadStories() async {
+    try {
+      final stories = await _storyApi.getStories();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _dynamicStories = stories;
       });
-    });
+    } catch (_) {
+      // Keep UI usable even if stories fail to load
+    }
+  }
+
+  Future<void> _addNewStory(String imagePath) async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login again to create a story.')),
+      );
+      return;
+    }
+
+    try {
+      await _storyApi.createStory(
+        mobileNumber: mobileNumber,
+        imagePath: imagePath,
+      );
+      await _loadStories();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
   }
 
   Future<void> _addNewPost(String text, List<String> imagePaths) async {
@@ -298,8 +332,8 @@ class _StoriesSection extends StatelessWidget {
     required this.onAddStory,
   });
 
-  final List<Map<String, String>> dynamicStories;
-  final ValueChanged<String> onAddStory;
+  final List<Map<String, dynamic>> dynamicStories;
+  final Future<void> Function(String) onAddStory;
 
   @override
   Widget build(BuildContext context) {
@@ -311,30 +345,21 @@ class _StoriesSection extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           _AddStoryCard(onAddStory: onAddStory),
-          ...dynamicStories.map(
-            (story) => _StoryCard(
-              name: story['name']!,
-              time: story['time']!,
-              imageUrl: story['imagePath']!,
-              avatarUrl: story['avatarUrl']!,
-              isNew: true,
-              isLocal: true,
-            ),
-          ),
-          const _StoryCard(
-            name: 'Alyssa Rose',
-            time: '1 new - 10m ago',
-            imageUrl:
-                'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400',
-            avatarUrl: 'https://i.pravatar.cc/150?u=alyssa',
-          ),
-          const _StoryCard(
-            name: 'TRIXIE',
-            time: '19h ago',
-            imageUrl:
-                'https://images.unsplash.com/photo-1516733725897-1aa73b87c8e8?w=400',
-            avatarUrl: 'https://i.pravatar.cc/150?u=trixie',
-          ),
+          ...dynamicStories
+              .where(
+                (story) =>
+                    ((story['imageUrl'] ?? '').toString().trim().isNotEmpty),
+              )
+              .map(
+                (story) => _StoryCard(
+                  name: (story['name'] ?? 'Unknown').toString(),
+                  time: (story['timeAgo'] ?? 'Just now').toString(),
+                  imageUrl: (story['imageUrl'] ?? '').toString(),
+                  avatarUrl: (story['avatarUrl'] ?? '').toString(),
+                  isNew: true,
+                  isLocal: false,
+                ),
+              ),
         ],
       ),
     );
@@ -344,7 +369,7 @@ class _StoriesSection extends StatelessWidget {
 class _AddStoryCard extends StatelessWidget {
   const _AddStoryCard({required this.onAddStory});
 
-  final ValueChanged<String> onAddStory;
+  final Future<void> Function(String) onAddStory;
 
   @override
   Widget build(BuildContext context) {
