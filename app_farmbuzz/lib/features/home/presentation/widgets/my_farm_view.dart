@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/features/home/data/breeding_api.dart';
 import 'package:farmbuzz/features/home/data/farm_api.dart';
 
 import 'create_farm_view.dart';
@@ -303,7 +304,153 @@ class _BreedingView extends StatefulWidget {
 }
 
 class _BreedingViewState extends State<_BreedingView> {
+  final BreedingApi _breedingApi = BreedingApi();
   int _subTabIndex = 0;
+  bool _isLoadingCollections = true;
+  List<Map<String, dynamic>> _collections = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCollections();
+  }
+
+  Future<void> _loadCollections() async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoadingCollections = false;
+        _collections = const [];
+      });
+      return;
+    }
+
+    setState(() => _isLoadingCollections = true);
+    try {
+      final data = await _breedingApi.getCollections(mobileNumber: mobileNumber);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _collections = data;
+        _isLoadingCollections = false;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoadingCollections = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
+  }
+
+  Future<void> _openCollectionEditor({Map<String, dynamic>? existing}) async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      return;
+    }
+
+    final payload = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => _CollectionEditorDialog(initial: existing),
+    );
+    if (payload == null) {
+      return;
+    }
+
+    try {
+      if (existing == null) {
+        await _breedingApi.createCollection(
+          mobileNumber: mobileNumber,
+          batchName: payload['batch_name'] as String,
+          eggCount: payload['egg_count'] as int,
+          collectedOn: payload['collected_on'] as String,
+          note: payload['note'] as String?,
+        );
+      } else {
+        await _breedingApi.updateCollection(
+          mobileNumber: mobileNumber,
+          id: (existing['id'] as num).toInt(),
+          batchName: payload['batch_name'] as String,
+          eggCount: payload['egg_count'] as int,
+          collectedOn: payload['collected_on'] as String,
+          note: payload['note'] as String?,
+        );
+      }
+
+      await _loadCollections();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(existing == null ? 'Collection added.' : 'Collection updated.'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
+  }
+
+  Future<void> _deleteCollection(Map<String, dynamic> item) async {
+    final mobileNumber = AppSession.mobileNumber;
+    if (mobileNumber == null || mobileNumber.trim().isEmpty) {
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete collection'),
+        content: const Text('Remove this egg collection record?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    try {
+      await _breedingApi.deleteCollection(
+        mobileNumber: mobileNumber,
+        id: (item['id'] as num).toInt(),
+      );
+      await _loadCollections();
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Collection deleted.')),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +474,7 @@ class _BreedingViewState extends State<_BreedingView> {
               child: _SubTabItem(
                 label: 'Collection',
                 icon: Icons.inventory_2_outlined,
-                count: 4,
+                count: _collections.length,
                 isActive: _subTabIndex == 0,
                 onTap: () => setState(() => _subTabIndex = 0),
               ),
@@ -363,7 +510,11 @@ class _BreedingViewState extends State<_BreedingView> {
                 child: _ActionButton(
                   label: _subTabIndex == 0 ? 'Collect eggs' : 'Start incubating',
                   icon: Icons.add,
-                  onTap: () {},
+                  onTap: () {
+                    if (_subTabIndex == 0) {
+                      _openCollectionEditor();
+                    }
+                  },
                 ),
               ),
             ],
@@ -372,7 +523,14 @@ class _BreedingViewState extends State<_BreedingView> {
         ],
 
         // Sub-tab Content
-        if (_subTabIndex == 0) const _CollectionGrid(),
+        if (_subTabIndex == 0)
+          _CollectionGrid(
+            isLoading: _isLoadingCollections,
+            collections: _collections,
+            onAdd: () => _openCollectionEditor(),
+            onEdit: (item) => _openCollectionEditor(existing: item),
+            onDelete: _deleteCollection,
+          ),
         if (_subTabIndex == 1) const _IncubatingGrid(),
         if (_subTabIndex == 2) const _ArchiveView(),
         
@@ -412,11 +570,11 @@ class _PerformanceSection extends StatelessWidget {
               icon: Icons.egg_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
-              description: 'Well below average — troubleshoot.',
+              description: 'Well below average â€” troubleshoot.',
             ),
             FarmStatCard(
               title: 'HATCH RATE',
-              value: '—',
+              value: 'â€”',
               icon: Icons.auto_awesome_rounded,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -424,7 +582,7 @@ class _PerformanceSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'SETTLING LOSS',
-              value: '—',
+              value: 'â€”',
               icon: Icons.favorite_border_rounded,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -463,7 +621,7 @@ class _LifecycleSection extends StatelessWidget {
           children: const [
             FarmStatCard(
               title: 'BROODING MORTALITY',
-              value: '—',
+              value: 'â€”',
               icon: Icons.home_outlined,
               color: Color(0xFF9A3412),
               iconBg: Color(0xFFFFF7ED),
@@ -471,7 +629,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'STAGE SURVIVAL',
-              value: '—',
+              value: 'â€”',
               icon: Icons.show_chart_rounded,
               color: Color(0xFF1E40AF),
               iconBg: Color(0xFFEFF6FF),
@@ -479,7 +637,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'CULL RATE',
-              value: '—',
+              value: 'â€”',
               icon: Icons.content_cut_rounded,
               color: Color(0xFF854D0E),
               iconBg: Color(0xFFFEFCE8),
@@ -487,7 +645,7 @@ class _LifecycleSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'TIME TO MATURITY',
-              value: '—',
+              value: 'â€”',
               icon: Icons.timer_outlined,
               color: Color(0xFF475569),
               iconBg: Color(0xFFF1F5F9),
@@ -511,7 +669,7 @@ class _QualitySection extends StatelessWidget {
         FarmSectionHeader(
           label: 'QUALITY & SELECTION',
           title: 'How good is your breeding program?',
-          subtitle: 'The real test isn\'t how many you raise — it\'s how many make the cut.',
+          subtitle: 'The real test isn\'t how many you raise â€” it\'s how many make the cut.',
           actionLabel: 'Go to Flock',
           onAction: () {},
         ),
@@ -526,7 +684,7 @@ class _QualitySection extends StatelessWidget {
           children: const [
             FarmStatCard(
               title: 'ROOSTER QUALITY RATE',
-              value: '—',
+              value: 'â€”',
               icon: Icons.military_tech_outlined,
               color: Color(0xFFB48634),
               iconBg: Color(0xFFFEFCE8),
@@ -534,7 +692,7 @@ class _QualitySection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'BROOD PROMOTION RATE',
-              value: '—',
+              value: 'â€”',
               icon: Icons.workspace_premium_outlined,
               color: Color(0xFFB48634),
               iconBg: Color(0xFFFEFCE8),
@@ -573,7 +731,7 @@ class _HealthSection extends StatelessWidget {
           children: const [
             FarmStatCard(
               title: 'VACCINATION RATE',
-              value: '—',
+              value: 'â€”',
               icon: Icons.medical_services_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -581,7 +739,7 @@ class _HealthSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'DISEASE INCIDENCE',
-              value: '—',
+              value: 'â€”',
               icon: Icons.bug_report_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -589,7 +747,7 @@ class _HealthSection extends StatelessWidget {
             ),
             FarmStatCard(
               title: 'AVG WEIGHT GAIN',
-              value: '—',
+              value: 'â€”',
               icon: Icons.fitness_center_outlined,
               color: Color(0xFF16A34A),
               iconBg: Color(0xFFE9F6EE),
@@ -629,11 +787,11 @@ class _BreedingStats extends StatelessWidget {
           icon: Icons.analytics_outlined,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
-          description: 'Well below average — troubleshoot.',
+          description: 'Well below average â€” troubleshoot.',
         ),
         FarmStatCard(
           title: 'AVG YIELD',
-          value: '—',
+          value: 'â€”',
           icon: Icons.auto_awesome_rounded,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
@@ -641,7 +799,7 @@ class _BreedingStats extends StatelessWidget {
         ),
         FarmStatCard(
           title: 'CHICK QUALITY',
-          value: '—',
+          value: 'â€”',
           icon: Icons.star_outline_rounded,
           color: Color(0xFF475569),
           iconBg: Color(0xFFF1F5F9),
@@ -657,54 +815,53 @@ class _BreedingTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: Container(
-          constraints: const BoxConstraints(minWidth: 400),
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.topCenter,
-            children: [
-              Positioned(
-                top: 6,
-                left: 40,
-                right: 40,
-                child: Container(
-                  height: 1.5,
-                  color: Colors.grey[200],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: 6,
+            left: 24,
+            right: 24,
+            child: Container(
+              height: 1.5,
+              color: Colors.grey[200],
+            ),
+          ),
+          Row(
+            children: const [
+              Expanded(
+                child: _TimelineStep(
+                  label: 'Candling',
+                  days: 'DAY 1-10',
+                  icon: Icons.lightbulb_outline_rounded,
+                  color: Color(0xFFFB923C),
+                  iconBg: Color(0xFFFFF7ED),
                 ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: const [
-                  _TimelineStep(
-                    label: 'Candling',
-                    days: 'DAY 1-10',
-                    icon: Icons.lightbulb_outline_rounded,
-                    color: Color(0xFFFB923C),
-                    iconBg: Color(0xFFFFF7ED),
-                  ),
-                  _TimelineStep(
-                    label: 'Settling',
-                    days: 'DAY 11-18',
-                    icon: Icons.settings_input_component_rounded,
-                    color: Color(0xFF475569),
-                    iconBg: Color(0xFFF1F5F9),
-                  ),
-                  _TimelineStep(
-                    label: 'Hatch',
-                    days: 'DAY 19-21',
-                    icon: Icons.egg_outlined,
-                    color: Color(0xFF16A34A),
-                    iconBg: Color(0xFFF0FDF4),
-                  ),
-                ],
+              Expanded(
+                child: _TimelineStep(
+                  label: 'Settling',
+                  days: 'DAY 11-18',
+                  icon: Icons.settings_input_component_rounded,
+                  color: Color(0xFF475569),
+                  iconBg: Color(0xFFF1F5F9),
+                ),
+              ),
+              Expanded(
+                child: _TimelineStep(
+                  label: 'Hatch',
+                  days: 'DAY 19-21',
+                  icon: Icons.egg_outlined,
+                  color: Color(0xFF16A34A),
+                  iconBg: Color(0xFFF0FDF4),
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -746,6 +903,7 @@ class _TimelineStep extends StatelessWidget {
         // Label Section below
         Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(4),
@@ -779,8 +937,6 @@ class _TimelineStep extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(width: 4),
-            Icon(Icons.info_outline_rounded, size: 10, color: Colors.grey[300]),
           ],
         ),
       ],
@@ -968,43 +1124,76 @@ class _ActionButton extends StatelessWidget {
 }
 
 class _CollectionGrid extends StatelessWidget {
-  const _CollectionGrid();
+  const _CollectionGrid({
+    required this.isLoading,
+    required this.collections,
+    required this.onAdd,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final bool isLoading;
+  final List<Map<String, dynamic>> collections;
+  final VoidCallback onAdd;
+  final ValueChanged<Map<String, dynamic>> onEdit;
+  final ValueChanged<Map<String, dynamic>> onDelete;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (collections.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[100]!),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.egg_alt_outlined, size: 28, color: Color(0xFF94A3B8)),
+            const SizedBox(height: 8),
+            Text(
+              'No collections yet',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF334155),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Tap Collect eggs to add your first batch.',
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('Collect eggs'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
-      children: const [
-        _CollectionCard(
-          title: 'Female',
-          count: 21,
-          date: 'Apr 23',
-          age: '0d old',
-          note: '—',
-        ),
-        SizedBox(height: 12),
-        _CollectionCard(
-          title: 'Lalaki',
-          count: 9,
-          date: 'Apr 23',
-          age: '0d old',
-          note: '—',
-        ),
-        SizedBox(height: 12),
-        _CollectionCard(
-          title: 'Stag × Pullet',
-          count: 10,
-          date: 'Apr 23',
-          age: '0d old',
-          note: '2nd batch',
-        ),
-        SizedBox(height: 12),
-        _CollectionCard(
-          title: 'Cock × Hen',
-          count: 21,
-          date: 'Apr 23',
-          age: '0d old',
-          note: 'this is just a test',
-        ),
+      children: [
+        for (var index = 0; index < collections.length; index++) ...[
+          _CollectionCard(
+            item: collections[index],
+            onEdit: () => onEdit(collections[index]),
+            onDelete: () => onDelete(collections[index]),
+          ),
+          if (index != collections.length - 1) const SizedBox(height: 12),
+        ],
       ],
     );
   }
@@ -1012,21 +1201,24 @@ class _CollectionGrid extends StatelessWidget {
 
 class _CollectionCard extends StatelessWidget {
   const _CollectionCard({
-    required this.title,
-    required this.count,
-    required this.date,
-    required this.age,
-    this.note,
+    required this.item,
+    required this.onEdit,
+    required this.onDelete,
   });
 
-  final String title;
-  final int count;
-  final String date;
-  final String age;
-  final String? note;
+  final Map<String, dynamic> item;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
+    final title = (item['batch_name'] ?? 'Collection').toString();
+    final count = (item['egg_count'] is num) ? (item['egg_count'] as num).toInt() : 0;
+    final note = item['note']?.toString();
+    final status = (item['status'] ?? 'fresh').toString().toUpperCase();
+    final date = _formatDate(item['collected_on']?.toString());
+    final age = _ageFromDate(item['collected_on']?.toString());
+
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -1037,7 +1229,6 @@ class _CollectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Title and Egg Count
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -1063,7 +1254,7 @@ class _CollectionCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'FRESH',
+                          status,
                           style: GoogleFonts.inter(
                             fontSize: 8,
                             fontWeight: FontWeight.w900,
@@ -1099,15 +1290,12 @@ class _CollectionCard extends StatelessWidget {
               ],
             ),
           ),
-          // Middle Section: Metadata (Cream background)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: const Color(0xFFFAF8F4),
-              border: Border.symmetric(
-                horizontal: BorderSide(color: Colors.grey[100]!),
-              ),
+              border: Border.symmetric(horizontal: BorderSide(color: Colors.grey[100]!)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1117,7 +1305,7 @@ class _CollectionCard extends StatelessWidget {
                     const Icon(Icons.calendar_today_rounded, size: 12, color: Colors.grey),
                     const SizedBox(width: 8),
                     Text(
-                      'Collected $date • $age',
+                      'Collected $date · $age',
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1148,7 +1336,7 @@ class _CollectionCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        note ?? '—',
+                        note == null || note.trim().isEmpty ? '—' : note,
                         style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1159,19 +1347,12 @@ class _CollectionCard extends StatelessWidget {
               ],
             ),
           ),
-          // Footer: Flush Action Blocks
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
           IntrinsicHeight(
             child: Row(
               children: [
-                _FooterIconButton(
-                  icon: Icons.edit_outlined,
-                  onTap: () {},
-                ),
-                _FooterIconButton(
-                  icon: Icons.delete_outline_rounded,
-                  onTap: () {},
-                ),
+                _FooterIconButton(icon: Icons.edit_outlined, onTap: onEdit),
+                _FooterIconButton(icon: Icons.delete_outline_rounded, onTap: onDelete),
                 Expanded(
                   child: Material(
                     color: AppColors.premiumGreen,
@@ -1206,8 +1387,152 @@ class _CollectionCard extends StatelessWidget {
       ),
     );
   }
+
+  String _formatDate(String? raw) {
+    if (raw == null || raw.trim().isEmpty) {
+      return 'Unknown';
+    }
+    final parsed = DateTime.tryParse(raw);
+    if (parsed == null) {
+      return raw;
+    }
+    const months = <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[parsed.month - 1]} ${parsed.day}';
+  }
+
+  String _ageFromDate(String? raw) {
+    final parsed = raw == null ? null : DateTime.tryParse(raw);
+    if (parsed == null) {
+      return '0d old';
+    }
+    final days = DateTime.now().difference(parsed).inDays;
+    return '${days < 0 ? 0 : days}d old';
+  }
 }
 
+class _CollectionEditorDialog extends StatefulWidget {
+  const _CollectionEditorDialog({this.initial});
+
+  final Map<String, dynamic>? initial;
+
+  @override
+  State<_CollectionEditorDialog> createState() => _CollectionEditorDialogState();
+}
+
+class _CollectionEditorDialogState extends State<_CollectionEditorDialog> {
+  late final TextEditingController _batchController;
+  late final TextEditingController _countController;
+  late final TextEditingController _noteController;
+  late DateTime _selectedDate;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _batchController = TextEditingController(text: widget.initial?['batch_name']?.toString() ?? '');
+    _countController = TextEditingController(text: widget.initial?['egg_count']?.toString() ?? '');
+    _noteController = TextEditingController(text: widget.initial?['note']?.toString() ?? '');
+    _selectedDate = DateTime.tryParse(widget.initial?['collected_on']?.toString() ?? '') ?? DateTime.now();
+  }
+
+  @override
+  void dispose() {
+    _batchController.dispose();
+    _countController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEdit = widget.initial != null;
+    return AlertDialog(
+      title: Text(isEdit ? 'Edit collection' : 'Collect eggs'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _batchController,
+              decoration: const InputDecoration(labelText: 'Batch name', hintText: 'e.g. Pen A'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _countController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Egg count'),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: _pickDate,
+              icon: const Icon(Icons.calendar_today_outlined, size: 16),
+              label: Text('Collected on: ${_toApiDate(_selectedDate)}'),
+            ),
+            TextField(
+              controller: _noteController,
+              maxLength: 255,
+              decoration: const InputDecoration(labelText: 'Note (optional)'),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          child: Text(isEdit ? 'Save' : 'Add'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 1)),
+    );
+    if (picked == null) {
+      return;
+    }
+    setState(() => _selectedDate = picked);
+  }
+
+  void _submit() {
+    final name = _batchController.text.trim();
+    final count = int.tryParse(_countController.text.trim());
+    if (name.isEmpty) {
+      setState(() => _error = 'Batch name is required.');
+      return;
+    }
+    if (count == null || count <= 0) {
+      setState(() => _error = 'Egg count must be greater than 0.');
+      return;
+    }
+
+    Navigator.of(context).pop({
+      'batch_name': name,
+      'egg_count': count,
+      'collected_on': _toApiDate(_selectedDate),
+      'note': _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+    });
+  }
+
+  String _toApiDate(DateTime date) {
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+}
 class _FooterIconButton extends StatelessWidget {
   const _FooterIconButton({
     required this.icon,
@@ -1317,7 +1642,7 @@ class _GetStartedCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Each step unlocks a layer of the dashboard — vitals, Bantay AI recommendations, milestones, and benchmarks all feed off this foundation.',
+                  'Each step unlocks a layer of the dashboard â€” vitals, Bantay AI recommendations, milestones, and benchmarks all feed off this foundation.',
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[500],
@@ -1330,7 +1655,7 @@ class _GetStartedCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      '0 / 4 • 0%',
+                      '0 / 4 â€¢ 0%',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1578,7 +1903,7 @@ class _DashboardBanner extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Thursday, April 23 • Week 17',
+            'Thursday, April 23 â€¢ Week 17',
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey[500],
@@ -1609,7 +1934,7 @@ class _DashboardBanner extends StatelessWidget {
                 const SizedBox(width: 8),
                 _BannerChip(
                   icon: Icons.wb_sunny_rounded,
-                  label: '29°C',
+                  label: '29Â°C',
                   color: Colors.transparent,
                   iconColor: const Color(0xFFF59E0B),
                   hasBorder: false,
@@ -2068,7 +2393,7 @@ class _CommitmentSectionState extends State<_CommitmentSection> {
                         ],
                       ),
                       Text(
-                        '•',
+                        'â€¢',
                         style: TextStyle(color: Colors.grey[400], fontSize: 12),
                       ),
                       GestureDetector(
@@ -2360,7 +2685,7 @@ class _HeroBanner extends StatelessWidget {
                 
                 // Subtext
                 Text(
-                  'The serious side of FarmBuzz. Record every cycle, track each flock line, measure every outcome — in one private record you actually own.',
+                  'The serious side of FarmBuzz. Record every cycle, track each flock line, measure every outcome â€” in one private record you actually own.',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.6),
                     fontSize: 13,
@@ -2384,8 +2709,8 @@ class _IncubatingGrid extends StatelessWidget {
     return Column(
       children: const [
         _IncubatingCard(
-          batchName: 'Apr 2026 • Barako × Inahin',
-          subLabel: 'Barako × Inahin',
+          batchName: 'Apr 2026 â€¢ Barako Ã— Inahin',
+          subLabel: 'Barako Ã— Inahin',
           day: 1,
           totalDays: 21,
           setCount: 31,
@@ -2397,7 +2722,7 @@ class _IncubatingGrid extends StatelessWidget {
         ),
         SizedBox(height: 16),
         _IncubatingCard(
-          batchName: 'Apr 2026 • Lalaki',
+          batchName: 'Apr 2026 â€¢ Lalaki',
           subLabel: 'Lalaki',
           day: 1,
           totalDays: 21,
@@ -2409,8 +2734,8 @@ class _IncubatingGrid extends StatelessWidget {
         ),
         SizedBox(height: 16),
         _IncubatingCard(
-          batchName: 'Apr 2026 • Stag × Pullet',
-          subLabel: 'Stag × Pullet',
+          batchName: 'Apr 2026 â€¢ Stag Ã— Pullet',
+          subLabel: 'Stag Ã— Pullet',
           day: 1,
           totalDays: 21,
           setCount: 10,
@@ -2607,7 +2932,7 @@ class _IncubatingCard extends StatelessWidget {
                       subValue: fertilePercent,
                     ),
                     const SizedBox(width: 10),
-                    _IncStat(label: 'HATCHED', value: hatchedCount.toString(), subValue: '—'),
+                    _IncStat(label: 'HATCHED', value: hatchedCount.toString(), subValue: 'â€”'),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -2952,7 +3277,7 @@ class _FlockStats extends StatelessWidget {
         ),
         FarmStatCard(
           title: 'SURVIVABILITY (30D)',
-          value: '—',
+          value: 'â€”',
           icon: Icons.shield_outlined,
           color: Color(0xFF16A34A),
           iconBg: Color(0xFFF0FDF4),
@@ -2960,7 +3285,7 @@ class _FlockStats extends StatelessWidget {
         ),
         FarmStatCard(
           title: 'MORTALITY (30D)',
-          value: '—',
+          value: 'â€”',
           icon: Icons.show_chart_rounded,
           color: Color(0xFF64748B),
           iconBg: Color(0xFFF8FAFC),
@@ -3259,7 +3584,7 @@ class _TeamView extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Invite by phone — we SMS them a join link. No email needed.',
+                      'Invite by phone â€” we SMS them a join link. No email needed.',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: Colors.grey[500],
@@ -3291,7 +3616,7 @@ class _TeamView extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Invite hands, your manager, and your vet. SMS-first — no email required.',
+          'Invite hands, your manager, and your vet. SMS-first â€” no email required.',
           style: TextStyle(
             fontSize: 11,
             color: Colors.grey[500],
@@ -3609,7 +3934,7 @@ class _AuditTrailBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'When you remove a team member, their access revokes immediately. Everything they logged before removal stays — you can\'t delete history. That\'s what makes the record trustworthy to vets, buyers, and registries.',
+                  'When you remove a team member, their access revokes immediately. Everything they logged before removal stays â€” you can\'t delete history. That\'s what makes the record trustworthy to vets, buyers, and registries.',
                   style: TextStyle(
                     fontSize: 11,
                     color: const Color(0xFF15803D).withOpacity(0.8),
@@ -3820,7 +4145,7 @@ class _ReportsViewState extends State<_ReportsView> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Farm name · Poultry metrics',
+                          'Farm name Â· Poultry metrics',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -3948,7 +4273,7 @@ class _ReportsViewState extends State<_ReportsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Production · 6 metrics',
+                    'Production Â· 6 metrics',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -3956,7 +4281,7 @@ class _ReportsViewState extends State<_ReportsView> {
                     ),
                   ),
                   Text(
-                    'What your farm produces — birds, eggs, hatches.',
+                    'What your farm produces â€” birds, eggs, hatches.',
                     style: TextStyle(fontSize: 11, color: const Color(0xFF15803D).withOpacity(0.8)),
                   ),
                 ],
@@ -3978,12 +4303,12 @@ class _ReportsViewState extends State<_ReportsView> {
             _MetricCard(
               title: 'FERTILITY RATE',
               badge: 'FARM',
-              formula: 'Fertile eggs ÷ eggs set',
+              formula: 'Fertile eggs Ã· eggs set',
             ),
             _MetricCard(
               title: 'HATCH RATE',
               badge: 'BATCH',
-              formula: 'Chicks hatched ÷ fertile eggs',
+              formula: 'Chicks hatched Ã· fertile eggs',
             ),
             _MetricCard(
               title: 'CHICK SURVIVAL (8WK)',
@@ -3991,7 +4316,7 @@ class _ReportsViewState extends State<_ReportsView> {
               formula: 'Chicks surviving to 8 weeks',
             ),
             _MetricCard(
-              title: 'STAG → COCK RATE',
+              title: 'STAG â†’ COCK RATE',
               badge: 'FARM',
               formula: 'Young roosters reaching mature rooster stage',
             ),
@@ -4068,7 +4393,7 @@ class _ReportsViewState extends State<_ReportsView> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'We aggregate numbers across PH farms of your type and share anonymized percentile comparisons. Your individual numbers are never shared — only medians and top-10% bands. Opt out anytime from Settings.',
+                          'We aggregate numbers across PH farms of your type and share anonymized percentile comparisons. Your individual numbers are never shared â€” only medians and top-10% bands. Opt out anytime from Settings.',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -4225,7 +4550,7 @@ class _MetricCard extends StatelessWidget {
     required this.title,
     required this.badge,
     required this.formula,
-    this.value = '—',
+    this.value = 'â€”',
   });
 
   final String title;
@@ -4319,7 +4644,7 @@ class _MetricCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '— 30d',
+                    'â€” 30d',
                     style: GoogleFonts.inter(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
@@ -4353,6 +4678,7 @@ class _MetricCard extends StatelessWidget {
     );
   }
 }
+
 
 
 
