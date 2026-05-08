@@ -50,7 +50,7 @@ class _CreateFarmViewState extends State<CreateFarmView> {
     {
       'title': 'Gamefowl (Heritage Breeder)',
       'description': 'Lineage tracking, individual bird records, QR certificates.',
-      'highlight': 'For breeders preserving bloodlines for show or sale.',
+      'highlight': 'For farmers tracking lineage records for documentation and sales.',
       'icon': Icons.flutter_dash_outlined,
       'color': const Color(0xFFA26543),
       'borderColor': AppColors.golden,
@@ -144,7 +144,7 @@ class _CreateFarmViewState extends State<CreateFarmView> {
                               ),
                             ),
                             Text(
-                              'Step $_currentStep of 2',
+                              'Setup step $_currentStep of 2',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[500],

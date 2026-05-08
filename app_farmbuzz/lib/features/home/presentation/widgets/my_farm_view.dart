@@ -525,12 +525,12 @@ class _QualitySection extends StatelessWidget {
           childAspectRatio: 0.9,
           children: const [
             FarmStatCard(
-              title: 'BULL STAG RATE',
+              title: 'ROOSTER QUALITY RATE',
               value: '—',
               icon: Icons.military_tech_outlined,
               color: Color(0xFFB48634),
               iconBg: Color(0xFFFEFCE8),
-              description: 'Needs stags graded in your farm.',
+              description: 'Needs roosters graded in your farm.',
             ),
             FarmStatCard(
               title: 'BROOD PROMOTION RATE',
@@ -1352,15 +1352,15 @@ class _GetStartedCard extends StatelessWidget {
                 const _OnboardingStep(
                   icon: Icons.eco_rounded,
                   color: Color(0xFF16A34A),
-                  title: 'Add your first bird',
-                  description: 'Vitals, lifecycle pyramid, and flock highlights come alive once your first bird is logged.',
+                  title: 'Add your first flock record',
+                  description: 'Vitals, growth tracking, and flock highlights appear once your first record is logged.',
                 ),
                 const SizedBox(height: 12),
                 const _OnboardingStep(
                   icon: Icons.people_rounded,
                   color: Color(0xFF475569),
                   title: 'Invite your team',
-                  description: 'Your hands can log health and feed events from their phones. Every action is audited.',
+                  description: 'Team members can log health and feed updates from their phones with clear activity history.',
                 ),
                 const SizedBox(height: 12),
                 const _OnboardingStep(
@@ -2359,7 +2359,7 @@ class _HeroBanner extends StatelessWidget {
                     children: [
                       const TextSpan(text: 'Run your farm with the precision '),
                       TextSpan(
-                        text: 'your bloodlines',
+                        text: 'your flock lines',
                         style: TextStyle(color: AppColors.golden.withOpacity(0.9)),
                       ),
                       const TextSpan(text: ' deserve.'),
@@ -2370,7 +2370,7 @@ class _HeroBanner extends StatelessWidget {
                 
                 // Subtext
                 Text(
-                  'The serious side of FarmBuzz. Record every cycle, trace every bloodline, measure every outcome — in one private record you actually own.',
+                  'The serious side of FarmBuzz. Record every cycle, track each flock line, measure every outcome — in one private record you actually own.',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.6),
                     fontSize: 13,
@@ -2863,7 +2863,7 @@ class _FlockViewState extends State<_FlockView> {
             SizedBox(
               width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
-                label: 'Stag / Cock',
+                label: 'Rooster',
                 icon: Icons.military_tech_outlined,
                 count: 0,
                 isActive: _categoryTabIndex == 1,
@@ -2873,7 +2873,7 @@ class _FlockViewState extends State<_FlockView> {
             SizedBox(
               width: (MediaQuery.of(context).size.width - 48) / 2,
               child: _SubTabItem(
-                label: 'Pullet / Hen',
+                label: 'Hen',
                 icon: Icons.female_rounded,
                 count: 0,
                 isActive: _categoryTabIndex == 2,
@@ -3026,7 +3026,7 @@ class _FlockTimeline extends StatelessWidget {
                 ),
                 SizedBox(width: 40),
                 _TimelineStep(
-                  label: 'Stag',
+                  label: 'Rooster',
                   days: '9 - 23 MOS',
                   icon: Icons.insights_rounded,
                   color: Color(0xFF3B82F6),
@@ -3034,7 +3034,7 @@ class _FlockTimeline extends StatelessWidget {
                 ),
                 SizedBox(width: 40),
                 _TimelineStep(
-                  label: 'Cock',
+                  label: 'Rooster',
                   days: '2 - 4 YRS +',
                   icon: Icons.workspace_premium_rounded,
                   color: Color(0xFF1E3A8A),
@@ -3830,7 +3830,7 @@ class _ReportsViewState extends State<_ReportsView> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Farm name · Gamefowl metrics',
+                          'Farm name · Poultry metrics',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -4003,7 +4003,7 @@ class _ReportsViewState extends State<_ReportsView> {
             _MetricCard(
               title: 'STAG → COCK RATE',
               badge: 'FARM',
-              formula: 'Stags reaching cock / brood-cock selection',
+              formula: 'Young roosters reaching mature rooster stage',
             ),
             _MetricCard(
               title: 'PEDIGREE DEPTH',
@@ -4069,7 +4069,7 @@ class _ReportsViewState extends State<_ReportsView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Know where you stand among PH breeders',
+                          'Know where you stand among PH poultry farmers',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
@@ -4363,5 +4363,7 @@ class _MetricCard extends StatelessWidget {
     );
   }
 }
+
+
 
 
