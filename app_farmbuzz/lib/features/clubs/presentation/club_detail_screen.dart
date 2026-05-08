@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/session/app_session.dart';
 
 /// A premium, high-density club detail screen.
 /// Features a parallax cover image, threaded feed, and comprehensive tabbed management.
@@ -447,11 +448,13 @@ class _ClubDetailScreenState extends State<ClubDetailScreen>
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 18,
-                    backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/150?u=janrey',
-                    ),
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: AppSession.avatarUrl.isNotEmpty ? NetworkImage(AppSession.avatarUrl) : null,
+                    child: AppSession.avatarUrl.isEmpty 
+                      ? Text(AppSession.userName.isNotEmpty ? AppSession.userName[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 12)) 
+                      : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

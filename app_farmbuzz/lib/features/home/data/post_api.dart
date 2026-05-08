@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/session/app_session.dart';
 
 class PostApi {
   PostApi({http.Client? client}) : _client = client ?? http.Client();
@@ -22,10 +23,11 @@ class PostApi {
   }
 
   Future<List<Map<String, dynamic>>> getPosts({
-    String reactorName = 'Janrey',
+    String? reactorName,
     String? authorName,
   }) async {
-    final queryParams = <String, String>{'reactor_name': reactorName};
+    final reactor = reactorName ?? AppSession.userName;
+    final queryParams = <String, String>{'reactor_name': reactor};
     final author = authorName?.trim() ?? '';
     if (author.isNotEmpty) {
       queryParams['author_name'] = author;

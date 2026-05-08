@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/session/app_session.dart';
 
 class ChatMessage {
   final String text;
@@ -43,7 +44,7 @@ class _BantayAiViewState extends State<BantayAiView> {
       if (mounted) {
         setState(() {
           _messages.add(ChatMessage(
-            text: "Haha, kamusta Janrey! 😊 Mukhang may sinasabi ka? Andito lang ako kung may tanong ka about sa farm mo, sa mga birds, o sa FarmBuzz. Ano'ng maitutulong ko sa'yo today?",
+            text: "Haha, kamusta ${AppSession.userName}! 😊 Mukhang may sinasabi ka? Andito lang ako kung may tanong ka about sa farm mo, sa mga birds, o sa FarmBuzz. Ano'ng maitutulong ko sa'yo today?",
             isUser: false,
             timestamp: DateTime.now(),
           ));
@@ -105,7 +106,7 @@ class _BantayAiViewState extends State<BantayAiView> {
           const _AiHeroAvatar(),
           const SizedBox(height: 24),
           Text(
-            'Magandang araw, Janrey!',
+            'Magandang araw, ${AppSession.userName}!',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 28,
               fontWeight: FontWeight.w800,

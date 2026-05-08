@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/session/app_session.dart';
 
 class RegionTabView extends StatelessWidget {
   const RegionTabView({super.key});
@@ -112,11 +113,13 @@ class RegionTabView extends StatelessWidget {
               ),
               const Divider(height: 1, color: Color(0xFFF3F4F6)),
               _buildBreederItem(
-                name: 'Janrey',
+                name: AppSession.userName,
                 subtitle: '1 birds',
                 xp: '110 XP',
                 isUser: true,
-                imageUrl: 'https://i.pravatar.cc/150?u=janrey',
+                imageUrl: AppSession.avatarUrl.isNotEmpty ? AppSession.avatarUrl : null,
+                initials: AppSession.userName.isNotEmpty ? AppSession.userName[0].toUpperCase() : 'U',
+                initialsColor: Colors.green,
               ),
             ],
           ),

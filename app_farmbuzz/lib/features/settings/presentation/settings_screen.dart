@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/features/settings/presentation/widgets/setting_tile.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -126,9 +127,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       children: [
                         Stack(
                           children: [
-                            const CircleAvatar(
+                            CircleAvatar(
                               radius: 32,
-                              backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=janrey'),
+                              backgroundColor: Colors.grey[200],
+                              backgroundImage: AppSession.avatarUrl.isNotEmpty ? NetworkImage(AppSession.avatarUrl) : null,
+                              child: AppSession.avatarUrl.isEmpty 
+                                ? Text(AppSession.userName.isNotEmpty ? AppSession.userName[0].toUpperCase() : 'U', style: const TextStyle(fontSize: 24)) 
+                                : null,
                             ),
                             PositionAt(
                               alignment: Alignment.bottomRight,
@@ -149,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Janrey',
+                                AppSession.userName,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
@@ -157,7 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                               ),
                               Text(
-                                '@janrey',
+                                '@${AppSession.userName.toLowerCase().replaceAll(' ', '')}',
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   color: Colors.grey[500],
@@ -195,8 +200,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildSectionHeader(Icons.person_outlined, 'ACCOUNT', 'Basic information visible on your profile'),
                     const SizedBox(height: 12),
                     _buildSettingsContainer([
-                      const SettingTile(title: 'Name', subtitle: 'Janrey'),
-                      const SettingTile(title: 'Username', subtitle: '@janrey'),
+                      SettingTile(title: 'Name', subtitle: AppSession.userName),
+                      SettingTile(title: 'Username', subtitle: '@${AppSession.userName.toLowerCase().replaceAll(' ', '')}'),
                       const SettingTile(title: 'Bio', subtitle: 'Add a short bio'),
                       const SettingTile(title: 'Phone', subtitle: '+639619174255', tag: 'Primary'),
                       const SettingTile(title: 'Email', subtitle: 'Add an email'),

@@ -259,6 +259,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       drawer: HomeDrawer(
         selectedIndex: _selectedIndex,
+        unreadMessages: _unreadMessages,
+        unreadNotifications: _unreadNotifications,
         onSelectItem: (index) {
           setState(() => _selectedIndex = index);
           Navigator.pop(context);

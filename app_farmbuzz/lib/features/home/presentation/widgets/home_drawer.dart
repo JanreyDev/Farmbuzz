@@ -13,12 +13,16 @@ class HomeDrawer extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onSelectItem;
   final VoidCallback onLogout;
+  final int unreadMessages;
+  final int unreadNotifications;
 
   const HomeDrawer({
     super.key,
     required this.selectedIndex,
     required this.onSelectItem,
     required this.onLogout,
+    this.unreadMessages = 0,
+    this.unreadNotifications = 0,
   });
 
   @override
@@ -53,9 +57,11 @@ class HomeDrawer extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 18,
-                    backgroundImage: NetworkImage(
-                      AppSession.avatarUrl,
-                    ),
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: AppSession.avatarUrl.isNotEmpty ? NetworkImage(AppSession.avatarUrl) : null,
+                    child: AppSession.avatarUrl.isEmpty 
+                      ? Text(AppSession.userName.isNotEmpty ? AppSession.userName[0].toUpperCase() : 'U') 
+                      : null,
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -94,7 +100,7 @@ class HomeDrawer extends StatelessWidget {
                   context,
                   Icons.chat_bubble_outline,
                   'Messages',
-                  badge: '3',
+                  badge: unreadMessages > 0 ? unreadMessages.toString() : null,
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -151,7 +157,7 @@ class HomeDrawer extends StatelessWidget {
                   context,
                   Icons.notifications_none_outlined,
                   'Notifications',
-                  badge: '5',
+                  badge: unreadNotifications > 0 ? unreadNotifications.toString() : null,
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
