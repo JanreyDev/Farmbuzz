@@ -129,7 +129,12 @@ class RegistrationApi {
       throw const RegistrationApiException('Incomplete user data from server.');
     }
 
-    return LoginUser(name: name, mobileNumber: mobile);
+    return LoginUser(
+      name: name,
+      mobileNumber: mobile,
+      avatarUrl: (user['avatar_url'] ?? '').toString(),
+      coverPhotoUrl: (user['cover_photo_url'] ?? '').toString(),
+    );
   }
 
   Future<http.Response> _postJson(
@@ -205,8 +210,15 @@ class RegistrationApiException implements Exception {
 }
 
 class LoginUser {
-  const LoginUser({required this.name, required this.mobileNumber});
+  const LoginUser({
+    required this.name,
+    required this.mobileNumber,
+    required this.avatarUrl,
+    required this.coverPhotoUrl,
+  });
 
   final String name;
   final String mobileNumber;
+  final String avatarUrl;
+  final String coverPhotoUrl;
 }

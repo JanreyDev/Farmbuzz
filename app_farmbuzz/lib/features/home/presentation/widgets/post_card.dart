@@ -296,7 +296,15 @@ class _PostCardState extends State<PostCard> {
   }
 
   Widget _buildHeader() {
-    final hasAvatar = _hasValidAvatarUrl(widget.userAvatar);
+    final isMyPost =
+        widget.userName.trim().toLowerCase() ==
+        AppSession.userName.trim().toLowerCase();
+    final resolvedAvatar = isMyPost
+        ? (AppSession.avatarUrlOrEmpty.trim().isNotEmpty
+              ? AppSession.avatarUrlOrEmpty
+              : widget.userAvatar)
+        : widget.userAvatar;
+    final hasAvatar = _hasValidAvatarUrl(resolvedAvatar);
 
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -305,7 +313,7 @@ class _PostCardState extends State<PostCard> {
           CircleAvatar(
             radius: 20,
             backgroundColor: const Color(0xFFE8F5E9),
-            backgroundImage: hasAvatar ? NetworkImage(widget.userAvatar) : null,
+            backgroundImage: hasAvatar ? NetworkImage(resolvedAvatar) : null,
             child: hasAvatar
                 ? null
                 : Text(

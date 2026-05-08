@@ -266,14 +266,16 @@ class _CreatePostModalState extends State<CreatePostModal> {
                 color: Colors.blue,
               ),
               const SizedBox(width: 24),
-              const _AttachmentIcon(
+              _AttachmentIcon(
                 icon: Icons.sentiment_satisfied_alt_rounded,
                 color: Colors.amber,
+                onTap: _pickMoodEmoji,
               ),
               const SizedBox(width: 24),
-              const _AttachmentIcon(
+              _AttachmentIcon(
                 icon: Icons.location_on_rounded,
                 color: Colors.red,
+                onTap: _addLocationTag,
               ),
             ],
           ),
@@ -325,11 +327,22 @@ class _CreatePostModalState extends State<CreatePostModal> {
   Future<void> _handlePost() async {
     final text = _postController.text.trim();
     final paths = _selectedImages.map((e) => e.path).toList();
+    final onPostCreated = widget.onPostCreated;
+
+    if (onPostCreated == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Post action is not configured.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isPosting = true);
 
     try {
-      await widget.onPostCreated?.call(text, paths);
+      await onPostCreated(text, paths);
 
       if (!mounted) {
         return;
@@ -350,7 +363,7 @@ class _CreatePostModalState extends State<CreatePostModal> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error.toString()),
+          content: Text(_readableError(error)),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -359,6 +372,105 @@ class _CreatePostModalState extends State<CreatePostModal> {
         setState(() => _isPosting = false);
       }
     }
+  }
+
+  Future<void> _pickMoodEmoji() async {
+    const emojis = ['😀', '😍', '🔥', '🌱', '🐓', '🌾', '💧', '🚜'];
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: emojis
+                .map(
+                  (emoji) => InkWell(
+                    onTap: () => Navigator.pop(context, emoji),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ),
+    );
+
+    if (picked == null || picked.isEmpty) {
+      return;
+    }
+    _insertIntoComposer('$picked ');
+  }
+
+  Future<void> _addLocationTag() async {
+    final controller = TextEditingController();
+    final location = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add location'),
+        content: TextField(
+          controller: controller,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'e.g. Brgy. San Isidro',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (location == null || location.isEmpty) {
+      return;
+    }
+
+    _insertIntoComposer('📍 $location ');
+  }
+
+  void _insertIntoComposer(String value) {
+    final current = _postController.text;
+    final selection = _postController.selection;
+    final start = selection.start >= 0 ? selection.start : current.length;
+    final end = selection.end >= 0 ? selection.end : current.length;
+    final nextText = current.replaceRange(start, end, value);
+    _postController.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: start + value.length),
+    );
+    _updatePostState();
+  }
+
+  String _readableError(Object error) {
+    final raw = error.toString();
+    const prefix = 'Exception: ';
+    if (raw.startsWith(prefix)) {
+      return raw.substring(prefix.length);
+    }
+    return raw;
   }
 }
 

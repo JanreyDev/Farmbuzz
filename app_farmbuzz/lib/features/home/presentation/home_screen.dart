@@ -158,6 +158,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = AppSession.avatarUrlOrEmpty;
+    final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Refined light grey background
       appBar: AppBar(
@@ -219,7 +222,16 @@ class _HomeScreenState extends State<HomeScreen> {
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.grey[200],
-                backgroundImage: NetworkImage(AppSession.avatarUrl),
+                backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+                child: hasAvatar
+                    ? null
+                    : Text(
+                        _initial(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black54,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -336,5 +348,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  bool _hasValidAvatarUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return false;
+    }
+    final uri = Uri.tryParse(trimmed);
+    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+  }
+
+  String _initial() {
+    final name = AppSession.userName.trim();
+    if (name.isEmpty) {
+      return 'U';
+    }
+    return name.substring(0, 1).toUpperCase();
   }
 }

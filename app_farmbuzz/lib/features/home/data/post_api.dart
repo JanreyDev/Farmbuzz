@@ -23,10 +23,17 @@ class PostApi {
 
   Future<List<Map<String, dynamic>>> getPosts({
     String reactorName = 'Janrey',
+    String? authorName,
   }) async {
+    final queryParams = <String, String>{'reactor_name': reactorName};
+    final author = authorName?.trim() ?? '';
+    if (author.isNotEmpty) {
+      queryParams['author_name'] = author;
+    }
+
     final uri = Uri.parse(
       '$_baseUrl/posts',
-    ).replace(queryParameters: {'reactor_name': reactorName});
+    ).replace(queryParameters: queryParams);
     final response = await _client.get(uri);
 
     if (response.statusCode >= 400) {

@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProfileStats extends StatelessWidget {
-  const ProfileStats({super.key});
+  const ProfileStats({
+    super.key,
+    required this.followersCount,
+    required this.followingCount,
+    required this.postsCount,
+    required this.birdsCount,
+  });
+
+  final int followersCount;
+  final int followingCount;
+  final int postsCount;
+  final int birdsCount;
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +28,13 @@ class ProfileStats extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildStatItem('4', 'FOLLOWERS'),
+          _buildStatItem(followersCount.toString(), 'FOLLOWERS'),
           _buildDivider(),
-          _buildStatItem('2', 'FOLLOWING'),
+          _buildStatItem(followingCount.toString(), 'FOLLOWING'),
           _buildDivider(),
-          _buildStatItem('2', 'POSTS'),
+          _buildStatItem(postsCount.toString(), 'POSTS'),
           _buildDivider(),
-          _buildStatItem('1', 'BIRDS'),
+          _buildStatItem(birdsCount.toString(), 'BIRDS'),
         ],
       ),
     );

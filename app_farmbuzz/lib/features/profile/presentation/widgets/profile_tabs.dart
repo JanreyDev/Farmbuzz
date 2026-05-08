@@ -3,7 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 
 class ProfileTabs extends StatefulWidget {
-  const ProfileTabs({super.key});
+  const ProfileTabs({
+    super.key,
+    required this.postsCount,
+    required this.birdsCount,
+  });
+
+  final int postsCount;
+  final int birdsCount;
 
   @override
   State<ProfileTabs> createState() => _ProfileTabsState();
@@ -11,15 +18,16 @@ class ProfileTabs extends StatefulWidget {
 
 class _ProfileTabsState extends State<ProfileTabs> {
   int selectedIndex = 0;
-  final List<Map<String, dynamic>> tabs = [
-    {'label': 'Posts', 'count': 2},
-    {'label': 'Birds', 'count': 1},
-    {'label': 'About', 'count': null},
-    {'label': 'Media', 'count': null},
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final tabs = [
+      {'label': 'Posts', 'count': widget.postsCount},
+      {'label': 'Birds', 'count': widget.birdsCount},
+      {'label': 'About', 'count': null},
+      {'label': 'Media', 'count': null},
+    ];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -31,8 +39,9 @@ class _ProfileTabsState extends State<ProfileTabs> {
       child: Row(
         children: tabs.asMap().entries.map((entry) {
           int idx = entry.key;
-          String label = entry.value['label'];
-          int? count = entry.value['count'];
+          final tab = entry.value;
+          String label = tab['label'] as String;
+          int? count = tab['count'] as int?;
           bool isSelected = selectedIndex == idx;
 
           return Expanded(

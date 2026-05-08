@@ -76,16 +76,14 @@ class _HomeFeedViewState extends State<HomeFeedView> {
   }
 
   Future<void> _addNewPost(String text, List<String> imagePaths) async {
-    final createdPost = await _postApi.createPost(
+    await _postApi.createPost(
       authorName: AppSession.userName,
       authorAvatar: AppSession.avatarUrlOrEmpty,
       content: text,
       imagePaths: imagePaths,
     );
 
-    setState(() {
-      _posts.insert(0, createdPost);
-    });
+    await _loadPosts();
 
     // Scroll to top to show the new post
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -196,6 +194,9 @@ class _StatusUpdateBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = AppSession.avatarUrlOrEmpty;
+    final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(12),
@@ -214,7 +215,17 @@ class _StatusUpdateBox extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundImage: NetworkImage(AppSession.avatarUrl),
+            backgroundColor: const Color(0xFFE8F5E9),
+            backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+            child: hasAvatar
+                ? null
+                : Text(
+                    _initial(),
+                    style: const TextStyle(
+                      color: Color(0xFF1B5E20),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -261,6 +272,23 @@ class _StatusUpdateBox extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _hasValidAvatarUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return false;
+    }
+    final uri = Uri.tryParse(trimmed);
+    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+  }
+
+  String _initial() {
+    final name = AppSession.userName.trim();
+    if (name.isEmpty) {
+      return 'U';
+    }
+    return name.substring(0, 1).toUpperCase();
   }
 }
 
@@ -320,6 +348,9 @@ class _AddStoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final avatarUrl = AppSession.avatarUrlOrEmpty;
+    final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+
     return InkWell(
       onTap: () => CreateStoryModal.show(context, onStoryCreated: onAddStory),
       borderRadius: BorderRadius.circular(12),
@@ -342,16 +373,31 @@ class _AddStoryCard extends StatelessWidget {
             Expanded(
               flex: 6,
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(12),
                     topRight: Radius.circular(12),
                   ),
-                  image: DecorationImage(
-                    image: NetworkImage('https://i.pravatar.cc/150?u=janrey'),
-                    fit: BoxFit.cover,
-                  ),
+                  image: hasAvatar
+                      ? DecorationImage(
+                          image: NetworkImage(avatarUrl),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
+                child: hasAvatar
+                    ? null
+                    : Center(
+                        child: Text(
+                          _initial(),
+                          style: const TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1B5E20),
+                          ),
+                        ),
+                      ),
               ),
             ),
             Expanded(
@@ -416,6 +462,23 @@ class _AddStoryCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  bool _hasValidAvatarUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return false;
+    }
+    final uri = Uri.tryParse(trimmed);
+    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+  }
+
+  String _initial() {
+    final name = AppSession.userName.trim();
+    if (name.isEmpty) {
+      return 'U';
+    }
+    return name.substring(0, 1).toUpperCase();
   }
 }
 
