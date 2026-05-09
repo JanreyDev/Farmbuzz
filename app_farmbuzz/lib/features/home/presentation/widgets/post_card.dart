@@ -642,12 +642,10 @@ class _PostCardState extends State<PostCard> {
             .get(
               Uri.parse(url),
               headers: const <String, String>{
-                'Connection': 'close',
-                'Accept': 'image/*',
-                'Accept-Encoding': 'identity',
+                'Accept': 'image/*,*/*',
               },
             )
-            .timeout(const Duration(seconds: 15));
+            .timeout(const Duration(seconds: 30));
 
         if (response.statusCode >= 200 &&
             response.statusCode < 300 &&
@@ -661,7 +659,7 @@ class _PostCardState extends State<PostCard> {
       }
 
       if (attempt < 2) {
-        await Future<void>.delayed(Duration(milliseconds: 300 * (attempt + 1)));
+        await Future<void>.delayed(Duration(milliseconds: 500 * (attempt + 1)));
       }
     }
 

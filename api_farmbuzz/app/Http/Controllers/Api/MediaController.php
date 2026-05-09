@@ -25,7 +25,6 @@ class MediaController extends Controller
 
         return response()->file($absolutePath, [
             'Cache-Control' => 'public, max-age=86400',
-            'Connection' => 'close',
         ]);
     }
 }

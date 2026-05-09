@@ -23,12 +23,21 @@ class _HomeFeedViewState extends State<HomeFeedView> {
   final StoryApi _storyApi = StoryApi();
   bool _isLoadingPosts = true;
   bool _hasPostLoadError = false;
+  bool _hasAutoRetried = false;
 
   @override
   void initState() {
     super.initState();
-    _loadPosts();
-    _loadStories();
+    // Use post-frame callback with a small delay to ensure
+    // AppSession is fully populated after login navigation.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          _loadPosts();
+          _loadStories();
+        }
+      });
+    });
   }
 
   @override
@@ -48,13 +57,30 @@ class _HomeFeedViewState extends State<HomeFeedView> {
         return;
       }
 
+      // If result is empty and we haven't retried yet, retry once after a delay.
+      // This handles cases where the session data wasn't ready on the first try.
+      if (posts.isEmpty && !_hasAutoRetried) {
+        _hasAutoRetried = true;
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) await _loadPosts();
+        return;
+      }
+
       setState(() {
         _posts = posts;
         _hasPostLoadError = false;
         _isLoadingPosts = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) {
+        return;
+      }
+
+      // Auto-retry once on network errors during initial load
+      if (!_hasAutoRetried) {
+        _hasAutoRetried = true;
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) await _loadPosts();
         return;
       }
 
@@ -166,58 +192,78 @@ class _HomeFeedViewState extends State<HomeFeedView> {
       );
     }
 
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _StatusUpdateBox(
-            onTap: () =>
-                CreatePostModal.show(context, onPostCreated: _addNewPost),
-          ),
-          _StoriesSection(
-            dynamicStories: _dynamicStories,
-            onAddStory: _addNewStory,
-          ),
-          const _FilterTabs(),
-          if (_posts.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-              child: Center(
-                child: Text(
-                  'No posts yet. Create the first one!',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _posts.length,
-              itemBuilder: (context, index) {
-                final post = _posts[index];
-                final postId = post['id'] as int?;
-                return PostCard(
-                  key: ValueKey<String>(
-                    postId != null ? 'post-$postId' : 'post-index-$index',
-                  ),
-                  postId: postId,
-                  userName: post['userName'],
-                  userAvatar: post['userAvatar'],
-                  timeAgo: post['timeAgo'],
-                  postText: post['postText'],
-                  postImageUrl: post['postImageUrl'],
-                  localImagePaths: post['localImagePaths'],
-                  likesCount: post['likesCount'],
-                  commentsCount: post['commentsCount'],
-                  userReaction: post['userReaction'] as String?,
-                  topReactions: (post['topReactions'] as List?)?.cast<String>(),
-                );
-              },
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([
+          _loadPosts(),
+          _loadStories(),
+        ]);
+      },
+      color: AppColors.accentGreen,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _StatusUpdateBox(
+              onTap: () =>
+                  CreatePostModal.show(context, onPostCreated: _addNewPost),
             ),
-          const SizedBox(height: 20),
-        ],
+            _StoriesSection(
+              dynamicStories: _dynamicStories,
+              onAddStory: _addNewStory,
+            ),
+            const _FilterTabs(),
+            if (_posts.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 60),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.feed_outlined, size: 48, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'No posts yet. Create the first one!',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _posts.length,
+                itemBuilder: (context, index) {
+                  final post = _posts[index];
+                  final postId = post['id'] as int?;
+                  return PostCard(
+                    key: ValueKey<String>(
+                      postId != null ? 'post-$postId' : 'post-index-$index',
+                    ),
+                    postId: postId,
+                    userName: post['userName'],
+                    userAvatar: post['userAvatar'],
+                    timeAgo: post['timeAgo'],
+                    postText: post['postText'],
+                    postImageUrl: post['postImageUrl'],
+                    localImagePaths: post['localImagePaths'],
+                    likesCount: post['likesCount'],
+                    commentsCount: post['commentsCount'],
+                    userReaction: post['userReaction'] as String?,
+                    topReactions: (post['topReactions'] as List?)?.cast<String>(),
+                  );
+                },
+              ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

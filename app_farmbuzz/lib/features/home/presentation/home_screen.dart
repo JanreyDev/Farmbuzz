@@ -29,17 +29,18 @@ class _HomeScreenState extends State<HomeScreen> {
   int _unreadMessages = 0;
   int _unreadNotifications = 0;
 
-  final List<Widget> _pages = [
-    const HomeFeedView(),
-    const MyFarmView(),
-    const BantayAiView(),
-    const ClubsView(),
-    const LeaderboardView(),
-  ];
+  late List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    _pages = [
+      const HomeFeedView(),
+      const MyFarmView(),
+      const BantayAiView(),
+      const ClubsView(),
+      const LeaderboardView(),
+    ];
     _loadCounts();
   }
 
