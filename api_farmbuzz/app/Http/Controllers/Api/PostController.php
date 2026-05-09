@@ -9,6 +9,8 @@ use App\Models\Comment;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 
 class PostController extends Controller
 {
@@ -74,11 +76,23 @@ class PostController extends Controller
 
     public function store(StorePostRequest $request): JsonResponse
     {
+        $storedPaths = [];
+        foreach ($request->file('images', []) as $image) {
+            if ($image instanceof UploadedFile) {
+                $storedPaths[] = $this->storePublicPostImage($image);
+            }
+        }
+
+        $fallbackPaths = $request->input('image_paths', []);
+        if (! is_array($fallbackPaths)) {
+            $fallbackPaths = [];
+        }
+
         $post = Post::query()->create([
             'author_name' => $request->string('author_name')->toString(),
             'author_avatar' => $request->input('author_avatar'),
             'content' => $request->input('content'),
-            'image_paths' => $request->input('image_paths', []),
+            'image_paths' => ! empty($storedPaths) ? $storedPaths : $fallbackPaths,
             'published_at' => now(),
         ]);
 
@@ -97,6 +111,25 @@ class PostController extends Controller
                 'topReactions' => [],
             ],
         ], 201);
+    }
+
+    private function storePublicPostImage(UploadedFile $file): string
+    {
+        $directory = public_path('uploads/posts');
+        if (! File::isDirectory($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $filename = sprintf(
+            'post_%s_%s.%s',
+            now()->format('YmdHisv'),
+            bin2hex(random_bytes(4)),
+            $file->getClientOriginalExtension(),
+        );
+
+        $file->move($directory, $filename);
+
+        return url('uploads/posts/' . $filename);
     }
 
     public function like(Post $post): JsonResponse

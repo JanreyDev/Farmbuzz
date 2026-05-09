@@ -58,13 +58,21 @@ class PostApi {
     required String content,
     required List<String> imagePaths,
   }) async {
-    final response = await _postJson('/posts', {
-      'author_name': authorName,
-      'author_avatar': authorAvatar,
-      'content': content,
-      'image_paths': imagePaths,
-    });
+    final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/posts'))
+      ..fields['author_name'] = authorName
+      ..fields['author_avatar'] = authorAvatar
+      ..fields['content'] = content;
 
+    for (final imagePath in imagePaths) {
+      final trimmed = imagePath.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      request.files.add(await http.MultipartFile.fromPath('images[]', trimmed));
+    }
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
     final decoded = _decode(response.body);
 
     if (response.statusCode != 201) {

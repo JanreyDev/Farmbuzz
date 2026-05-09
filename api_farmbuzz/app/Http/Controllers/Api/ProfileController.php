@@ -121,6 +121,26 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function destroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
+        ]);
+
+        $user = User::query()
+            ->where('mobile_number', $validated['mobile_number'])
+            ->firstOrFail();
+
+        $this->deleteLocalUploadIfPresent($user->avatar_url);
+        $this->deleteLocalUploadIfPresent($user->cover_photo_url);
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Account deleted successfully.',
+        ]);
+    }
+
     private function storePublicUpload(UploadedFile $file, string $prefix): string
     {
         $directory = public_path('uploads/profile');

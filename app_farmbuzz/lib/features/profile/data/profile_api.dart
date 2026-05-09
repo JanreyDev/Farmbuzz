@@ -59,7 +59,9 @@ class ProfileApi {
     )..fields['mobile_number'] = mobileNumber;
 
     if (avatarPath != null && avatarPath.trim().isNotEmpty) {
-      request.files.add(await http.MultipartFile.fromPath('avatar', avatarPath));
+      request.files.add(
+        await http.MultipartFile.fromPath('avatar', avatarPath),
+      );
     }
 
     if (coverPhotoPath != null && coverPhotoPath.trim().isNotEmpty) {
@@ -91,6 +93,21 @@ class ProfileApi {
       'avatar_url': (payload['avatar_url'] ?? '').toString(),
       'cover_photo_url': (payload['cover_photo_url'] ?? '').toString(),
     };
+  }
+
+  Future<void> deleteAccount({required String mobileNumber}) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/profile'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'mobile_number': mobileNumber}),
+    );
+
+    final data = _decode(response.body);
+    if (response.statusCode >= 400) {
+      throw ProfileApiException(
+        _extractMessage(data, fallback: 'Failed to delete account.'),
+      );
+    }
   }
 
   static Map<String, dynamic> _decode(String body) {

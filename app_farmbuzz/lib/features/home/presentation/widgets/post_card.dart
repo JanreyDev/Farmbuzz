@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
@@ -403,18 +403,25 @@ class _PostCardState extends State<PostCard> {
 
   Widget _buildMediaGrid(bool isLocal) {
     if (isLocal) {
-      final paths = widget.localImagePaths!;
-      final count = paths.length;
+      final providers = widget.localImagePaths!
+          .map(_providerForPath)
+          .whereType<ImageProvider>()
+          .toList();
+      final count = providers.length;
+
+      if (count == 0) {
+        return const SizedBox.shrink();
+      }
 
       if (count == 1) {
-        return _buildLargeImage(FileImage(File(paths[0])));
+        return _buildLargeImage(providers[0]);
       }
       if (count == 2) {
         return Row(
           children: [
-            Expanded(child: _buildSquareImage(FileImage(File(paths[0])))),
+            Expanded(child: _buildSquareImage(providers[0])),
             const SizedBox(width: 2),
-            Expanded(child: _buildSquareImage(FileImage(File(paths[1])))),
+            Expanded(child: _buildSquareImage(providers[1])),
           ],
         );
       }
@@ -423,15 +430,15 @@ class _PostCardState extends State<PostCard> {
           height: 300,
           child: Row(
             children: [
-              Expanded(flex: 2, child: _buildImage(FileImage(File(paths[0])))),
+              Expanded(flex: 2, child: _buildImage(providers[0])),
               const SizedBox(width: 2),
               Expanded(
                 flex: 1,
                 child: Column(
                   children: [
-                    Expanded(child: _buildImage(FileImage(File(paths[1])))),
+                    Expanded(child: _buildImage(providers[1])),
                     const SizedBox(height: 2),
-                    Expanded(child: _buildImage(FileImage(File(paths[2])))),
+                    Expanded(child: _buildImage(providers[2])),
                   ],
                 ),
               ),
@@ -447,9 +454,9 @@ class _PostCardState extends State<PostCard> {
             Expanded(
               child: Row(
                 children: [
-                  Expanded(child: _buildImage(FileImage(File(paths[0])))),
+                  Expanded(child: _buildImage(providers[0])),
                   const SizedBox(width: 2),
-                  Expanded(child: _buildImage(FileImage(File(paths[1])))),
+                  Expanded(child: _buildImage(providers[1])),
                 ],
               ),
             ),
@@ -457,13 +464,13 @@ class _PostCardState extends State<PostCard> {
             Expanded(
               child: Row(
                 children: [
-                  Expanded(child: _buildImage(FileImage(File(paths[2])))),
+                  Expanded(child: _buildImage(providers[2])),
                   const SizedBox(width: 2),
                   Expanded(
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        _buildImage(FileImage(File(paths[3]))),
+                        _buildImage(providers[3]),
                         if (count > 4)
                           Container(
                             color: Colors.black54,
@@ -497,13 +504,18 @@ class _PostCardState extends State<PostCard> {
       width: double.infinity,
       height: 300,
       fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => _imageFallback(height: 220),
     );
   }
 
   Widget _buildSquareImage(ImageProvider provider) {
     return AspectRatio(
       aspectRatio: 1,
-      child: Image(image: provider, fit: BoxFit.cover),
+      child: Image(
+        image: provider,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _imageFallback(),
+      ),
     );
   }
 
@@ -513,6 +525,35 @@ class _PostCardState extends State<PostCard> {
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => _imageFallback(),
+    );
+  }
+
+  ImageProvider? _providerForPath(String rawPath) {
+    final path = rawPath.trim();
+    if (path.isEmpty) {
+      return null;
+    }
+
+    final uri = Uri.tryParse(path);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      return NetworkImage(path);
+    }
+
+    final file = File(path);
+    if (!file.existsSync()) {
+      return null;
+    }
+
+    return FileImage(file);
+  }
+
+  Widget _imageFallback({double? height}) {
+    return Container(
+      height: height,
+      color: const Color(0xFFF1F3F5),
+      alignment: Alignment.center,
+      child: Icon(Icons.broken_image_outlined, color: Colors.grey[500]),
     );
   }
 
@@ -572,9 +613,7 @@ class _PostCardState extends State<PostCard> {
                     : null,
                 label: _isLikeLoading
                     ? 'Saving...'
-                    : (_isLiked
-                          ? _reactionLabel(_selectedReaction)
-                          : 'Like'),
+                    : (_isLiked ? _reactionLabel(_selectedReaction) : 'Like'),
                 reaction: _selectedReaction,
                 color: _isLiked ? AppColors.accentGreen : null,
               ),
@@ -743,5 +782,3 @@ class _PostAction extends StatelessWidget {
     );
   }
 }
-
-

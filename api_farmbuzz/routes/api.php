@@ -28,6 +28,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/profile', [ProfileController::class, 'show']);
 Route::post('/profile/media', [ProfileController::class, 'updateMedia']);
 Route::post('/profile/update', [ProfileController::class, 'update']);
+Route::delete('/profile', [ProfileController::class, 'destroy']);
 
 Route::get('/farm', [FarmController::class, 'show']);
 Route::post('/farm', [FarmController::class, 'store']);

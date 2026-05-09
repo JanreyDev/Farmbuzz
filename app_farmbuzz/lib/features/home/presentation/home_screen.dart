@@ -13,6 +13,7 @@ import 'package:farmbuzz/features/clubs/presentation/clubs_view.dart';
 import 'package:farmbuzz/features/leaderboard/presentation/leaderboard_view.dart';
 import 'package:farmbuzz/features/messages/data/notification_api.dart';
 import 'package:farmbuzz/features/profile/presentation/profile_screen.dart';
+import 'package:farmbuzz/features/profile/data/profile_api.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final NotificationApi _notificationApi = NotificationApi();
+  final ProfileApi _profileApi = ProfileApi();
   int _unreadMessages = 0;
   int _unreadNotifications = 0;
 
@@ -174,6 +176,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _handleDeleteAccount() async {
+    final mobile = AppSession.mobileNumber;
+    if (mobile == null || mobile.trim().isEmpty || !mounted) {
+      return;
+    }
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text('This action is permanent and cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+
+    try {
+      await _profileApi.deleteAccount(mobileNumber: mobile);
+      if (!mounted) return;
+      AppSession.clear();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LandingScreen()),
+        (route) => false,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final avatarUrl = AppSession.avatarUrlOrEmpty;
@@ -206,36 +251,54 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: Badge(
-              label: Text(_unreadMessages.toString(), style: const TextStyle(fontSize: 10)),
+              label: Text(
+                _unreadMessages.toString(),
+                style: const TextStyle(fontSize: 10),
+              ),
               backgroundColor: Colors.redAccent,
               isLabelVisible: _unreadMessages > 0,
-              child: const Icon(Icons.chat_bubble_outline, color: Colors.black87),
+              child: const Icon(
+                Icons.chat_bubble_outline,
+                color: Colors.black87,
+              ),
             ),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const MessagesScreen()),
-              ).then((_) => _loadCounts());
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                  )
+                  .then((_) => _loadCounts());
             },
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: Badge(
-              label: Text(_unreadNotifications.toString(), style: const TextStyle(fontSize: 10)),
+              label: Text(
+                _unreadNotifications.toString(),
+                style: const TextStyle(fontSize: 10),
+              ),
               backgroundColor: Colors.redAccent,
               isLabelVisible: _unreadNotifications > 0,
-              child: const Icon(Icons.notifications_outlined, color: Colors.black87),
+              child: const Icon(
+                Icons.notifications_outlined,
+                color: Colors.black87,
+              ),
             ),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-              ).then((_) => _loadCounts());
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsScreen(),
+                    ),
+                  )
+                  .then((_) => _loadCounts());
             },
           ),
           InkWell(
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
             },
             child: Padding(
               padding: const EdgeInsets.only(right: 12, left: 4),
@@ -268,6 +331,13 @@ class _HomeScreenState extends State<HomeScreen> {
         onLogout: () {
           Navigator.pop(context);
           Future.delayed(const Duration(milliseconds: 150), _handleLogout);
+        },
+        onDeleteAccount: () {
+          Navigator.pop(context);
+          Future.delayed(
+            const Duration(milliseconds: 150),
+            _handleDeleteAccount,
+          );
         },
       ),
       body: _pages[_selectedIndex],
@@ -320,7 +390,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+                      colors: [
+                        const Color(0xFFF59E0B),
+                        const Color(0xFFD97706),
+                      ],
                     ),
                   ),
                   child: const Icon(

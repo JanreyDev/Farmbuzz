@@ -13,6 +13,7 @@ class HomeDrawer extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onSelectItem;
   final VoidCallback onLogout;
+  final VoidCallback onDeleteAccount;
   final int unreadMessages;
   final int unreadNotifications;
 
@@ -21,6 +22,7 @@ class HomeDrawer extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelectItem,
     required this.onLogout,
+    required this.onDeleteAccount,
     this.unreadMessages = 0,
     this.unreadNotifications = 0,
   });
@@ -58,10 +60,16 @@ class HomeDrawer extends StatelessWidget {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: Colors.grey[200],
-                    backgroundImage: AppSession.avatarUrl.isNotEmpty ? NetworkImage(AppSession.avatarUrl) : null,
-                    child: AppSession.avatarUrl.isEmpty 
-                      ? Text(AppSession.userName.isNotEmpty ? AppSession.userName[0].toUpperCase() : 'U') 
-                      : null,
+                    backgroundImage: AppSession.avatarUrl.isNotEmpty
+                        ? NetworkImage(AppSession.avatarUrl)
+                        : null,
+                    child: AppSession.avatarUrl.isEmpty
+                        ? Text(
+                            AppSession.userName.isNotEmpty
+                                ? AppSession.userName[0].toUpperCase()
+                                : 'U',
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -157,7 +165,9 @@ class HomeDrawer extends StatelessWidget {
                   context,
                   Icons.notifications_none_outlined,
                   'Notifications',
-                  badge: unreadNotifications > 0 ? unreadNotifications.toString() : null,
+                  badge: unreadNotifications > 0
+                      ? unreadNotifications.toString()
+                      : null,
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -203,6 +213,14 @@ class HomeDrawer extends StatelessWidget {
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     );
                   },
+                ),
+                _buildNavItem(
+                  context,
+                  Icons.delete_forever_outlined,
+                  'Delete Account',
+                  onTap: onDeleteAccount,
+                  iconColor: Colors.red,
+                  textColor: Colors.red,
                 ),
                 _buildNavItem(
                   context,

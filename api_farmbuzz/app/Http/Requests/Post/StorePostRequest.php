@@ -19,6 +19,8 @@ class StorePostRequest extends FormRequest
             'content' => ['nullable', 'string'],
             'image_paths' => ['nullable', 'array'],
             'image_paths.*' => ['string', 'max:1000'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['image', 'max:8192'],
         ];
     }
 
@@ -27,8 +29,9 @@ class StorePostRequest extends FormRequest
         return [function ($validator): void {
             $content = trim((string) $this->input('content', ''));
             $images = $this->input('image_paths', []);
+            $uploadedImages = $this->file('images', []);
 
-            if ($content === '' && empty($images)) {
+            if ($content === '' && empty($images) && empty($uploadedImages)) {
                 $validator->errors()->add('content', 'Post content or image is required.');
             }
         }];
