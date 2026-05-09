@@ -1,3 +1,5 @@
+/// Resolves a raw media URL for use in the app.
+/// Images in /uploads/ are publicly accessible directly — no proxy needed.
 String resolveMediaUrl(String rawUrl) {
   final trimmed = rawUrl.trim();
   if (trimmed.isEmpty) {
@@ -9,18 +11,10 @@ String resolveMediaUrl(String rawUrl) {
     return trimmed;
   }
 
-  final path = uri.path;
-  if (!path.startsWith('/uploads/')) {
+  // Already a valid http/https URL — return as-is (direct public access)
+  if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
     return trimmed;
   }
 
-  final origin = uri.hasScheme && uri.host.isNotEmpty
-      ? '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}'
-      : '';
-  if (origin.isEmpty) {
-    return trimmed;
-  }
-
-  final uploadPath = path.startsWith('/') ? path.substring(1) : path;
-  return '$origin/api/media?path=${Uri.encodeComponent(uploadPath)}';
+  return trimmed;
 }
