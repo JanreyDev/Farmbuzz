@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/network/media_proxy.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
 import 'package:farmbuzz/features/home/data/story_api.dart';
 import 'post_card.dart';
@@ -103,9 +104,9 @@ class _HomeFeedViewState extends State<HomeFeedView> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -229,7 +230,8 @@ class _StatusUpdateBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = AppSession.avatarUrlOrEmpty;
-    final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+    final proxiedAvatarUrl = resolveMediaUrl(avatarUrl);
+    final hasAvatar = _hasValidAvatarUrl(proxiedAvatarUrl);
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -250,7 +252,7 @@ class _StatusUpdateBox extends StatelessWidget {
           CircleAvatar(
             radius: 18,
             backgroundColor: const Color(0xFFE8F5E9),
-            backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+            backgroundImage: hasAvatar ? NetworkImage(proxiedAvatarUrl) : null,
             child: hasAvatar
                 ? null
                 : Text(
@@ -374,7 +376,8 @@ class _AddStoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = AppSession.avatarUrlOrEmpty;
-    final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+    final proxiedAvatarUrl = resolveMediaUrl(avatarUrl);
+    final hasAvatar = _hasValidAvatarUrl(proxiedAvatarUrl);
 
     return InkWell(
       onTap: () => CreateStoryModal.show(context, onStoryCreated: onAddStory),
@@ -406,7 +409,7 @@ class _AddStoryCard extends StatelessWidget {
                   ),
                   image: hasAvatar
                       ? DecorationImage(
-                          image: NetworkImage(avatarUrl),
+                          image: NetworkImage(proxiedAvatarUrl),
                           fit: BoxFit.cover,
                         )
                       : null,
@@ -526,6 +529,9 @@ class _StoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedImageUrl = resolveMediaUrl(imageUrl);
+    final resolvedAvatarUrl = resolveMediaUrl(avatarUrl);
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -533,8 +539,8 @@ class _StoryCard extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => StoryViewScreen(
               userName: name,
-              avatarUrl: avatarUrl,
-              imageUrl: imageUrl,
+              avatarUrl: resolvedAvatarUrl,
+              imageUrl: resolvedImageUrl,
               isLocal: isLocal,
             ),
           ),
@@ -548,7 +554,7 @@ class _StoryCard extends StatelessWidget {
           image: DecorationImage(
             image: isLocal
                 ? FileImage(File(imageUrl)) as ImageProvider
-                : NetworkImage(imageUrl),
+                : NetworkImage(resolvedImageUrl),
             fit: BoxFit.cover,
           ),
         ),
@@ -580,7 +586,7 @@ class _StoryCard extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 12,
-                  backgroundImage: NetworkImage(avatarUrl),
+                  backgroundImage: NetworkImage(resolvedAvatarUrl),
                 ),
               ),
             ),
@@ -698,4 +704,3 @@ class _FilterChip extends StatelessWidget {
     );
   }
 }
-

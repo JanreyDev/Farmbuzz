@@ -218,7 +218,7 @@ class PostApi {
       final decoded = jsonDecode(body);
       return decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
     } catch (_) {
-      return <String, dynamic>{};
+      return <String, dynamic>{'_raw_body': body};
     }
   }
 
@@ -238,6 +238,11 @@ class PostApi {
           return value.first as String;
         }
       }
+    }
+
+    final rawBody = data['_raw_body'];
+    if (rawBody is String && rawBody.trim().isNotEmpty) {
+      return rawBody;
     }
 
     return fallback;

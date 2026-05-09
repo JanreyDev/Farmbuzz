@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\EggCollectionController;
 use App\Http\Controllers\Api\FarmController;
 use App\Http\Controllers\Api\FlockController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProfileController;
@@ -69,3 +70,4 @@ Route::get('/messages/history', [MessageController::class, 'messages']);
 Route::post('/messages/send', [MessageController::class, 'send']);
 
 Route::get('/counts', [NotificationController::class, 'counts']);
+Route::get('/media', [MediaController::class, 'show']);

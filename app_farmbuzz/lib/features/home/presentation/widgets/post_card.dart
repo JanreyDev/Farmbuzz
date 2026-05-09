@@ -1,12 +1,15 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/network/media_proxy.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
 import 'package:farmbuzz/features/profile/presentation/profile_screen.dart';
 import 'package:farmbuzz/features/profile/presentation/screens/public_profile_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 
 import 'comments_sheet.dart';
 
@@ -44,6 +47,7 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   final PostApi _postApi = PostApi();
+  final Map<String, Future<Uint8List?>> _networkImageFutures = {};
 
   bool _showReactions = false;
   bool _isLiked = false;
@@ -306,7 +310,8 @@ class _PostCardState extends State<PostCard> {
               ? AppSession.avatarUrlOrEmpty
               : widget.userAvatar)
         : widget.userAvatar;
-    final hasAvatar = _hasValidAvatarUrl(resolvedAvatar);
+    final proxiedAvatar = resolveMediaUrl(resolvedAvatar);
+    final hasAvatar = _hasValidAvatarUrl(proxiedAvatar);
 
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -317,7 +322,7 @@ class _PostCardState extends State<PostCard> {
             child: CircleAvatar(
               radius: 20,
               backgroundColor: const Color(0xFFE8F5E9),
-              backgroundImage: hasAvatar ? NetworkImage(resolvedAvatar) : null,
+              backgroundImage: hasAvatar ? NetworkImage(proxiedAvatar) : null,
               child: hasAvatar
                   ? null
                   : Text(
@@ -495,37 +500,71 @@ class _PostCardState extends State<PostCard> {
       );
     }
 
-    return _buildLargeImage(NetworkImage(widget.postImageUrl!));
+    return _buildLargeImage(
+      NetworkImage(resolveMediaUrl(widget.postImageUrl!)),
+    );
   }
 
   Widget _buildLargeImage(ImageProvider provider) {
+    if (provider is NetworkImage) {
+      return _buildReliableNetworkImage(
+        provider.url,
+        width: double.infinity,
+        height: 300,
+      );
+    }
+
     return Image(
       image: provider,
       width: double.infinity,
       height: 300,
       fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => _imageFallback(height: 220),
+      errorBuilder: (_, error, stackTrace) {
+        debugPrint('Post image load failed: $error');
+        return _imageFallback(height: 220);
+      },
     );
   }
 
   Widget _buildSquareImage(ImageProvider provider) {
+    if (provider is NetworkImage) {
+      return AspectRatio(
+        aspectRatio: 1,
+        child: _buildReliableNetworkImage(provider.url),
+      );
+    }
+
     return AspectRatio(
       aspectRatio: 1,
       child: Image(
         image: provider,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _imageFallback(),
+        errorBuilder: (_, error, stackTrace) {
+          debugPrint('Post image load failed: $error');
+          return _imageFallback();
+        },
       ),
     );
   }
 
   Widget _buildImage(ImageProvider provider) {
+    if (provider is NetworkImage) {
+      return _buildReliableNetworkImage(
+        provider.url,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    }
+
     return Image(
       image: provider,
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => _imageFallback(),
+      errorBuilder: (_, error, stackTrace) {
+        debugPrint('Post image load failed: $error');
+        return _imageFallback();
+      },
     );
   }
 
@@ -537,7 +576,7 @@ class _PostCardState extends State<PostCard> {
 
     final uri = Uri.tryParse(path);
     if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
-      return NetworkImage(path);
+      return NetworkImage(resolveMediaUrl(path));
     }
 
     final file = File(path);
@@ -555,6 +594,78 @@ class _PostCardState extends State<PostCard> {
       alignment: Alignment.center,
       child: Icon(Icons.broken_image_outlined, color: Colors.grey[500]),
     );
+  }
+
+  Widget _buildReliableNetworkImage(
+    String url, {
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.cover,
+  }) {
+    final future = _networkImageFutures[url] ??= _fetchImageBytesWithRetry(url);
+
+    return FutureBuilder<Uint8List?>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return Container(
+            width: width,
+            height: height,
+            color: const Color(0xFFF1F3F5),
+          );
+        }
+
+        final bytes = snapshot.data;
+        if (bytes == null || bytes.isEmpty) {
+          return _imageFallback(height: height);
+        }
+
+        return Image.memory(
+          bytes,
+          width: width,
+          height: height,
+          fit: fit,
+          gaplessPlayback: true,
+          errorBuilder: (_, error, stackTrace) {
+            debugPrint('Post image decode failed: $error');
+            return _imageFallback(height: height);
+          },
+        );
+      },
+    );
+  }
+
+  Future<Uint8List?> _fetchImageBytesWithRetry(String url) async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final response = await http
+            .get(
+              Uri.parse(url),
+              headers: const <String, String>{
+                'Connection': 'close',
+                'Accept': 'image/*',
+                'Accept-Encoding': 'identity',
+              },
+            )
+            .timeout(const Duration(seconds: 15));
+
+        if (response.statusCode >= 200 &&
+            response.statusCode < 300 &&
+            response.bodyBytes.isNotEmpty) {
+          return response.bodyBytes;
+        }
+      } catch (error) {
+        debugPrint(
+          'Post image fetch failed (attempt ${attempt + 1}/3): $error, url=$url',
+        );
+      }
+
+      if (attempt < 2) {
+        await Future<void>.delayed(Duration(milliseconds: 300 * (attempt + 1)));
+      }
+    }
+
+    return null;
   }
 
   Widget _buildEngagementStats() {
