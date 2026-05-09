@@ -53,6 +53,13 @@ class PostController extends Controller
                         ->firstWhere('reactor_name', $reactorName)?->reaction;
                 }
 
+                $normalizedImagePaths = collect($post->image_paths ?? [])
+                    ->filter(fn ($path): bool => is_string($path))
+                    ->map(fn (string $path): ?string => $this->normalizePublicUrl($path, request()))
+                    ->filter(fn ($path): bool => is_string($path) && $path !== '')
+                    ->values()
+                    ->all();
+
                 return [
                     'id' => $post->id,
                     'userName' => $post->author_name,
@@ -60,7 +67,7 @@ class PostController extends Controller
                     'timeAgo' => $post->published_at?->diffForHumans() ?? 'Just now',
                     'postText' => $post->content ?? '',
                     'postImageUrl' => null,
-                    'localImagePaths' => $post->image_paths ?? [],
+                    'localImagePaths' => $normalizedImagePaths,
                     'likesCount' => (string) ($post->reactions_count ?? 0),
                     'commentsCount' => (string) ($post->comments_count ?? 0),
                     'userReaction' => $userReaction,
@@ -79,14 +86,11 @@ class PostController extends Controller
         $storedPaths = [];
         foreach ($request->file('images', []) as $image) {
             if ($image instanceof UploadedFile) {
-                $storedPaths[] = $this->storePublicPostImage($image);
+                $storedPaths[] = $this->storePublicPostImage($image, $request);
             }
         }
 
-        $fallbackPaths = $request->input('image_paths', []);
-        if (! is_array($fallbackPaths)) {
-            $fallbackPaths = [];
-        }
+        $fallbackPaths = $this->sanitizeIncomingImagePaths($request->input('image_paths', []));
 
         $post = Post::query()->create([
             'author_name' => $request->string('author_name')->toString(),
@@ -105,7 +109,12 @@ class PostController extends Controller
                 'timeAgo' => 'Just now',
                 'postText' => $post->content ?? '',
                 'postImageUrl' => null,
-                'localImagePaths' => $post->image_paths ?? [],
+                'localImagePaths' => collect($post->image_paths ?? [])
+                    ->filter(fn ($path): bool => is_string($path))
+                    ->map(fn (string $path): ?string => $this->normalizePublicUrl($path, $request))
+                    ->filter(fn ($path): bool => is_string($path) && $path !== '')
+                    ->values()
+                    ->all(),
                 'likesCount' => '0',
                 'commentsCount' => '0',
                 'topReactions' => [],
@@ -113,7 +122,7 @@ class PostController extends Controller
         ], 201);
     }
 
-    private function storePublicPostImage(UploadedFile $file): string
+    private function storePublicPostImage(UploadedFile $file, Request $request): string
     {
         $directory = public_path('uploads/posts');
         if (! File::isDirectory($directory)) {
@@ -129,7 +138,59 @@ class PostController extends Controller
 
         $file->move($directory, $filename);
 
-        return url('uploads/posts/' . $filename);
+        return rtrim($request->getSchemeAndHttpHost(), '/') . '/uploads/posts/' . $filename;
+    }
+
+    private function sanitizeIncomingImagePaths(mixed $input): array
+    {
+        if (! is_array($input)) {
+            return [];
+        }
+
+        return collect($input)
+            ->filter(fn ($path): bool => is_string($path))
+            ->map(fn (string $path): string => trim($path))
+            ->filter(function (string $path): bool {
+                if ($path === '') {
+                    return false;
+                }
+
+                if (str_starts_with($path, '/uploads/')) {
+                    return true;
+                }
+
+                $uri = parse_url($path);
+                if (! is_array($uri)) {
+                    return false;
+                }
+
+                return in_array(($uri['scheme'] ?? ''), ['http', 'https'], true);
+            })
+            ->values()
+            ->all();
+    }
+
+    private function normalizePublicUrl(?string $value, Request $request): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $path = parse_url($trimmed, PHP_URL_PATH);
+        if (is_string($path) && str_starts_with($path, '/uploads/')) {
+            return rtrim($request->getSchemeAndHttpHost(), '/') . $path;
+        }
+
+        if (str_starts_with($trimmed, '/uploads/')) {
+            return rtrim($request->getSchemeAndHttpHost(), '/') . $trimmed;
+        }
+
+        return $trimmed;
     }
 
     public function like(Post $post): JsonResponse
