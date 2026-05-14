@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
+import 'create_account_card.dart';
 import 'widgets/action_button.dart';
 import 'widgets/mobile_input.dart';
 
@@ -15,6 +16,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _forgotMobileController = TextEditingController();
+  final TextEditingController _registerMobileController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _referralController = TextEditingController();
   bool _isLightMode = false;
   _AuthView _currentView = _AuthView.login;
 
@@ -25,6 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _mobileController.dispose();
     _forgotMobileController.dispose();
+    _registerMobileController.dispose();
+    _nameController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
@@ -102,18 +109,28 @@ class _LoginScreenState extends State<LoginScreen> {
                                           canLogin: _canLogin,
                                           onChanged: (_) => setState(() {}),
                                           onForgotPin: () => setState(() => _currentView = _AuthView.forgotPin),
-                                          onCreateAccount: () => _showPlaceholderMessage('Create account flow is not connected yet.'),
+                                          onCreateAccount: () => setState(() => _currentView = _AuthView.createAccount),
                                           onLogin: () => _showPlaceholderMessage('Login action is frontend-only for now.'),
                                         )
-                                      : _ForgotPinCard(
-                                          isCompact: isCompact,
-                                          isLightMode: _isLightMode,
-                                          mobileController: _forgotMobileController,
-                                          canReset: _canReset,
-                                          onChanged: (_) => setState(() {}),
-                                          onBack: () => setState(() => _currentView = _AuthView.login),
-                                          onSendCode: () => _showPlaceholderMessage('Reset PIN flow is not connected yet.'),
-                                        ),
+                                      : _currentView == _AuthView.forgotPin
+                                          ? _ForgotPinCard(
+                                              isCompact: isCompact,
+                                              isLightMode: _isLightMode,
+                                              mobileController: _forgotMobileController,
+                                              canReset: _canReset,
+                                              onChanged: (_) => setState(() {}),
+                                              onBack: () => setState(() => _currentView = _AuthView.login),
+                                              onSendCode: () => _showPlaceholderMessage('Reset PIN flow is not connected yet.'),
+                                            )
+                                          : CreateAccountCard(
+                                              isCompact: isCompact,
+                                              isLightMode: _isLightMode,
+                                              nameController: _nameController,
+                                              mobileController: _registerMobileController,
+                                              referralController: _referralController,
+                                              onBackToLogin: () => setState(() => _currentView = _AuthView.login),
+                                              onComplete: () => setState(() => _currentView = _AuthView.login),
+                                            ),
                                 ),
                               ),
                             ],
@@ -139,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-enum _AuthView { login, forgotPin }
+enum _AuthView { login, forgotPin, createAccount }
 
 class _BackgroundLayer extends StatelessWidget {
   const _BackgroundLayer({required this.isLightMode});
