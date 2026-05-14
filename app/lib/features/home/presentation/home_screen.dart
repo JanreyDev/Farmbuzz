@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -39,6 +40,8 @@ class _HomeHeader extends StatelessWidget {
   const _HomeHeader();
 
   static const String _demoAvatarUrl = 'https://i.pravatar.cc/100?img=12';
+  static const int _unreadMessages = 3;
+  static const int _unreadNotifications = 7;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +71,10 @@ class _HomeHeader extends StatelessWidget {
           const Spacer(),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.chat_bubble_outline, color: Colors.black87),
+            icon: _HeaderIconWithBadge(
+              icon: LucideIcons.messageCircle,
+              count: _unreadMessages,
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Messages screen coming next.')),
@@ -77,7 +83,10 @@ class _HomeHeader extends StatelessWidget {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.notifications_none, color: Colors.black87),
+            icon: _HeaderIconWithBadge(
+              icon: LucideIcons.bell,
+              count: _unreadNotifications,
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Notifications screen coming next.')),
@@ -95,6 +104,48 @@ class _HomeHeader extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _HeaderIconWithBadge extends StatelessWidget {
+  const _HeaderIconWithBadge({
+    required this.icon,
+    required this.count,
+  });
+
+  final IconData icon;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon, color: Colors.black87, size: 24),
+        if (count > 0)
+          Positioned(
+            top: -6,
+            right: -8,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE53935),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                count > 99 ? '99+' : '$count',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
