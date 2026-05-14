@@ -12,6 +12,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _activeTab = 0;
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -23,26 +24,154 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
-        body: Column(
-          children: [
-            const _HomeHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const _StatusComposer(),
-                    const _StoriesSection(),
-                    _FilterTabs(
-                      activeIndex: _activeTab,
-                      onChanged: (index) => setState(() => _activeTab = index),
+        body: _selectedIndex == 0 ? _buildHomeFeed() : _buildTabPlaceholder(),
+        floatingActionButton: _selectedIndex == 2
+            ? null
+            : FloatingActionButton(
+                onPressed: () => setState(() => _selectedIndex = 2),
+                backgroundColor: const Color(0xFFD97706),
+                elevation: 4,
+                shape: const CircleBorder(),
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                     ),
-                    const _PostsSection(),
-                  ],
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
               ),
-            ),
-          ],
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: BottomAppBar(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          height: 70,
+          color: Colors.white,
+          shape: _selectedIndex == 2 ? null : const CircularNotchedRectangle(),
+          notchMargin: 8,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              Expanded(child: _bottomNavItem(0, Icons.home_filled, 'Home')),
+              Expanded(child: _bottomNavItem(1, Icons.agriculture, 'My Farm')),
+              if (_selectedIndex == 2)
+                GestureDetector(
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('AI shortcuts coming next.')),
+                  ),
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFD97706),
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.grid_view_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(width: 70),
+              Expanded(child: _bottomNavItem(3, Icons.groups, 'Clubs')),
+              Expanded(child: _bottomNavItem(4, Icons.leaderboard, 'Rank')),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildHomeFeed() {
+    return Column(
+      children: [
+        const _HomeHeader(),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const _StatusComposer(),
+                const _StoriesSection(),
+                _FilterTabs(
+                  activeIndex: _activeTab,
+                  onChanged: (index) => setState(() => _activeTab = index),
+                ),
+                const _PostsSection(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTabPlaceholder() {
+    final labels = <int, String>{
+      1: 'My Farm',
+      2: 'Bantay AI',
+      3: 'Clubs',
+      4: 'Rank',
+    };
+    return Column(
+      children: [
+        const _HomeHeader(),
+        Expanded(
+          child: Center(
+            child: Text(
+              '${labels[_selectedIndex] ?? 'Section'} (UI-only)',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF4B5563),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _bottomNavItem(int index, IconData icon, String label) {
+    final isSelected = _selectedIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _selectedIndex = index),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      focusColor: Colors.transparent,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? AppColors.accentGreen : Colors.grey,
+            size: 24,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? AppColors.accentGreen : Colors.grey,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -669,6 +798,8 @@ class _PostCardState extends State<_PostCard> {
   static const double _mediaTileGap = 2;
   bool _showReactions = false;
   String _selectedReaction = '';
+  late int _currentComments;
+  late List<Map<String, String>> _comments;
   final List<String> _reactions = const [
     '\u{1F44D}',
     '\u{2764}\u{FE0F}',
@@ -677,6 +808,20 @@ class _PostCardState extends State<_PostCard> {
     '\u{1F622}',
     '\u{1F621}',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentComments = widget.commentsCount;
+    _comments = [
+      {
+        'name': 'FarmBuzz User',
+        'text': 'Nice update!',
+        'time': '1h',
+        'avatar': 'https://i.pravatar.cc/150?img=18',
+      },
+    ];
+  }
 
   String _initial() {
     final trimmed = widget.userName.trim();
@@ -714,6 +859,23 @@ class _PostCardState extends State<_PostCard> {
       _selectedReaction = reaction;
       _showReactions = false;
     });
+  }
+
+  Future<void> _openComments() async {
+    await _CommentsSheet.show(
+      context,
+      userName: widget.userName,
+      comments: _comments,
+      onCommentCountChanged: (count, updatedComments) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _currentComments = count;
+          _comments = updatedComments;
+        });
+      },
+    );
   }
 
   List<String> get _displayReactions {
@@ -872,6 +1034,11 @@ class _PostCardState extends State<_PostCard> {
                       '${widget.likesCount}',
                       style: TextStyle(color: Colors.grey[700], fontSize: 14),
                     ),
+                    const Spacer(),
+                    Text(
+                      '$_currentComments comments',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
                   ],
                 ),
               ),
@@ -911,10 +1078,13 @@ class _PostCardState extends State<_PostCard> {
                       ),
                     ),
                     Expanded(
-                      child: _PostAction(
-                        icon: Icons.chat_bubble_outline,
-                        label: 'Comment',
-                        color: Colors.grey[700],
+                      child: GestureDetector(
+                        onTap: _openComments,
+                        child: _PostAction(
+                          icon: Icons.chat_bubble_outline,
+                          label: 'Comment',
+                          color: Colors.grey[700],
+                        ),
                       ),
                     ),
                     Expanded(
@@ -1095,6 +1265,7 @@ class _PostAction extends StatelessWidget {
   final String label;
   final String reaction;
   final Color? color;
+  static const Color _defaultActionColor = Color(0xFF6B7280);
 
   @override
   Widget build(BuildContext context) {
@@ -1107,18 +1278,529 @@ class _PostAction extends StatelessWidget {
           if (reaction.isNotEmpty)
             _ReactionGlyph(reaction: reaction, size: 18)
           else if (icon != null)
-            Icon(icon, size: 18, color: color ?? Colors.grey[700]),
+            Icon(icon, size: 18, color: color ?? _defaultActionColor),
           const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
-              color: color,
+              color: color ?? _defaultActionColor,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CommentsSheet extends StatefulWidget {
+  const _CommentsSheet({
+    required this.userName,
+    required this.comments,
+    required this.onCommentCountChanged,
+  });
+
+  final String userName;
+  final List<Map<String, String>> comments;
+  final void Function(int count, List<Map<String, String>> comments)
+  onCommentCountChanged;
+
+  static Future<void> show(
+    BuildContext context, {
+    required String userName,
+    required List<Map<String, String>> comments,
+    required void Function(int count, List<Map<String, String>> comments)
+    onCommentCountChanged,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      builder: (context) => _CommentsSheet(
+        userName: userName,
+        comments: comments,
+        onCommentCountChanged: onCommentCountChanged,
+      ),
+    );
+  }
+
+  @override
+  State<_CommentsSheet> createState() => _CommentsSheetState();
+}
+
+class _CommentsSheetState extends State<_CommentsSheet> {
+  final TextEditingController _commentController = TextEditingController();
+  late List<Map<String, String>> _comments;
+  String _sortLabel = 'Most relevant';
+
+  @override
+  void initState() {
+    super.initState();
+    _comments = List<Map<String, String>>.from(widget.comments);
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  void _addComment() {
+    final text = _commentController.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _comments.insert(0, {
+        'name': 'You',
+        'text': text,
+        'time': 'now',
+        'avatar': 'https://i.pravatar.cc/150?img=12',
+      });
+      _commentController.clear();
+    });
+
+    widget.onCommentCountChanged(_comments.length, _comments);
+    FocusScope.of(context).unfocus();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final reactionPreview = widget.comments.length > 10 ? '11K' : '1.2K';
+
+    return Container(
+      height: size.height * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 42,
+            height: 5,
+            decoration: BoxDecoration(
+              color: const Color(0xFFBFC5CA),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const _ReactionGlyph(reaction: '\u{1F44D}', size: 16),
+                    const SizedBox(width: 2),
+                    const _ReactionGlyph(
+                      reaction: '\u{2764}\u{FE0F}',
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      reactionPreview,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, size: 20),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF3F4F6),
+                    padding: const EdgeInsets.all(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+            child: Row(
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _sortLabel = _sortLabel == 'Most relevant'
+                          ? 'Newest'
+                          : 'Most relevant';
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF111827),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 0,
+                      vertical: 4,
+                    ),
+                    minimumSize: const Size(0, 0),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  iconAlignment: IconAlignment.end,
+                  icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+                  label: Text(
+                    _sortLabel,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _comments.isEmpty
+                ? Center(
+                    child: Text(
+                      'No comments yet. Be the first to comment.',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    itemCount: _comments.length,
+                    itemBuilder: (context, index) {
+                      final comment = _comments[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _CommentItem(
+                          name: (comment['name'] ?? '').toString(),
+                          text: (comment['text'] ?? '').toString(),
+                          time: (comment['time'] ?? 'now').toString(),
+                          avatar:
+                              (comment['avatar'] ??
+                                      'https://i.pravatar.cc/150?u=farmbuzz-comment')
+                                  .toString(),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          Container(
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey[100]!)),
+            ),
+            child: Row(
+              children: [
+                const CircleAvatar(
+                  radius: 18,
+                  backgroundImage: NetworkImage(
+                    'https://i.pravatar.cc/150?img=12',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: TextField(
+                      controller: _commentController,
+                      onSubmitted: (_) => _addComment(),
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        hintText: 'Write a comment...',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _addComment,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accentGreen,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.send,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommentItem extends StatefulWidget {
+  const _CommentItem({
+    required this.name,
+    required this.text,
+    required this.time,
+    required this.avatar,
+  });
+
+  final String name;
+  final String text;
+  final String time;
+  final String avatar;
+
+  @override
+  State<_CommentItem> createState() => _CommentItemState();
+}
+
+class _CommentItemState extends State<_CommentItem> {
+  bool _showReplies = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final likes = (widget.text.length % 80) + 3;
+    final canShowReplies = (widget.text.length % 2) == 0;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(radius: 17, backgroundImage: NetworkImage(widget.avatar)),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    widget.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    widget.time,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                widget.text,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.32,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    'Reply',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  const _ReactionGlyph(reaction: '\u{1F44D}', size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$likes',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.thumb_up_alt_outlined,
+                    size: 18,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(width: 14),
+                  Icon(
+                    Icons.thumb_down_alt_outlined,
+                    size: 18,
+                    color: Colors.grey[600],
+                  ),
+                ],
+              ),
+              if (canShowReplies) ...[
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => setState(() => _showReplies = !_showReplies),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _showReplies
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        size: 12,
+                        color: const Color(0xFF374151),
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        _showReplies ? 'Hide replies' : 'View 2 replies',
+                        style: const TextStyle(
+                          color: Color(0xFF374151),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_showReplies) ...[
+                  const SizedBox(height: 8),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 2,
+                          margin: const EdgeInsets.only(left: 8, right: 10),
+                          color: const Color(0xFFD1D5DB),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              _ReplyItem(
+                                name: 'Joe Benedict Española',
+                                time: '4h',
+                                text: 'Lala',
+                              ),
+                              SizedBox(height: 10),
+                              _ReplyItem(
+                                name: 'secretsh1T',
+                                time: '3h',
+                                text:
+                                    'BrilliantNectarine8854 7 slot Ng pet 2k? Gising ka yah. Baka natutulog kaa. May mythic pet pa Yan. HAHAHAHAH',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReplyItem extends StatelessWidget {
+  const _ReplyItem({
+    required this.name,
+    required this.time,
+    required this.text,
+  });
+
+  final String name;
+  final String time;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const CircleAvatar(
+          radius: 12,
+          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=22'),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    time,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.3,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Text(
+                    'Reply',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.thumb_up_alt_outlined,
+                    size: 17,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(width: 12),
+                  Icon(
+                    Icons.thumb_down_alt_outlined,
+                    size: 17,
+                    color: Colors.grey[600],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1201,7 +1883,7 @@ class _TopReactionsCluster extends StatelessWidget {
   const _TopReactionsCluster({required this.reactions});
 
   final List<String> reactions;
-  static const double _emojiSize = 15;
+  static const double _emojiSize = 16;
 
   @override
   Widget build(BuildContext context) {
@@ -1214,7 +1896,7 @@ class _TopReactionsCluster extends StatelessWidget {
       children: [
         for (int i = 0; i < reactions.length; i++) ...[
           _ReactionGlyph(reaction: reactions[i], size: _emojiSize),
-          if (i != reactions.length - 1) const SizedBox(width: 3),
+          if (i != reactions.length - 1) const SizedBox(width: 2),
         ],
       ],
     );
@@ -1233,6 +1915,10 @@ class _ReactionGlyph extends StatelessWidget {
       return Icon(Icons.favorite, color: const Color(0xFFE11D48), size: size);
     }
 
-    return Text(reaction, style: TextStyle(fontSize: size));
+    return Text(
+      reaction,
+      style: TextStyle(fontSize: size),
+      strutStyle: const StrutStyle(forceStrutHeight: true, height: 1),
+    );
   }
 }
