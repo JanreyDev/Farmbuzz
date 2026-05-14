@@ -7,11 +7,13 @@ class ActionButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.isEnabled,
+    required this.isLightMode,
     required this.onPressed,
   });
 
   final String label;
   final bool isEnabled;
+  final bool isLightMode;
   final VoidCallback onPressed;
 
   @override
@@ -26,7 +28,9 @@ class ActionButton extends StatelessWidget {
           end: Alignment.centerRight,
           colors: isEnabled
               ? const [Color(0xFF16A34A), Color(0xFF1ED760)]
-              : const [Color(0xFF2A322F), Color(0xFF3A423E)],
+              : isLightMode
+                  ? const [Color(0xFFD7DAD5), Color(0xFFC9CCC7)]
+                  : const [Color(0xFF2A322F), Color(0xFF3A423E)],
         ),
         boxShadow: [
           if (isEnabled)
@@ -53,7 +57,9 @@ class ActionButton extends StatelessWidget {
                   fontSize: 15,
                   color: isEnabled
                       ? const Color(0xFF04210E)
-                      : Colors.white.withValues(alpha: 0.28),
+                      : isLightMode
+                          ? const Color(0xFF8D938D)
+                          : Colors.white.withValues(alpha: 0.28),
                 ),
               ),
             ),

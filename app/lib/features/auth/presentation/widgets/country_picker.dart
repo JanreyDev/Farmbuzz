@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class CountryPicker extends StatelessWidget {
-  const CountryPicker({super.key});
+  const CountryPicker({
+    super.key,
+    required this.isLightMode,
+  });
+
+  final bool isLightMode;
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +41,10 @@ class CountryPicker extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        const Text(
+        Text(
           '+63',
           style: TextStyle(
-            color: Colors.white,
+            color: isLightMode ? Color(0xFF2B3A2E) : Colors.white,
             fontWeight: FontWeight.w600,
             fontSize: 15,
           ),
@@ -48,3 +53,4 @@ class CountryPicker extends StatelessWidget {
     );
   }
 }
+

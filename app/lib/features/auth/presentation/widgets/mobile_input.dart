@@ -10,11 +10,13 @@ class MobileInput extends StatefulWidget {
     required this.controller,
     required this.onChanged,
     required this.isValid,
+    required this.isLightMode,
   });
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final bool isValid;
+  final bool isLightMode;
 
   @override
   State<MobileInput> createState() => _MobileInputState();
@@ -49,12 +51,16 @@ class _MobileInputState extends State<MobileInput> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.3),
+        color: widget.isLightMode
+            ? const Color(0xFFFFFFFF).withValues(alpha: 0.76)
+            : Colors.black.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isFocused
               ? AppColors.accentGreen.withValues(alpha: 0.8)
-              : Colors.white.withValues(alpha: 0.1),
+              : widget.isLightMode
+                  ? const Color(0xFFBFC8BE)
+                  : Colors.white.withValues(alpha: 0.1),
           width: isFocused ? 1.4 : 1.0,
         ),
         boxShadow: [
@@ -68,9 +74,13 @@ class _MobileInputState extends State<MobileInput> {
       ),
       child: Row(
         children: [
-          const CountryPicker(),
+          CountryPicker(isLightMode: widget.isLightMode),
           const SizedBox(width: 8),
-          Container(width: 1, height: 20, color: Colors.white10),
+          Container(
+            width: 1,
+            height: 20,
+            color: widget.isLightMode ? const Color(0xFFC6CEC6) : Colors.white10,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -82,12 +92,17 @@ class _MobileInputState extends State<MobileInput> {
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(10),
               ],
-              style: const TextStyle(color: Colors.white, fontSize: 15),
-              decoration: const InputDecoration(
+              style: TextStyle(
+                color: widget.isLightMode ? const Color(0xFF314234) : Colors.white,
+                fontSize: 15,
+              ),
+              decoration: InputDecoration(
                 border: InputBorder.none,
                 hintText: '9XX XXXX XXX',
-                hintStyle: TextStyle(color: AppColors.hintGrey),
-                contentPadding: EdgeInsets.symmetric(vertical: 14),
+                hintStyle: TextStyle(
+                  color: widget.isLightMode ? const Color(0xFF93A098) : AppColors.hintGrey,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),
