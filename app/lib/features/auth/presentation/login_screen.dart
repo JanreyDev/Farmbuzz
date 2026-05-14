@@ -14,13 +14,17 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _forgotMobileController = TextEditingController();
   bool _isLightMode = false;
+  _AuthView _currentView = _AuthView.login;
 
   bool get _canLogin => _mobileController.text.trim().length == 10;
+  bool get _canReset => _forgotMobileController.text.trim().length == 10;
 
   @override
   void dispose() {
     _mobileController.dispose();
+    _forgotMobileController.dispose();
     super.dispose();
   }
 
@@ -90,16 +94,26 @@ class _LoginScreenState extends State<LoginScreen> {
                               Center(
                                 child: ConstrainedBox(
                                   constraints: const BoxConstraints(maxWidth: 420),
-                                  child: _LoginCard(
-                                    isCompact: isCompact,
-                                    isLightMode: _isLightMode,
-                                    mobileController: _mobileController,
-                                    canLogin: _canLogin,
-                                    onChanged: (_) => setState(() {}),
-                                    onForgotPin: () => _showPlaceholderMessage('Forgot PIN flow is not connected yet.'),
-                                    onCreateAccount: () => _showPlaceholderMessage('Create account flow is not connected yet.'),
-                                    onLogin: () => _showPlaceholderMessage('Login action is frontend-only for now.'),
-                                  ),
+                                  child: _currentView == _AuthView.login
+                                      ? _LoginCard(
+                                          isCompact: isCompact,
+                                          isLightMode: _isLightMode,
+                                          mobileController: _mobileController,
+                                          canLogin: _canLogin,
+                                          onChanged: (_) => setState(() {}),
+                                          onForgotPin: () => setState(() => _currentView = _AuthView.forgotPin),
+                                          onCreateAccount: () => _showPlaceholderMessage('Create account flow is not connected yet.'),
+                                          onLogin: () => _showPlaceholderMessage('Login action is frontend-only for now.'),
+                                        )
+                                      : _ForgotPinCard(
+                                          isCompact: isCompact,
+                                          isLightMode: _isLightMode,
+                                          mobileController: _forgotMobileController,
+                                          canReset: _canReset,
+                                          onChanged: (_) => setState(() {}),
+                                          onBack: () => setState(() => _currentView = _AuthView.login),
+                                          onSendCode: () => _showPlaceholderMessage('Reset PIN flow is not connected yet.'),
+                                        ),
                                 ),
                               ),
                             ],
@@ -124,6 +138,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+enum _AuthView { login, forgotPin }
 
 class _BackgroundLayer extends StatelessWidget {
   const _BackgroundLayer({required this.isLightMode});
@@ -570,6 +586,140 @@ class _LoginCard extends StatelessWidget {
   }
 }
 
+class _ForgotPinCard extends StatelessWidget {
+  const _ForgotPinCard({
+    required this.isCompact,
+    required this.isLightMode,
+    required this.mobileController,
+    required this.canReset,
+    required this.onChanged,
+    required this.onBack,
+    required this.onSendCode,
+  });
+
+  final bool isCompact;
+  final bool isLightMode;
+  final TextEditingController mobileController;
+  final bool canReset;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onBack;
+  final VoidCallback onSendCode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        isCompact ? 16 : 24,
+        isCompact ? 20 : 28,
+        isCompact ? 16 : 24,
+        isCompact ? 24 : 32,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isLightMode
+              ? const Color(0xFFBFD1C2)
+              : AppColors.accentGreen.withValues(alpha: 0.15),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isLightMode
+              ? const [Color(0xFFF1F3EF), Color(0xFFE6E9E4)]
+              : [
+                  AppColors.cardDarkGreen.withValues(alpha: 0.9),
+                  AppColors.cardDeepGreen.withValues(alpha: 0.95),
+                ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isLightMode
+                ? const Color(0xFF758C79).withValues(alpha: 0.22)
+                : Colors.black.withValues(alpha: 0.5),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isLightMode
+                      ? const Color(0xFFFFFFFF).withValues(alpha: 0.35)
+                      : Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isLightMode
+                        ? const Color(0xFFCDD4CF)
+                        : Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: onBack,
+                  icon: Icon(
+                    Icons.arrow_back,
+                    size: 20,
+                    color: isLightMode ? const Color(0xFF4A5A4F) : Colors.white70,
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reset your PIN',
+                      style: TextStyle(
+                        fontSize: isCompact ? 34 / 2 : 18,
+                        fontWeight: FontWeight.w700,
+                        color: isLightMode ? const Color(0xFF1E2821) : const Color(0xFFEAF7ED),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Enter your phone number to reset your PIN',
+                      style: TextStyle(
+                        color: isLightMode ? const Color(0xFF6F7A74) : AppColors.textGrey,
+                        fontSize: isCompact ? 12 : 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isCompact ? 22 : 28),
+          MobileInput(
+            controller: mobileController,
+            onChanged: onChanged,
+            isValid: canReset,
+            isLightMode: isLightMode,
+          ),
+          const SizedBox(height: 16),
+          ActionButton(
+            label: 'Send Reset Code',
+            isEnabled: canReset,
+            isLightMode: isLightMode,
+            onPressed: onSendCode,
+          ),
+          if (isCompact) const SizedBox(height: 2),
+          if (!isCompact) const SizedBox(height: 4),
+        ],
+      ),
+    );
+  }
+}
 class _FooterLinks extends StatelessWidget {
   const _FooterLinks({required this.isLightMode});
 
