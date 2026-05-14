@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
 import 'create_account_card.dart';
+import '../../home/presentation/home_screen.dart';
 import 'widgets/action_button.dart';
 import 'widgets/mobile_input.dart';
 
@@ -39,6 +40,12 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _goToHome() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
   }
 
   @override
@@ -110,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           onChanged: (_) => setState(() {}),
                                           onForgotPin: () => setState(() => _currentView = _AuthView.forgotPin),
                                           onCreateAccount: () => setState(() => _currentView = _AuthView.createAccount),
-                                          onLogin: () => _showPlaceholderMessage('Login action is frontend-only for now.'),
+                                          onLogin: _goToHome,
                                         )
                                       : _currentView == _AuthView.forgotPin
                                           ? _ForgotPinCard(
