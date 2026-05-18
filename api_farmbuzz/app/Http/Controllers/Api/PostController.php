@@ -67,7 +67,7 @@ class PostController extends Controller
                     'timeAgo' => $post->published_at?->diffForHumans() ?? 'Just now',
                     'postText' => $post->content ?? '',
                     'postImageUrl' => null,
-                    'localImagePaths' => $normalizedImagePaths,
+                    'imageUrls' => $normalizedImagePaths,
                     'likesCount' => (string) ($post->reactions_count ?? 0),
                     'commentsCount' => (string) ($post->comments_count ?? 0),
                     'userReaction' => $userReaction,
@@ -90,13 +90,11 @@ class PostController extends Controller
             }
         }
 
-        $fallbackPaths = $this->sanitizeIncomingImagePaths($request->input('image_paths', []));
-
         $post = Post::query()->create([
             'author_name' => $request->string('author_name')->toString(),
             'author_avatar' => $request->input('author_avatar'),
             'content' => $request->input('content'),
-            'image_paths' => ! empty($storedPaths) ? $storedPaths : $fallbackPaths,
+            'image_paths' => $storedPaths,
             'published_at' => now(),
         ]);
 
@@ -109,7 +107,7 @@ class PostController extends Controller
                 'timeAgo' => 'Just now',
                 'postText' => $post->content ?? '',
                 'postImageUrl' => null,
-                'localImagePaths' => collect($post->image_paths ?? [])
+                'imageUrls' => collect($post->image_paths ?? [])
                     ->filter(fn ($path): bool => is_string($path))
                     ->map(fn (string $path): ?string => $this->normalizePublicUrl($path, $request))
                     ->filter(fn ($path): bool => is_string($path) && $path !== '')
@@ -139,35 +137,6 @@ class PostController extends Controller
         $file->move($directory, $filename);
 
         return rtrim($request->getSchemeAndHttpHost(), '/') . '/uploads/posts/' . $filename;
-    }
-
-    private function sanitizeIncomingImagePaths(mixed $input): array
-    {
-        if (! is_array($input)) {
-            return [];
-        }
-
-        return collect($input)
-            ->filter(fn ($path): bool => is_string($path))
-            ->map(fn (string $path): string => trim($path))
-            ->filter(function (string $path): bool {
-                if ($path === '') {
-                    return false;
-                }
-
-                if (str_starts_with($path, '/uploads/')) {
-                    return true;
-                }
-
-                $uri = parse_url($path);
-                if (! is_array($uri)) {
-                    return false;
-                }
-
-                return in_array(($uri['scheme'] ?? ''), ['http', 'https'], true);
-            })
-            ->values()
-            ->all();
     }
 
     private function normalizePublicUrl(?string $value, Request $request): ?string

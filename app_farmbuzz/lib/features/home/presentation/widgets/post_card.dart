@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -578,13 +577,7 @@ class _PostCardState extends State<PostCard> {
     if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
       return NetworkImage(resolveMediaUrl(path));
     }
-
-    final file = File(path);
-    if (!file.existsSync()) {
-      return null;
-    }
-
-    return FileImage(file);
+    return null;
   }
 
   Widget _imageFallback({double? height}) {
@@ -641,9 +634,7 @@ class _PostCardState extends State<PostCard> {
         final response = await http
             .get(
               Uri.parse(url),
-              headers: const <String, String>{
-                'Accept': 'image/*,*/*',
-              },
+              headers: const <String, String>{'Accept': 'image/*,*/*'},
             )
             .timeout(const Duration(seconds: 30));
 

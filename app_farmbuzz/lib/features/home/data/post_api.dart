@@ -249,9 +249,10 @@ class PostApi {
   }
 
   static Map<String, dynamic> _normalizePost(Map<String, dynamic> item) {
-    final paths = item['localImagePaths'] ?? item['image_paths'];
-    final localImagePaths = paths is List
-        ? paths.whereType<String>().toList()
+    final imageUrlsRaw =
+        item['imageUrls'] ?? item['localImagePaths'] ?? item['image_paths'];
+    final imageUrls = imageUrlsRaw is List
+        ? imageUrlsRaw.whereType<String>().toList()
         : <String>[];
 
     return <String, dynamic>{
@@ -263,7 +264,7 @@ class PostApi {
       'timeAgo': (item['timeAgo'] ?? 'Just now').toString(),
       'postText': (item['postText'] ?? item['content'] ?? '').toString(),
       'postImageUrl': item['postImageUrl'],
-      'localImagePaths': localImagePaths,
+      'localImagePaths': imageUrls,
       'likesCount': (item['likesCount'] ?? '0').toString(),
       'commentsCount': (item['commentsCount'] ?? '0').toString(),
       'userReaction': item['userReaction']?.toString(),
