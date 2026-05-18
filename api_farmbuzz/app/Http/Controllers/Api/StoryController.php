@@ -23,8 +23,8 @@ class StoryController extends Controller
             'data' => $stories->map(fn (Story $story): array => [
                 'id' => $story->id,
                 'name' => $story->user?->name ?? 'Unknown',
-                'avatarUrl' => $story->user?->avatar_url ?? '',
-                'imageUrl' => $story->image_url,
+                'avatarUrl' => $this->normalizePublicMediaUrl($story->user?->avatar_url, $request) ?? '',
+                'imageUrl' => $this->normalizePublicMediaUrl($story->image_url, $request),
                 'textContent' => $story->text_content,
                 'timeAgo' => optional($story->created_at)?->diffForHumans() ?? 'Just now',
                 'createdAt' => optional($story->created_at)?->toISOString(),
@@ -74,12 +74,35 @@ class StoryController extends Controller
             'data' => [
                 'id' => $story->id,
                 'name' => $user->name,
-                'avatarUrl' => $user->avatar_url ?? '',
-                'imageUrl' => $story->image_url,
+                'avatarUrl' => $this->normalizePublicMediaUrl($user->avatar_url, $request) ?? '',
+                'imageUrl' => $this->normalizePublicMediaUrl($story->image_url, $request),
                 'textContent' => $story->text_content,
                 'timeAgo' => optional($story->created_at)?->diffForHumans() ?? 'Just now',
                 'createdAt' => optional($story->created_at)?->toISOString(),
             ],
         ], 201);
+    }
+
+    private function normalizePublicMediaUrl(?string $value, Request $request): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $path = parse_url($trimmed, PHP_URL_PATH);
+        if (is_string($path) && str_starts_with($path, '/uploads/')) {
+            return rtrim($request->getSchemeAndHttpHost(), '/') . $path;
+        }
+
+        if (str_starts_with($trimmed, '/uploads/')) {
+            return rtrim($request->getSchemeAndHttpHost(), '/') . $trimmed;
+        }
+
+        return $trimmed;
     }
 }

@@ -28,8 +28,8 @@ class ProfileController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'mobile_number' => $user->mobile_number,
-                'avatar_url' => $user->avatar_url,
-                'cover_photo_url' => $user->cover_photo_url,
+                'avatar_url' => $this->normalizePublicMediaUrl($user->avatar_url, $request),
+                'cover_photo_url' => $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
             ],
         ]);
     }
@@ -66,8 +66,8 @@ class ProfileController extends Controller
             'data' => [
                 'name' => $user->name,
                 'mobile_number' => $user->mobile_number,
-                'avatar_url' => $user->avatar_url,
-                'cover_photo_url' => $user->cover_photo_url,
+                'avatar_url' => $this->normalizePublicMediaUrl($user->avatar_url, $request),
+                'cover_photo_url' => $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
             ],
         ]);
     }
@@ -115,8 +115,8 @@ class ProfileController extends Controller
         return response()->json([
             'message' => 'Profile media updated successfully.',
             'data' => [
-                'avatar_url' => $user->avatar_url,
-                'cover_photo_url' => $user->cover_photo_url,
+                'avatar_url' => $this->normalizePublicMediaUrl($user->avatar_url, $request),
+                'cover_photo_url' => $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
             ],
         ]);
     }
@@ -175,5 +175,28 @@ class ProfileController extends Controller
         if (File::exists($filePath)) {
             File::delete($filePath);
         }
+    }
+
+    private function normalizePublicMediaUrl(?string $value, Request $request): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $path = parse_url($trimmed, PHP_URL_PATH);
+        if (is_string($path) && str_starts_with($path, '/uploads/')) {
+            return rtrim($request->getSchemeAndHttpHost(), '/') . $path;
+        }
+
+        if (str_starts_with($trimmed, '/uploads/')) {
+            return rtrim($request->getSchemeAndHttpHost(), '/') . $trimmed;
+        }
+
+        return $trimmed;
     }
 }

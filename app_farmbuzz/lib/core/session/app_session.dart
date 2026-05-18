@@ -24,7 +24,7 @@ class AppSession {
     if (configured != null && configured.isNotEmpty) {
       return resolveMediaUrl(configured);
     }
-    return 'https://i.pravatar.cc/150?u=${Uri.encodeComponent(userName)}';
+    return '';
   }
 
   static bool get isLoggedIn =>
@@ -48,10 +48,10 @@ class AppSession {
   }
 
   static void setProfileMedia({String? avatarUrl, String? coverPhotoUrl}) {
-    if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
+    if (avatarUrl != null) {
       _avatarUrl = avatarUrl.trim();
     }
-    if (coverPhotoUrl != null && coverPhotoUrl.trim().isNotEmpty) {
+    if (coverPhotoUrl != null) {
       _coverPhotoUrl = coverPhotoUrl.trim();
     }
   }

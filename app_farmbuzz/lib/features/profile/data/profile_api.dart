@@ -48,6 +48,31 @@ class ProfileApi {
     };
   }
 
+  Future<Map<String, String>> getProfile({required String mobileNumber}) async {
+    final uri = Uri.parse(
+      '$_baseUrl/profile',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
+    final response = await http.get(uri);
+
+    final data = _decode(response.body);
+    if (response.statusCode >= 400) {
+      throw ProfileApiException(
+        _extractMessage(data, fallback: 'Failed to load profile.'),
+      );
+    }
+
+    final payload = data['data'];
+    if (payload is! Map<String, dynamic>) {
+      throw const ProfileApiException('Invalid profile response.');
+    }
+
+    return {
+      'name': (payload['name'] ?? '').toString(),
+      'avatar_url': (payload['avatar_url'] ?? '').toString(),
+      'cover_photo_url': (payload['cover_photo_url'] ?? '').toString(),
+    };
+  }
+
   Future<Map<String, String>> updateProfileMedia({
     required String mobileNumber,
     String? avatarPath,

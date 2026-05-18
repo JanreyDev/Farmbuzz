@@ -28,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final ProfileApi _profileApi = ProfileApi();
   int _unreadMessages = 0;
   int _unreadNotifications = 0;
+  bool _avatarImageFailed = false;
+  String _lastAvatarUrl = '';
 
   late List<Widget> _pages;
 
@@ -42,6 +44,34 @@ class _HomeScreenState extends State<HomeScreen> {
       const LeaderboardView(),
     ];
     _loadCounts();
+    _refreshProfileFromApi();
+  }
+
+  Future<void> _refreshProfileFromApi() async {
+    final mobile = AppSession.mobileNumber;
+    if (mobile == null || mobile.trim().isEmpty) {
+      return;
+    }
+
+    try {
+      final profile = await _profileApi.getProfile(mobileNumber: mobile);
+      if (!mounted) {
+        return;
+      }
+
+      final latestName = (profile['name'] ?? '').trim();
+      if (latestName.isNotEmpty && latestName != AppSession.userName) {
+        AppSession.setUserName(latestName);
+      }
+      AppSession.setProfileMedia(
+        avatarUrl: profile['avatar_url'],
+        coverPhotoUrl: profile['cover_photo_url'],
+      );
+
+      setState(() {});
+    } catch (_) {
+      // Keep current session values if profile fetch fails.
+    }
   }
 
   Future<void> _loadCounts() async {
@@ -223,7 +253,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = AppSession.avatarUrlOrEmpty;
-    final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+    if (_lastAvatarUrl != avatarUrl) {
+      _lastAvatarUrl = avatarUrl;
+      _avatarImageFailed = false;
+    }
+    final hasAvatar = _hasValidAvatarUrl(avatarUrl) && !_avatarImageFailed;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -307,6 +341,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 radius: 16,
                 backgroundColor: Colors.grey[200],
                 backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+                onBackgroundImageError: hasAvatar
+                    ? (Object error, StackTrace? stackTrace) {
+                        if (!_avatarImageFailed && mounted) {
+                          setState(() => _avatarImageFailed = true);
+                        }
+                      }
+                    : null,
                 child: hasAvatar
                     ? null
                     : Text(
