@@ -1,3 +1,5 @@
+import 'package:farmbuzz/core/network/media_proxy.dart';
+
 class AppSession {
   AppSession._();
 
@@ -6,20 +8,21 @@ class AppSession {
   static String? _avatarUrl;
   static String? _coverPhotoUrl;
 
-  static String get userName => _userName?.trim().isNotEmpty == true
-      ? _userName!.trim()
-      : 'Guest';
+  static String get userName =>
+      _userName?.trim().isNotEmpty == true ? _userName!.trim() : 'Guest';
 
   static String? get mobileNumber => _mobileNumber;
 
-  static String get avatarUrlOrEmpty => _avatarUrl?.trim() ?? '';
+  static String get avatarUrlOrEmpty =>
+      resolveMediaUrl(_avatarUrl?.trim() ?? '');
 
-  static String get coverPhotoUrlOrEmpty => _coverPhotoUrl?.trim() ?? '';
+  static String get coverPhotoUrlOrEmpty =>
+      resolveMediaUrl(_coverPhotoUrl?.trim() ?? '');
 
   static String get avatarUrl {
     final configured = _avatarUrl?.trim();
     if (configured != null && configured.isNotEmpty) {
-      return configured;
+      return resolveMediaUrl(configured);
     }
     return 'https://i.pravatar.cc/150?u=${Uri.encodeComponent(userName)}';
   }

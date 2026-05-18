@@ -14,6 +14,7 @@ class StoryController extends Controller
     {
         $stories = Story::query()
             ->with('user:id,name,avatar_url')
+            ->where('created_at', '>=', now()->subDay())
             ->latest()
             ->limit(100)
             ->get();
