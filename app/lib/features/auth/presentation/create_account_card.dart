@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../data/auth_api.dart';
 import 'widgets/action_button.dart';
 import 'widgets/checkbox_tile.dart';
 import 'widgets/custom_text_field.dart';
@@ -35,10 +36,13 @@ class CreateAccountCard extends StatefulWidget {
 }
 
 class _CreateAccountCardState extends State<CreateAccountCard> {
+  final AuthApi _authApi = AuthApi();
+
   int _currentStep = 0;
   bool _isEighteen = false;
   bool _isAgreed = false;
   bool _isLoading = false;
+  int? _registrationId;
 
   String _otp = '';
   String _pin = '';
@@ -75,46 +79,108 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _startRegistration() {
+  Future<void> _startRegistration() async {
     if (!_canSignUp || _isLoading) {
       return;
     }
-    _goNext();
+
+    setState(() => _isLoading = true);
+    try {
+      final registrationId = await _authApi.startRegistration(
+        name: widget.nameController.text.trim(),
+        referralCode: widget.referralController.text.trim().isEmpty
+            ? null
+            : widget.referralController.text.trim(),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _registrationId = registrationId;
+        _isLoading = false;
+      });
+      _goNext();
+    } on AuthApiException catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage(e.message);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage('Unable to start registration. Please try again.');
+    }
   }
 
   Future<void> _sendOtp() async {
-    if (!_canSendCode || _isLoading) {
+    final registrationId = _registrationId;
+    if (!_canSendCode || _isLoading || registrationId == null) {
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    if (!mounted) {
-      return;
-    }
+    try {
+      await _authApi.sendOtp(
+        registrationId: registrationId,
+        mobileNumber: '+63${widget.mobileController.text.trim()}',
+      );
+      if (!mounted) {
+        return;
+      }
 
-    setState(() {
-      _isLoading = false;
-      _currentStep = 2;
-    });
-    _showMessage('Code sent (demo mode).');
+      setState(() {
+        _isLoading = false;
+        _currentStep = 2;
+      });
+      _showMessage('Code sent successfully.');
+    } on AuthApiException catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage(e.message);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage('Failed to send OTP. Please try again.');
+    }
   }
 
   Future<void> _verifyOtp() async {
-    if (!_canVerifyOtp || _isLoading) {
+    final registrationId = _registrationId;
+    if (!_canVerifyOtp || _isLoading || registrationId == null) {
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-    if (!mounted) {
-      return;
-    }
+    try {
+      await _authApi.verifyOtp(registrationId: registrationId, otp: _otp);
+      if (!mounted) {
+        return;
+      }
 
-    setState(() {
-      _isLoading = false;
-      _currentStep = 3;
-    });
+      setState(() {
+        _isLoading = false;
+        _currentStep = 3;
+      });
+    } on AuthApiException catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage(e.message);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage('OTP verification failed. Please try again.');
+    }
   }
 
   Future<void> _submitPin() async {
@@ -141,15 +207,34 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    if (!mounted) {
+    final registrationId = _registrationId;
+    if (registrationId == null) {
+      _showMessage('Registration session expired. Please start again.');
       return;
     }
 
-    setState(() => _isLoading = false);
-    _showMessage('Account created (frontend demo).');
-    widget.onComplete();
+    setState(() => _isLoading = true);
+    try {
+      await _authApi.setPin(registrationId: registrationId, pin: _pin);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage('Account created successfully.');
+      widget.onComplete();
+    } on AuthApiException catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage(e.message);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _isLoading = false);
+      _showMessage('Failed to complete registration. Please try again.');
+    }
   }
 
   String _maskedPhone() {

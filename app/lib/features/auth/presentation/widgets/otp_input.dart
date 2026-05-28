@@ -45,48 +45,62 @@ class _OtpInputState extends State<OtpInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(6, (index) {
-        final isFocused = _focusNodes[index].hasFocus;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 8.0;
+        final availableWidth = constraints.maxWidth - (spacing * 5);
+        final adaptiveWidth = availableWidth / 6;
+        final boxWidth = adaptiveWidth.clamp(36.0, 45.0);
 
-        return Container(
-          width: 45,
-          height: 52,
-          decoration: BoxDecoration(
-            color: widget.isLightMode
-                ? const Color(0xFFFFFFFF).withValues(alpha: 0.72)
-                : Colors.black26,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isFocused
-                  ? AppColors.accentGreen
-                  : widget.isLightMode
-                      ? const Color(0xFFBFC8BE)
-                      : Colors.white12,
-              width: isFocused ? 1.5 : 1.0,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: TextField(
-            controller: _controllers[index],
-            focusNode: _focusNodes[index],
-            onChanged: (v) {
-              _onChanged(v, index);
-              setState(() {});
-            },
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
-            style: TextStyle(
-              color: widget.isLightMode ? const Color(0xFF314234) : Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLength: 1,
-            decoration: const InputDecoration(counterText: '', border: InputBorder.none),
-          ),
+        return Row(
+          children: List.generate(6, (index) {
+            final isFocused = _focusNodes[index].hasFocus;
+
+            return Padding(
+              padding: EdgeInsets.only(right: index == 5 ? 0 : spacing),
+              child: Container(
+                width: boxWidth,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: widget.isLightMode
+                      ? const Color(0xFFFFFFFF).withValues(alpha: 0.72)
+                      : Colors.black26,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isFocused
+                        ? AppColors.accentGreen
+                        : widget.isLightMode
+                            ? const Color(0xFFBFC8BE)
+                            : Colors.white12,
+                    width: isFocused ? 1.5 : 1.0,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: TextField(
+                  controller: _controllers[index],
+                  focusNode: _focusNodes[index],
+                  onChanged: (v) {
+                    _onChanged(v, index);
+                    setState(() {});
+                  },
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    color: widget.isLightMode ? const Color(0xFF314234) : Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLength: 1,
+                  decoration: const InputDecoration(
+                    counterText: '',
+                    border: InputBorder.none,
+                  ),
+                ),
+              ),
+            );
+          }),
         );
-      }),
+      },
     );
   }
 }

@@ -8,11 +8,18 @@ use App\Http\Requests\Auth\SetPinRequest;
 use App\Http\Requests\Auth\StartRegistrationRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Models\User;
+use App\Support\Sms\SmsManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class RegistrationController extends Controller
 {
+    public function __construct(
+        private readonly SmsManager $smsManager,
+    ) {
+    }
+
     public function start(StartRegistrationRequest $request): JsonResponse
     {
         $user = User::query()->create([
@@ -37,13 +44,28 @@ class RegistrationController extends Controller
             return response()->json(['message' => 'Registration is already completed.'], 422);
         }
 
+        $otp = $this->resolveOtp();
+
         $user->forceFill([
             'mobile_number' => $request->string('mobile_number')->toString(),
-            'otp_code' => Hash::make((string) config('registration.default_otp', '123456')),
+            'otp_code' => Hash::make($otp),
             'otp_sent_at' => now(),
             'mobile_verified_at' => null,
             'registration_status' => 'otp_sent',
         ])->save();
+
+        $mobile = $request->string('mobile_number')->toString();
+        $ttl = (int) config('registration.otp_ttl_minutes', 10);
+
+        try {
+            $this->smsManager
+                ->driver()
+                ->send($mobile, "Your FarmBuzz verification code is {$otp}. It expires in {$ttl} minutes.");
+        } catch (RuntimeException) {
+            return response()->json([
+                'message' => 'Unable to deliver OTP right now. Please contact support or try again later.',
+            ], 503);
+        }
 
         return response()->json([
             'message' => 'OTP sent successfully.',
@@ -86,5 +108,21 @@ class RegistrationController extends Controller
         return response()->json([
             'message' => 'PIN set successfully. Registration completed.',
         ]);
+    }
+
+    private function resolveOtp(): string
+    {
+        $defaultOtp = config('registration.default_otp');
+        if (is_string($defaultOtp) && preg_match('/^\d{6}$/', $defaultOtp) === 1) {
+            return $defaultOtp;
+        }
+
+        $length = (int) config('registration.otp_length', 6);
+        $length = max(4, min(8, $length));
+
+        $min = 10 ** ($length - 1);
+        $max = (10 ** $length) - 1;
+
+        return (string) random_int($min, $max);
     }
 }

@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+        'from' => env('SMS_FROM', 'FarmBuzz'),
+        'txtbox' => [
+            'url' => env('TXTBOX_URL'),
+            'api_key' => env('TXTBOX_API_KEY'),
+            'sender_name' => env('TXTBOX_SENDER_NAME', env('SMS_FROM', 'FarmBuzz')),
+        ],
+        'semaphore' => [
+            'key' => env('SEMAPHORE_API_KEY'),
+            'sender_name' => env('SEMAPHORE_SENDER_NAME', env('SMS_FROM', 'FarmBuzz')),
+        ],
+    ],
+
 ];
