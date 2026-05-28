@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../clubs/presentation/clubs_screen.dart';
+import 'my_farm_setup_screen.dart';
+import 'my_farm_dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,9 +17,46 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _activeTab = 0;
   int _selectedIndex = 0;
+  bool _hasFarm = false;
+  bool _isFarmLoading = true;
+  bool _isChecking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFarmStatus();
+  }
+
+  Future<void> _checkFarmStatus() async {
+    if (_isChecking) return;
+    _isChecking = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _hasFarm = prefs.getBool('farm_created') ?? false;
+          _isFarmLoading = false;
+          _isChecking = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _hasFarm = FallbackFarmStore.farmCreated;
+          _isFarmLoading = false;
+          _isChecking = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isFarmLoading) {
+      _checkFarmStatus();
+    }
+    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.white,
@@ -26,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         body: _selectedIndex == 0 ? _buildHomeFeed() : _buildTabPlaceholder(),
-        floatingActionButton: _selectedIndex == 2
+        floatingActionButton: (_selectedIndex == 2 || isKeyboardOpen)
             ? null
             : FloatingActionButton(
                 onPressed: () => setState(() => _selectedIndex = 2),
@@ -127,6 +167,43 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _HomeHeader(),
           Expanded(child: ClubsScreen()),
+        ],
+      );
+    }
+
+    if (_selectedIndex == 1) {
+      if (_isFarmLoading) {
+        return const Column(
+          children: [
+            _HomeHeader(),
+            Expanded(
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.accentGreen),
+              ),
+            ),
+          ],
+        );
+      }
+      return Column(
+        children: [
+          const _HomeHeader(),
+          Expanded(
+            child: _hasFarm
+                ? MyFarmDashboardScreen(
+                    onReset: () {
+                      setState(() {
+                        _hasFarm = false;
+                      });
+                    },
+                  )
+                : MyFarmSetupScreen(
+                    onCreated: () {
+                      setState(() {
+                        _hasFarm = true;
+                      });
+                    },
+                  ),
+          ),
         ],
       );
     }
