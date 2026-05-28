@@ -61,9 +61,12 @@ class RegistrationController extends Controller
             $this->smsManager
                 ->driver()
                 ->send($mobile, "Your FarmBuzz verification code is {$otp}. It expires in {$ttl} minutes.");
-        } catch (RuntimeException) {
+        } catch (RuntimeException $e) {
+            $message = app()->isLocal()
+                ? 'Unable to deliver OTP: '.$e->getMessage()
+                : 'Unable to deliver OTP right now. Please contact support or try again later.';
             return response()->json([
-                'message' => 'Unable to deliver OTP right now. Please contact support or try again later.',
+                'message' => $message,
             ], 503);
         }
 
