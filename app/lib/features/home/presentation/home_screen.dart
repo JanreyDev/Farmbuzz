@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
@@ -218,11 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    final labels = <int, String>{
-      1: 'My Farm',
-      2: 'Bantay AI',
-      4: 'Rank',
-    };
+    final labels = <int, String>{1: 'My Farm', 2: 'Bantay AI', 4: 'Rank'};
     return Column(
       children: [
         const _HomeHeader(),
@@ -410,18 +409,26 @@ class _StatusComposer extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFD0D3D6)),
+            child: GestureDetector(
+              onTap: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const _CreatePostSheet(),
               ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "What's happening on your farm?",
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+              child: Container(
+                height: 36,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFD0D3D6)),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "What's happening on your farm?",
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                  ),
                 ),
               ),
             ),
@@ -429,6 +436,1054 @@ class _StatusComposer extends StatelessWidget {
           const SizedBox(width: 10),
           const Icon(Icons.image, color: AppColors.accentGreen, size: 22),
         ],
+      ),
+    );
+  }
+}
+
+class _CreatePostSheet extends StatefulWidget {
+  const _CreatePostSheet();
+
+  @override
+  State<_CreatePostSheet> createState() => _CreatePostSheetState();
+}
+
+class _CreatePostSheetState extends State<_CreatePostSheet> {
+  final TextEditingController _postController = TextEditingController();
+  final List<String> _imagePaths = [];
+  final List<String> _videoPaths = [];
+  String? _selectedFeeling;
+  String? _selectedLocation;
+
+  Future<void> _pickImage() async {
+    try {
+      FocusScope.of(context).unfocus();
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: true,
+      );
+      if (!mounted || result == null) return;
+      final picked = result.paths.whereType<String>().toList();
+      if (picked.isEmpty) return;
+      setState(() => _imagePaths.addAll(picked));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to open image picker: $e')),
+      );
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    try {
+      FocusScope.of(context).unfocus();
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      final result = await FilePicker.platform.pickFiles(type: FileType.video);
+      if (!mounted || result == null) return;
+      final pickedPath = result.files.single.path;
+      if (pickedPath == null) return;
+      setState(() => _videoPaths.add(pickedPath));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to open video picker: $e')),
+      );
+    }
+  }
+
+  Future<void> _openFeelingPicker() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          _FeelingPickerSheet(selectedFeeling: _selectedFeeling),
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _selectedFeeling = selected);
+  }
+
+  Future<void> _openLocationPicker() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          _LocationPickerSheet(selectedLocation: _selectedLocation),
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _selectedLocation = selected);
+  }
+
+  @override
+  void dispose() {
+    _postController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled =
+        _postController.text.trim().isNotEmpty ||
+        _imagePaths.isNotEmpty ||
+        _videoPaths.isNotEmpty;
+    final hasAttachments = _imagePaths.isNotEmpty || _videoPaths.isNotEmpty;
+    final sheetHeight =
+        MediaQuery.of(context).size.height * (hasAttachments ? 0.76 : 0.68);
+
+    return SafeArea(
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.fromLTRB(
+          0,
+          8,
+          0,
+          MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          height: sheetHeight,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    const Text(
+                      'Create Post',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF1F3F5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF07A45F),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'BF',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 15,
+                                    ),
+                                    children: [
+                                      const TextSpan(
+                                        text: "Bueno's Farm",
+                                        style: TextStyle(fontWeight: FontWeight.w700),
+                                      ),
+                                      if (_selectedFeeling != null)
+                                        const WidgetSpan(
+                                          alignment: PlaceholderAlignment.middle,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(left: 4, right: 3),
+                                            child: Icon(
+                                              Icons.emoji_emotions_outlined,
+                                              size: 15,
+                                              color: Color(0xFFF6A623),
+                                            ),
+                                          ),
+                                        ),
+                                      if (_selectedFeeling != null)
+                                        TextSpan(
+                                          text: 'is feeling $_selectedFeeling',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w400,
+                                            color: Color(0xFF4B5563),
+                                          ),
+                                        ),
+                                      if (_selectedLocation != null)
+                                        const WidgetSpan(
+                                          alignment: PlaceholderAlignment.middle,
+                                          child: Padding(
+                                            padding: EdgeInsets.only(left: 6, right: 3),
+                                            child: Icon(
+                                              Icons.location_on_outlined,
+                                              size: 15,
+                                              color: Color(0xFFF6A623),
+                                            ),
+                                          ),
+                                        ),
+                                      if (_selectedLocation != null)
+                                        TextSpan(
+                                          text: '$_selectedLocation',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w400,
+                                            color: Color(0xFF4B5563),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      SizedBox(
+                        height: 64,
+                        child: TextField(
+                          controller: _postController,
+                          onChanged: (_) => setState(() {}),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                            height: 1.35,
+                          ),
+                          cursorColor: Colors.black87,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          decoration: const InputDecoration(
+                            hintText: "What's happening on your farm?",
+                            hintStyle: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF7C7C7C),
+                            ),
+                            border: InputBorder.none,
+                          ),
+                        ),
+                      ),
+                      if (_imagePaths.isNotEmpty || _videoPaths.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Text(
+                              '${_imagePaths.length + _videoPaths.length} / 20 photos',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Spacer(),
+                            GestureDetector(
+                              onTap: () => setState(() {
+                                _imagePaths.clear();
+                                _videoPaths.clear();
+                              }),
+                              child: const Text(
+                                'Remove all',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (_imagePaths.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        _buildImagePreviewGrid(),
+                      ],
+                      if (_videoPaths.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        ..._videoPaths.map(
+                          (videoPath) => Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF6F8FA),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFDDE3E8),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.videocam_outlined,
+                                  color: Color(0xFF10A64A),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    videoPath.split('\\').last,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => setState(
+                                    () => _videoPaths.remove(videoPath),
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _MediaActionButton(
+                          onTap: _pickImage,
+                          icon: const Icon(
+                            Icons.image_outlined,
+                            color: Color(0xFF10A64A),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _MediaActionButton(
+                          onTap: _pickVideo,
+                          icon: const Icon(
+                            Icons.videocam_outlined,
+                            color: Color(0xFF10A64A),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _MediaActionButton(
+                          onTap: _openFeelingPicker,
+                          icon: const Icon(
+                            Icons.emoji_emotions_outlined,
+                            color: Color(0xFFF6A623),
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        _MediaActionButton(
+                          onTap: _openLocationPicker,
+                          icon: const Icon(
+                            Icons.location_on_outlined,
+                            color: Color(0xFFF6A623),
+                            size: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 44,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isEnabled
+                            ? const Color(0xFF15A352)
+                            : const Color(0xFFE8EBEF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Post',
+                        style: TextStyle(
+                          color: isEnabled
+                              ? Colors.white
+                              : const Color(0xFFB8BEC5),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreviewGrid() {
+    final count = _imagePaths.length;
+    if (count == 1) {
+      return _buildImageTile(
+        _imagePaths[0],
+        height: 180,
+        width: double.infinity,
+      );
+    }
+    if (count == 2) {
+      return Row(
+        children: [
+          Expanded(child: _buildImageTile(_imagePaths[0], height: 140)),
+          const SizedBox(width: 8),
+          Expanded(child: _buildImageTile(_imagePaths[1], height: 140)),
+        ],
+      );
+    }
+    if (count == 3) {
+      return SizedBox(
+        height: 180,
+        child: Row(
+          children: [
+            Expanded(child: _buildImageTile(_imagePaths[0], height: 180)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(child: _buildImageTile(_imagePaths[1], height: 86)),
+                  const SizedBox(height: 8),
+                  Expanded(child: _buildImageTile(_imagePaths[2], height: 86)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      itemCount: count > 4 ? 4 : count,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 1.15,
+      ),
+      itemBuilder: (context, index) {
+        final path = _imagePaths[index];
+        final extraCount = count - 4;
+        return Stack(
+          children: [
+            _buildImageTile(
+              path,
+              height: double.infinity,
+              width: double.infinity,
+            ),
+            if (index == 3 && extraCount > 0)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '+$extraCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildImageTile(String path, {double? height, double? width}) {
+    return SizedBox(
+      height: height,
+      width: width,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.file(
+              File(path),
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: const Color(0xFFE9EDF1),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.broken_image_outlined,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 6,
+            right: 6,
+            child: GestureDetector(
+              onTap: () => setState(() => _imagePaths.remove(path)),
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MediaActionButton extends StatelessWidget {
+  const _MediaActionButton({required this.onTap, required this.icon});
+
+  final VoidCallback onTap;
+  final Widget icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(width: 40, height: 40, child: Center(child: icon)),
+      ),
+    );
+  }
+}
+
+class _FeelingPickerSheet extends StatefulWidget {
+  const _FeelingPickerSheet({this.selectedFeeling});
+
+  final String? selectedFeeling;
+
+  @override
+  State<_FeelingPickerSheet> createState() => _FeelingPickerSheetState();
+}
+
+class _FeelingPickerSheetState extends State<_FeelingPickerSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  int _activeTab = 0;
+  final List<String> _feelings = const [
+    'Loved',
+    'In Love',
+    'Blessed',
+    'Grateful',
+    'Thankful',
+    'Happy',
+    'Cheerful',
+    'Excited',
+    'Celebrating',
+    'Joyful',
+    'Content',
+    'Proud',
+    'Accomplished',
+    'Motivated',
+    'Determined',
+    'Confident',
+  ];
+
+  final Map<String, String> _emojiByFeeling = const {
+    'Loved': '💗',
+    'In Love': '🥰',
+    'Blessed': '✨',
+    'Grateful': '🙏',
+    'Thankful': '🤗',
+    'Happy': '😊',
+    'Cheerful': '😁',
+    'Excited': '🤩',
+    'Celebrating': '🥳',
+    'Joyful': '😄',
+    'Content': '😌',
+    'Proud': '😍',
+    'Accomplished': '🏆',
+    'Motivated': '💪',
+    'Determined': '🧐',
+    'Confident': '😎',
+  };
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _searchController.text.trim().toLowerCase();
+    final filtered = _feelings
+        .where((f) => f.toLowerCase().contains(q))
+        .toList();
+
+    return SafeArea(
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.72,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(height: 3, color: const Color(0xFFC99843)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'How are you feeling?',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F3F5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                children: [
+                  _FeelingTab(
+                    title: 'Feelings',
+                    isActive: _activeTab == 0,
+                    onTap: () => setState(() => _activeTab = 0),
+                  ),
+                  const SizedBox(width: 16),
+                  _FeelingTab(
+                    title: 'Activities',
+                    isActive: _activeTab == 1,
+                    onTap: () => setState(() => _activeTab = 1),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                style: const TextStyle(color: Colors.black87, fontSize: 14),
+                cursorColor: Colors.black87,
+                decoration: InputDecoration(
+                  hintText: 'Search feelings or activities...',
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF7A7A7A),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF7A7A7A),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFC99843)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFC99843),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                itemCount: (filtered.length / 2).ceil(),
+                itemBuilder: (context, row) {
+                  final leftIndex = row * 2;
+                  final rightIndex = leftIndex + 1;
+                  final left = filtered[leftIndex];
+                  final right = rightIndex < filtered.length
+                      ? filtered[rightIndex]
+                      : null;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _FeelingItem(
+                            emoji: _emojiByFeeling[left] ?? '🙂',
+                            label: left,
+                            isSelected: widget.selectedFeeling == left,
+                            onTap: () => Navigator.of(context).pop(left),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: right == null
+                              ? const SizedBox.shrink()
+                              : _FeelingItem(
+                                  emoji: _emojiByFeeling[right] ?? '🙂',
+                                  label: right,
+                                  isSelected: widget.selectedFeeling == right,
+                                  onTap: () => Navigator.of(context).pop(right),
+                                ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeelingTab extends StatelessWidget {
+  const _FeelingTab({
+    required this.title,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String title;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: isActive ? const Color(0xFF16A34A) : Colors.grey.shade700,
+        ),
+      ),
+    );
+  }
+}
+
+class _FeelingItem extends StatelessWidget {
+  const _FeelingItem({
+    required this.emoji,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected ? const Color(0xFFF3F4F6) : Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationPickerSheet extends StatefulWidget {
+  const _LocationPickerSheet({this.selectedLocation});
+
+  final String? selectedLocation;
+
+  @override
+  State<_LocationPickerSheet> createState() => _LocationPickerSheetState();
+}
+
+class _LocationPickerSheetState extends State<_LocationPickerSheet> {
+  final TextEditingController _searchController = TextEditingController();
+
+  final List<({String city, String region})> _locations = const [
+    (city: 'Aborlan', region: 'Palawan · MIMAROPA Region'),
+    (city: 'Abra De Ilog', region: 'Occidental Mindoro · MIMAROPA Region'),
+    (city: 'Abucay', region: 'Bataan · Region III (Central Luzon)'),
+    (city: 'Abulug', region: 'Cagayan · Region II (Cagayan Valley)'),
+    (city: 'Abuyog', region: 'Leyte · Region VIII (Eastern Visayas)'),
+    (city: 'Bacoor', region: 'Cavite · Region IV-A (CALABARZON)'),
+    (city: 'Cebu City', region: 'Cebu · Region VII (Central Visayas)'),
+    (city: 'Davao City', region: 'Davao del Sur · Region XI (Davao Region)'),
+    (city: 'Iloilo City', region: 'Iloilo · Region VI (Western Visayas)'),
+    (city: 'Quezon City', region: 'Metro Manila · NCR'),
+  ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = _searchController.text.trim().toLowerCase();
+    final filtered = _locations.where((item) {
+      return item.city.toLowerCase().contains(q) ||
+          item.region.toLowerCase().contains(q);
+    }).toList();
+
+    return SafeArea(
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.62,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.location_on_outlined,
+                    color: Color(0xFFF06A6A),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Pick your city or municipality',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F3F5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                style: const TextStyle(color: Colors.black87, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Search cities + municipalities',
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF7A7A7A),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF98A2B3),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFF1B2B2)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFF08A8A),
+                      width: 1.2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFD9DDE3)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListView.separated(
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final item = filtered[index];
+                    final locationLabel = '${item.city} · ${item.region}';
+                    final isSelected = widget.selectedLocation == locationLabel;
+                    return Material(
+                      color: isSelected
+                          ? const Color(0xFFF3F4F6)
+                          : Colors.white,
+                      child: InkWell(
+                        onTap: () => Navigator.of(context).pop(locationLabel),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                                color: Color(0xFF98A2B3),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.city,
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      item.region,
+                                      style: const TextStyle(
+                                        color: Color(0xFF7A7A7A),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
       ),
     );
   }
