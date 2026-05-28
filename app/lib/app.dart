@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'core/theme/app_colors.dart';
 import 'features/auth/presentation/login_screen.dart';
-
+import 'features/home/presentation/home_screen.dart';
 class FarmBuzzApp extends StatelessWidget {
   const FarmBuzzApp({super.key});
 
@@ -25,7 +25,7 @@ class FarmBuzzApp extends StatelessWidget {
       title: 'FarmBuzz App',
       debugShowCheckedModeBanner: false,
       theme: baseTheme,
-      home: const LoginScreen(),
+      home: const HomeScreen(),
     );
   }
 }

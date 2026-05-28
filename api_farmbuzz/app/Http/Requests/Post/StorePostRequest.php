@@ -18,7 +18,7 @@ class StorePostRequest extends FormRequest
             'author_avatar' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'string'],
             'images' => ['nullable', 'array'],
-            'images.*' => ['image', 'max:8192'],
+            'images.*' => ['image', 'max:20480'],
         ];
     }
 

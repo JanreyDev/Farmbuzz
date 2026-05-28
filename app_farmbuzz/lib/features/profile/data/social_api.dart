@@ -1,32 +1,34 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 
 class SocialApi {
   SocialApi();
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) return override;
-    if (Platform.isAndroid) return 'http://167.172.89.188:8083/api';
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
   Future<Map<String, dynamic>> getStatus({
     required String mobileNumber,
     required String targetName,
   }) async {
-    final uri = Uri.parse('$_baseUrl/social/status').replace(queryParameters: {
-      'mobile_number': mobileNumber,
-      'target_name': targetName,
-    });
+    final uri = Uri.parse('$_baseUrl/social/status').replace(
+      queryParameters: {
+        'mobile_number': mobileNumber,
+        'target_name': targetName,
+      },
+    );
     final response = await http.get(uri);
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw SocialApiException(_extractMessage(data, fallback: 'Failed to load follow status.'));
+      throw SocialApiException(
+        _extractMessage(data, fallback: 'Failed to load follow status.'),
+      );
     }
-    return (data['data'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+    return (data['data'] as Map?)?.cast<String, dynamic>() ??
+        <String, dynamic>{};
   }
 
   Future<Map<String, dynamic>> getCounts({
@@ -37,36 +39,57 @@ class SocialApi {
     if (targetName != null && targetName.trim().isNotEmpty) {
       query['target_name'] = targetName.trim();
     }
-    final uri = Uri.parse('$_baseUrl/social/counts').replace(queryParameters: query);
+    final uri = Uri.parse(
+      '$_baseUrl/social/counts',
+    ).replace(queryParameters: query);
     final response = await http.get(uri);
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw SocialApiException(_extractMessage(data, fallback: 'Failed to load social counts.'));
+      throw SocialApiException(
+        _extractMessage(data, fallback: 'Failed to load social counts.'),
+      );
     }
-    return (data['data'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+    return (data['data'] as Map?)?.cast<String, dynamic>() ??
+        <String, dynamic>{};
   }
 
-  Future<void> follow({required String mobileNumber, required String targetName}) async {
+  Future<void> follow({
+    required String mobileNumber,
+    required String targetName,
+  }) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/social/follow'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'mobile_number': mobileNumber, 'target_name': targetName}),
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+        'target_name': targetName,
+      }),
     );
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw SocialApiException(_extractMessage(data, fallback: 'Failed to follow user.'));
+      throw SocialApiException(
+        _extractMessage(data, fallback: 'Failed to follow user.'),
+      );
     }
   }
 
-  Future<void> unfollow({required String mobileNumber, required String targetName}) async {
+  Future<void> unfollow({
+    required String mobileNumber,
+    required String targetName,
+  }) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl/social/follow'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'mobile_number': mobileNumber, 'target_name': targetName}),
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+        'target_name': targetName,
+      }),
     );
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw SocialApiException(_extractMessage(data, fallback: 'Failed to unfollow user.'));
+      throw SocialApiException(
+        _extractMessage(data, fallback: 'Failed to unfollow user.'),
+      );
     }
   }
 
@@ -80,7 +103,10 @@ class SocialApi {
     }
   }
 
-  static String _extractMessage(Map<String, dynamic> data, {required String fallback}) {
+  static String _extractMessage(
+    Map<String, dynamic> data, {
+    required String fallback,
+  }) {
     final message = data['message'];
     if (message is String && message.trim().isNotEmpty) return message;
     return fallback;

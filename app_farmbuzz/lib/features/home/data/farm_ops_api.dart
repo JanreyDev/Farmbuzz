@@ -1,28 +1,27 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 
 class FarmOpsApi {
   FarmOpsApi();
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
-    }
-    if (Platform.isAndroid) {
-      return 'http://167.172.89.188:8083/api';
-    }
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
-  Future<List<Map<String, dynamic>>> getFlock({required String mobileNumber}) async {
-    final uri = Uri.parse('$_baseUrl/flock').replace(queryParameters: {'mobile_number': mobileNumber});
+  Future<List<Map<String, dynamic>>> getFlock({
+    required String mobileNumber,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/flock',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
     final response = await http.get(uri);
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to load flock.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to load flock.'),
+      );
     }
     return _asList(data['data']);
   }
@@ -51,11 +50,16 @@ class FarmOpsApi {
     );
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to add flock batch.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to add flock batch.'),
+      );
     }
   }
 
-  Future<void> deleteFlock({required String mobileNumber, required int id}) async {
+  Future<void> deleteFlock({
+    required String mobileNumber,
+    required int id,
+  }) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl/flock/$id'),
       headers: {'Content-Type': 'application/json'},
@@ -63,27 +67,40 @@ class FarmOpsApi {
     );
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to delete flock batch.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to delete flock batch.'),
+      );
     }
   }
 
-  Future<List<Map<String, dynamic>>> getTeam({required String mobileNumber}) async {
-    final uri = Uri.parse('$_baseUrl/team').replace(queryParameters: {'mobile_number': mobileNumber});
+  Future<List<Map<String, dynamic>>> getTeam({
+    required String mobileNumber,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/team',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
     final response = await http.get(uri);
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to load team.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to load team.'),
+      );
     }
     return _asList(data['data']);
   }
 
-  Future<List<Map<String, dynamic>>> getTeamInviteCandidates({required String mobileNumber}) async {
-    final uri = Uri.parse('$_baseUrl/team/invite-candidates')
-        .replace(queryParameters: {'mobile_number': mobileNumber});
+  Future<List<Map<String, dynamic>>> getTeamInviteCandidates({
+    required String mobileNumber,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/team/invite-candidates',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
     final response = await http.get(uri);
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to load invite candidates.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to load invite candidates.'),
+      );
     }
     return _asList(data['data']);
   }
@@ -108,11 +125,16 @@ class FarmOpsApi {
 
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to save team member.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to save team member.'),
+      );
     }
   }
 
-  Future<void> deleteTeamMember({required String ownerMobileNumber, required int id}) async {
+  Future<void> deleteTeamMember({
+    required String ownerMobileNumber,
+    required int id,
+  }) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl/team/$id'),
       headers: {'Content-Type': 'application/json'},
@@ -120,16 +142,24 @@ class FarmOpsApi {
     );
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to delete team member.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to delete team member.'),
+      );
     }
   }
 
-  Future<Map<String, dynamic>> getReportSummary({required String mobileNumber}) async {
-    final uri = Uri.parse('$_baseUrl/reports/summary').replace(queryParameters: {'mobile_number': mobileNumber});
+  Future<Map<String, dynamic>> getReportSummary({
+    required String mobileNumber,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/reports/summary',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
     final response = await http.get(uri);
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmOpsApiException(_extractMessage(data, fallback: 'Failed to load report summary.'));
+      throw FarmOpsApiException(
+        _extractMessage(data, fallback: 'Failed to load report summary.'),
+      );
     }
     final payload = data['data'];
     if (payload is Map<String, dynamic>) {
@@ -144,7 +174,9 @@ class FarmOpsApi {
     }
     return payload
         .whereType<Map>()
-        .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
+        .map(
+          (item) => item.map((key, value) => MapEntry(key.toString(), value)),
+        )
         .toList();
   }
 
@@ -160,7 +192,10 @@ class FarmOpsApi {
     }
   }
 
-  static String _extractMessage(Map<String, dynamic> data, {required String fallback}) {
+  static String _extractMessage(
+    Map<String, dynamic> data, {
+    required String fallback,
+  }) {
     final message = data['message'];
     if (message is String && message.trim().isNotEmpty) {
       return message;

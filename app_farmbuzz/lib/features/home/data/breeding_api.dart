@@ -1,32 +1,28 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 
 class BreedingApi {
   BreedingApi();
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    if (Platform.isAndroid) {
-      return 'http://167.172.89.188:8083/api';
-    }
-
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
-  Future<List<Map<String, dynamic>>> getCollections({required String mobileNumber}) async {
-    final uri = Uri.parse('$_baseUrl/breeding/collections')
-        .replace(queryParameters: {'mobile_number': mobileNumber});
+  Future<List<Map<String, dynamic>>> getCollections({
+    required String mobileNumber,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/breeding/collections',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
 
     final response = await http.get(uri);
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw BreedingApiException(_extractMessage(data, fallback: 'Failed to load collections.'));
+      throw BreedingApiException(
+        _extractMessage(data, fallback: 'Failed to load collections.'),
+      );
     }
 
     final payload = data['data'];
@@ -36,7 +32,9 @@ class BreedingApi {
 
     return payload
         .whereType<Map>()
-        .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
+        .map(
+          (item) => item.map((key, value) => MapEntry(key.toString(), value)),
+        )
         .toList();
   }
 
@@ -61,7 +59,9 @@ class BreedingApi {
 
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw BreedingApiException(_extractMessage(data, fallback: 'Failed to create collection.'));
+      throw BreedingApiException(
+        _extractMessage(data, fallback: 'Failed to create collection.'),
+      );
     }
 
     final payload = data['data'];
@@ -96,7 +96,9 @@ class BreedingApi {
 
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw BreedingApiException(_extractMessage(data, fallback: 'Failed to update collection.'));
+      throw BreedingApiException(
+        _extractMessage(data, fallback: 'Failed to update collection.'),
+      );
     }
 
     final payload = data['data'];
@@ -107,7 +109,10 @@ class BreedingApi {
     return payload;
   }
 
-  Future<void> deleteCollection({required String mobileNumber, required int id}) async {
+  Future<void> deleteCollection({
+    required String mobileNumber,
+    required int id,
+  }) async {
     final response = await http.delete(
       Uri.parse('$_baseUrl/breeding/collections/$id'),
       headers: {'Content-Type': 'application/json'},
@@ -116,7 +121,9 @@ class BreedingApi {
 
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw BreedingApiException(_extractMessage(data, fallback: 'Failed to delete collection.'));
+      throw BreedingApiException(
+        _extractMessage(data, fallback: 'Failed to delete collection.'),
+      );
     }
   }
 
@@ -133,7 +140,10 @@ class BreedingApi {
     }
   }
 
-  static String _extractMessage(Map<String, dynamic> data, {required String fallback}) {
+  static String _extractMessage(
+    Map<String, dynamic> data, {
+    required String fallback,
+  }) {
     final message = data['message'];
     if (message is String && message.trim().isNotEmpty) {
       return message;

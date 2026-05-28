@@ -1,26 +1,27 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 
 class MessageApi {
   MessageApi();
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) return override;
-    if (Platform.isAndroid) return 'http://167.172.89.188:8083/api';
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
-  Future<List<Map<String, dynamic>>> getConversations({required String mobileNumber}) async {
-    final uri = Uri.parse('$_baseUrl/messages').replace(queryParameters: {
-      'mobile_number': mobileNumber,
-    });
+  Future<List<Map<String, dynamic>>> getConversations({
+    required String mobileNumber,
+  }) async {
+    final uri = Uri.parse(
+      '$_baseUrl/messages',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
     final response = await http.get(uri);
 
     final data = jsonDecode(response.body);
     if (response.statusCode >= 400) {
-      throw MessageApiException(data['message'] ?? 'Failed to load conversations.');
+      throw MessageApiException(
+        data['message'] ?? 'Failed to load conversations.',
+      );
     }
 
     return (data['data'] as List).cast<Map<String, dynamic>>();
@@ -30,10 +31,12 @@ class MessageApi {
     required String mobileNumber,
     required int conversationId,
   }) async {
-    final uri = Uri.parse('$_baseUrl/messages/history').replace(queryParameters: {
-      'mobile_number': mobileNumber,
-      'conversation_id': conversationId.toString(),
-    });
+    final uri = Uri.parse('$_baseUrl/messages/history').replace(
+      queryParameters: {
+        'mobile_number': mobileNumber,
+        'conversation_id': conversationId.toString(),
+      },
+    );
     final response = await http.get(uri);
 
     final data = jsonDecode(response.body);
@@ -59,7 +62,9 @@ class MessageApi {
 
     final data = jsonDecode(response.body);
     if (response.statusCode >= 400) {
-      throw MessageApiException(data['message'] ?? 'Failed to start conversation.');
+      throw MessageApiException(
+        data['message'] ?? 'Failed to start conversation.',
+      );
     }
 
     return data['data']['id'] as int;

@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 
 class StoryApi {
   StoryApi({http.Client? client}) : _client = client ?? http.Client();
@@ -9,16 +9,7 @@ class StoryApi {
   final http.Client _client;
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    if (Platform.isAndroid) {
-      return 'http://167.172.89.188:8083/api';
-    }
-
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
   Future<List<Map<String, dynamic>>> getStories() async {
@@ -35,7 +26,9 @@ class StoryApi {
 
     return payload
         .whereType<Map>()
-        .map((item) => item.map((key, value) => MapEntry(key.toString(), value)))
+        .map(
+          (item) => item.map((key, value) => MapEntry(key.toString(), value)),
+        )
         .toList();
   }
 
@@ -45,9 +38,11 @@ class StoryApi {
     String? textContent,
     String visibility = 'public',
   }) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/stories'))
-      ..fields['mobile_number'] = mobileNumber
-      ..fields['visibility'] = visibility;
+    final request =
+        http.MultipartRequest('POST', Uri.parse('$_baseUrl/stories'))
+          ..headers['Accept'] = 'application/json'
+          ..fields['mobile_number'] = mobileNumber
+          ..fields['visibility'] = visibility;
 
     if (textContent != null && textContent.trim().isNotEmpty) {
       request.fields['text_content'] = textContent.trim();
@@ -62,7 +57,9 @@ class StoryApi {
     final data = _decode(response.body);
 
     if (response.statusCode >= 400) {
-      throw StoryApiException(_extractMessage(data, fallback: 'Failed to create story.'));
+      throw StoryApiException(
+        _extractMessage(data, fallback: 'Failed to create story.'),
+      );
     }
 
     final payload = data['data'];
@@ -86,7 +83,10 @@ class StoryApi {
     }
   }
 
-  static String _extractMessage(Map<String, dynamic> data, {required String fallback}) {
+  static String _extractMessage(
+    Map<String, dynamic> data, {
+    required String fallback,
+  }) {
     final message = data['message'];
     if (message is String && message.trim().isNotEmpty) {
       return message;

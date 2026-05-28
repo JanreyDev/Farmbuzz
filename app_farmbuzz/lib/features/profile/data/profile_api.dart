@@ -1,22 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 
 class ProfileApi {
   ProfileApi();
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    if (Platform.isAndroid) {
-      return 'http://167.172.89.188:8083/api';
-    }
-
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
   Future<Map<String, String>> updateProfile({
@@ -78,10 +69,10 @@ class ProfileApi {
     String? avatarPath,
     String? coverPhotoPath,
   }) async {
-    final request = http.MultipartRequest(
-      'POST',
-      Uri.parse('$_baseUrl/profile/media'),
-    )..fields['mobile_number'] = mobileNumber;
+    final request =
+        http.MultipartRequest('POST', Uri.parse('$_baseUrl/profile/media'))
+          ..headers['Accept'] = 'application/json'
+          ..fields['mobile_number'] = mobileNumber;
 
     if (avatarPath != null && avatarPath.trim().isNotEmpty) {
       request.files.add(
@@ -168,6 +159,11 @@ class ProfileApi {
 
     final rawBody = data['_raw_body'];
     if (rawBody is String && rawBody.trim().isNotEmpty) {
+      final normalized = rawBody.toLowerCase();
+      if (normalized.contains('<html') ||
+          normalized.contains('<!doctype html')) {
+        return fallback;
+      }
       return rawBody;
     }
 

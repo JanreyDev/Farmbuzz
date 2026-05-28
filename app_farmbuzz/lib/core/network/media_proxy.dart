@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:farmbuzz/core/network/api_config.dart';
 
 /// Resolves a raw media URL for use in the app.
 /// Handles absolute URLs, root-relative paths like `/uploads/...`,
@@ -15,22 +15,42 @@ String resolveMediaUrl(String rawUrl) {
   }
 
   if (uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https')) {
-    return trimmed;
+    final normalizedAbsolute = _normalizeUploadsPath(uri);
+    if (_isLoopbackHost(uri.host)) {
+      final base = _mediaBaseUri;
+      return normalizedAbsolute
+          .replace(
+            scheme: base.scheme,
+            host: base.host,
+            port: base.hasPort ? base.port : null,
+          )
+          .toString();
+    }
+    return normalizedAbsolute.toString();
   }
 
   final base = _mediaBaseUri;
-  final normalizedPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+  final rawPath = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+  final normalizedPath = _normalizeUploadsPath(Uri(path: rawPath)).path;
   return base.resolve(normalizedPath).toString();
 }
 
 Uri get _mediaBaseUri {
-  const override = String.fromEnvironment('API_BASE_URL');
-  final rawBase = override.isNotEmpty
-      ? override
-      : (Platform.isAndroid
-            ? 'http://167.172.89.188:8083/api'
-            : 'http://167.172.89.188:8083/api');
-
-  final apiUri = Uri.parse(rawBase);
+  final apiUri = Uri.parse(ApiConfig.baseUrl);
   return apiUri.replace(path: '', query: null, fragment: null);
+}
+
+bool _isLoopbackHost(String host) {
+  final normalized = host.trim().toLowerCase();
+  return normalized == 'localhost' ||
+      normalized == '127.0.0.1' ||
+      normalized == '10.0.2.2';
+}
+
+Uri _normalizeUploadsPath(Uri uri) {
+  final path = uri.path;
+  if (path.startsWith('/api/uploads/')) {
+    return uri.replace(path: path.replaceFirst('/api/uploads/', '/uploads/'));
+  }
+  return uri;
 }

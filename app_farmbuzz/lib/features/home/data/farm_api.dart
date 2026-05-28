@@ -1,27 +1,19 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 
 class FarmApi {
   FarmApi();
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    if (Platform.isAndroid) {
-      return 'http://167.172.89.188:8083/api';
-    }
-
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
   Future<Map<String, dynamic>?> getFarm({required String mobileNumber}) async {
-    final uri = Uri.parse('$_baseUrl/farm')
-        .replace(queryParameters: {'mobile_number': mobileNumber});
+    final uri = Uri.parse(
+      '$_baseUrl/farm',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
 
     final response = await http.get(uri);
     if (response.statusCode >= 400) {
@@ -57,7 +49,9 @@ class FarmApi {
 
     final data = _decode(response.body);
     if (response.statusCode >= 400) {
-      throw FarmApiException(_extractMessage(data, fallback: 'Failed to save farm.'));
+      throw FarmApiException(
+        _extractMessage(data, fallback: 'Failed to save farm.'),
+      );
     }
 
     final payload = data['data'];
@@ -72,9 +66,7 @@ class FarmApi {
     final response = await http.delete(
       Uri.parse('$_baseUrl/farm'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'mobile_number': mobileNumber,
-      }),
+      body: jsonEncode({'mobile_number': mobileNumber}),
     );
 
     final data = _decode(response.body);
@@ -98,7 +90,10 @@ class FarmApi {
     }
   }
 
-  static String _extractMessage(Map<String, dynamic> data, {required String fallback}) {
+  static String _extractMessage(
+    Map<String, dynamic> data, {
+    required String fallback,
+  }) {
     final message = data['message'];
     if (message is String && message.trim().isNotEmpty) {
       return message;

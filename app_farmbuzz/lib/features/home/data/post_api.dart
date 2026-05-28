@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:farmbuzz/core/network/api_config.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
 
 class PostApi {
@@ -10,16 +11,7 @@ class PostApi {
   final http.Client _client;
 
   static String get _baseUrl {
-    const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    if (Platform.isAndroid) {
-      return 'http://167.172.89.188:8083/api';
-    }
-
-    return 'http://167.172.89.188:8083/api';
+    return ApiConfig.baseUrl;
   }
 
   Future<List<Map<String, dynamic>>> getPosts({
@@ -59,6 +51,7 @@ class PostApi {
     required List<String> imagePaths,
   }) async {
     final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/posts'))
+      ..headers['Accept'] = 'application/json'
       ..fields['author_name'] = authorName
       ..fields['author_avatar'] = authorAvatar
       ..fields['content'] = content;
@@ -242,6 +235,11 @@ class PostApi {
 
     final rawBody = data['_raw_body'];
     if (rawBody is String && rawBody.trim().isNotEmpty) {
+      final normalized = rawBody.toLowerCase();
+      if (normalized.contains('<html') ||
+          normalized.contains('<!doctype html')) {
+        return fallback;
+      }
       return rawBody;
     }
 

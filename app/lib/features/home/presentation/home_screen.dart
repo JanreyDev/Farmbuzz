@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../clubs/presentation/clubs_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -121,10 +122,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTabPlaceholder() {
+    if (_selectedIndex == 3) {
+      return const Column(
+        children: [
+          _HomeHeader(),
+          Expanded(child: ClubsScreen()),
+        ],
+      );
+    }
+
     final labels = <int, String>{
       1: 'My Farm',
       2: 'Bantay AI',
-      3: 'Clubs',
       4: 'Rank',
     };
     return Column(

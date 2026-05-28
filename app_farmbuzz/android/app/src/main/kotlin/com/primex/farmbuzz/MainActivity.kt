@@ -1,4 +1,4 @@
-package com.example.farmbuzz
+package com.primex.farmbuzz
 
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.RenderMode

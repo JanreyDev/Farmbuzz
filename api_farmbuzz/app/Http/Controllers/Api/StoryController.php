@@ -36,7 +36,7 @@ class StoryController extends Controller
     {
         $validated = $request->validate([
             'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
-            'image' => ['nullable', 'image', 'max:8192'],
+            'image' => ['nullable', 'image', 'max:20480'],
             'text_content' => ['nullable', 'string', 'max:5000'],
             'visibility' => ['nullable', 'in:public,followers'],
         ]);
