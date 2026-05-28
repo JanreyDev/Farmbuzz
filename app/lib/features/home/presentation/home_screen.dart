@@ -6,14 +6,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/presentation/login_screen.dart';
 import '../../clubs/presentation/clubs_screen.dart';
 import 'my_farm_setup_screen.dart';
 import 'my_farm_dashboard_screen.dart';
+import 'profile_screen.dart';
 import 'rank_screen.dart';
 
 void _showBottomToast(BuildContext context, String message) {
   final overlay = Overlay.of(context);
-  if (overlay == null) return;
 
   late OverlayEntry entry;
   entry = OverlayEntry(
@@ -106,6 +107,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
+        drawer: _HomeDrawer(
+          onNavigateTab: (index) {
+            setState(() => _selectedIndex = index);
+          },
+        ),
         body: _selectedIndex == 0 ? _buildHomeFeed() : _buildTabPlaceholder(),
         floatingActionButton: (_selectedIndex == 2 || isKeyboardOpen)
             ? null
@@ -146,10 +152,8 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(child: _bottomNavItem(1, Icons.agriculture, 'My Farm')),
               if (_selectedIndex == 2)
                 GestureDetector(
-                  onTap: () => _showBottomToast(
-                    context,
-                    'AI shortcuts coming next.',
-                  ),
+                  onTap: () =>
+                      _showBottomToast(context, 'AI shortcuts coming next.'),
                   child: Container(
                     width: 50,
                     height: 50,
@@ -329,7 +333,7 @@ class _HomeHeader extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.menu, color: Colors.black87),
             onPressed: () {
-              _showBottomToast(context, 'Menu is UI-only for now.');
+              Scaffold.of(context).openDrawer();
             },
           ),
           Image.asset(
@@ -418,6 +422,233 @@ class _HeaderIconWithBadge extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _HomeDrawer extends StatelessWidget {
+  const _HomeDrawer({required this.onNavigateTab});
+
+  final ValueChanged<int> onNavigateTab;
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.84,
+      backgroundColor: const Color(0xFFF8FAFC),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF374151),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      'BF',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                ProfileScreen(onNavigateTab: onNavigateTab),
+                          ),
+                        );
+                      },
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Bueno's Farm",
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'View Profile',
+                            style: TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _MenuItemTile(
+                    icon: LucideIcons.messageCircle,
+                    title: 'Messages',
+                    subtitle: 'Open your inbox and chats',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const _MessagesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _MenuItemTile(
+                    icon: LucideIcons.bell,
+                    title: 'Notifications',
+                    subtitle: 'See mentions and updates',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const _NotificationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _MenuItemTile(
+                    icon: LucideIcons.settings,
+                    title: 'Settings',
+                    subtitle: 'App and account preferences',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _showBottomToast(context, 'Settings screen coming next.');
+                    },
+                  ),
+                  _MenuItemTile(
+                    icon: LucideIcons.user,
+                    title: 'Profile',
+                    subtitle: 'View and manage your profile',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              ProfileScreen(onNavigateTab: onNavigateTab),
+                        ),
+                      );
+                    },
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(14, 10, 14, 8),
+                    child: Divider(height: 1),
+                  ),
+                  _MenuItemTile(
+                    icon: LucideIcons.logOut,
+                    title: 'Logout',
+                    subtitle: 'Sign out from this account',
+                    danger: true,
+                    onTap: () async {
+                      Navigator.of(context).pop();
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.clear();
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const LoginScreen(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuItemTile extends StatelessWidget {
+  const _MenuItemTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.danger = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = danger ? const Color(0xFFDC2626) : const Color(0xFF374151);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: accent, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: danger ? const Color(0xFFDC2626) : Colors.black87,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
+          ],
+        ),
+      ),
     );
   }
 }
