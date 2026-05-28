@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../clubs/presentation/clubs_screen.dart';
 import 'my_farm_setup_screen.dart';
 import 'my_farm_dashboard_screen.dart';
+import 'rank_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -204,6 +205,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
           ),
+        ],
+      );
+    }
+
+    if (_selectedIndex == 4) {
+      return const Column(
+        children: [
+          _HomeHeader(),
+          Expanded(child: RankScreen()),
         ],
       );
     }
