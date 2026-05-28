@@ -12,12 +12,6 @@
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="true">
-        <meta-data
-            android:name="io.flutter.embedding.android.EnableImpeller"
-            android:value="false" />
-        <meta-data
-            android:name="io.flutter.embedding.android.EnableFlutterSoftwareRendering"
-            android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
