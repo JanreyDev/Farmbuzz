@@ -91,6 +91,41 @@ class HeritageLine {
   }
 }
 
+class FeaturedBird {
+  const FeaturedBird({
+    required this.id,
+    required this.name,
+    required this.heritageLine,
+    required this.ageLabel,
+    required this.sex,
+    required this.badge,
+    this.imageUrl,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String name;
+  final String heritageLine;
+  final String ageLabel;
+  final String sex;
+  final String badge;
+  final String? imageUrl;
+  final String createdAt;
+
+  factory FeaturedBird.fromJson(Map<String, dynamic> json) {
+    return FeaturedBird(
+      id: (json['id'] as int?) ?? 0,
+      name: (json['name'] as String?) ?? '',
+      heritageLine: (json['heritage_line'] as String?) ?? '',
+      ageLabel: (json['age_label'] as String?) ?? '',
+      sex: (json['sex'] as String?) ?? '',
+      badge: (json['badge'] as String?) ?? '',
+      imageUrl: json['image_url'] as String?,
+      createdAt: (json['created_at'] as String?) ?? '',
+    );
+  }
+}
+
 // ── API class ────────────────────────────────────────────────────────────────
 
 class FarmApi {
@@ -352,6 +387,129 @@ class FarmApi {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw FarmApiException(
         _extractMessage(body, fallback: 'Failed to delete heritage line.'),
+      );
+    }
+  }
+
+  Future<List<FeaturedBird>> fetchFeaturedBirds({
+    required String mobileNumber,
+  }) async {
+    final uri = _buildUri(
+      '/farm/featured-birds',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
+    final response = await _client.get(uri, headers: _jsonHeaders);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to load featured birds.'),
+      );
+    }
+    final raw = body['data'];
+    if (raw is! List) return const <FeaturedBird>[];
+    return raw
+        .whereType<Map>()
+        .map((e) => FeaturedBird.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<FeaturedBird> addFeaturedBird({
+    required String mobileNumber,
+    required String name,
+    String? heritageLine,
+    String? ageLabel,
+    String? sex,
+    String? badge,
+    File? image,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      _buildUri('/farm/featured-birds'),
+    );
+    request.fields['mobile_number'] = mobileNumber;
+    request.fields['name'] = name;
+    if (heritageLine != null) request.fields['heritage_line'] = heritageLine;
+    if (ageLabel != null) request.fields['age_label'] = ageLabel;
+    if (sex != null) request.fields['sex'] = sex;
+    if (badge != null) request.fields['badge'] = badge;
+    if (image != null) {
+      final ext = image.path.split('.').last.toLowerCase();
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          image.path,
+          contentType: MediaType('image', ext),
+        ),
+      );
+    }
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to add featured bird.'),
+      );
+    }
+    return FeaturedBird.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  Future<FeaturedBird> updateFeaturedBird({
+    required int id,
+    required String mobileNumber,
+    required String name,
+    String? heritageLine,
+    String? ageLabel,
+    String? sex,
+    String? badge,
+    File? image,
+    bool removeImage = false,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      _buildUri('/farm/featured-birds/$id'),
+    );
+    request.fields['mobile_number'] = mobileNumber;
+    request.fields['name'] = name;
+    request.fields['remove_image'] = removeImage ? '1' : '0';
+    if (heritageLine != null) request.fields['heritage_line'] = heritageLine;
+    if (ageLabel != null) request.fields['age_label'] = ageLabel;
+    if (sex != null) request.fields['sex'] = sex;
+    if (badge != null) request.fields['badge'] = badge;
+    if (image != null) {
+      final ext = image.path.split('.').last.toLowerCase();
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'image',
+          image.path,
+          contentType: MediaType('image', ext),
+        ),
+      );
+    }
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to update featured bird.'),
+      );
+    }
+    return FeaturedBird.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  Future<void> deleteFeaturedBird({
+    required int id,
+    required String mobileNumber,
+  }) async {
+    final response = await _client.delete(
+      _buildUri('/farm/featured-birds/$id'),
+      headers: _jsonHeaders,
+      body: jsonEncode({'mobile_number': mobileNumber}),
+    );
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to delete featured bird.'),
       );
     }
   }

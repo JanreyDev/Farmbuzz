@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/network/api_config.dart';
@@ -33,9 +34,11 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   String _ownerName = '';
   String _mobileNumber = '';
   List<HeritageLine> _heritageLines = const <HeritageLine>[];
+  List<FeaturedBird> _featuredBirds = const <FeaturedBird>[];
 
   bool _isLoading = true;
   bool _isHeritageLoading = true;
+  bool _isFeaturedBirdsLoading = true;
 
   @override
   void initState() {
@@ -73,7 +76,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             _ownerName = profile.ownerName;
             _isLoading = false;
           });
-          await _loadHeritageLines();
+          await Future.wait<void>([_loadHeritageLines(), _loadFeaturedBirds()]);
           return;
         }
       }
@@ -94,7 +97,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             : (prefs.getString('farm_cover_photo') ?? '');
         _isLoading = false;
       });
-      await _loadHeritageLines();
+      await Future.wait<void>([_loadHeritageLines(), _loadFeaturedBirds()]);
     } catch (_) {
       setState(() {
         _farmName = FallbackFarmStore.farmName.isEmpty
@@ -106,6 +109,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
         _startYear = FallbackFarmStore.farmYear;
         _isLoading = false;
         _isHeritageLoading = false;
+        _isFeaturedBirdsLoading = false;
       });
     }
   }
@@ -135,6 +139,35 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       setState(() {
         _heritageLines = const <HeritageLine>[];
         _isHeritageLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadFeaturedBirds() async {
+    if (_mobileNumber.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _featuredBirds = const <FeaturedBird>[];
+          _isFeaturedBirdsLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final birds = await _farmApi.fetchFeaturedBirds(
+        mobileNumber: _mobileNumber,
+      );
+      if (!mounted) return;
+      setState(() {
+        _featuredBirds = birds;
+        _isFeaturedBirdsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _featuredBirds = const <FeaturedBird>[];
+        _isFeaturedBirdsLoading = false;
       });
     }
   }
@@ -204,34 +237,40 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Green Header Card ──
+              // â”€â”€ Green Header Card â”€â”€
               _buildHeaderCard(),
 
               const SizedBox(height: 16),
 
-              // ── Statistics Row ──
+              // â”€â”€ Statistics Row â”€â”€
               _buildStatsRow(),
 
               const SizedBox(height: 24),
 
-              // ── Section Title ──
-              _buildSectionHeader('HERITAGE LINES'),
+              // â”€â”€ Section Title â”€â”€
+              _buildSectionHeader(
+                'HERITAGE LINES',
+                onManageTap: _openHeritageManager,
+              ),
 
               const SizedBox(height: 12),
 
-              // ── Heritage Lines ──
+              // â”€â”€ Heritage Lines â”€â”€
               _buildHeritageLinesSection(),
 
               const SizedBox(height: 24),
 
-              // ── Featured Birds ──
-              _buildSectionHeader('FEATURED BIRDS'),
+              // â”€â”€ Featured Birds â”€â”€
+              _buildSectionHeader(
+                'FEATURED BIRDS',
+                onManageTap: _openFeaturedBirdsManager,
+              ),
               const SizedBox(height: 12),
               _buildFeaturedBirdsCard(),
 
               const SizedBox(height: 24),
 
-              // ── Our Story ──
+              // â”€â”€ Our Story â”€â”€
               _buildInfoCard(
                 title: 'OUR STORY',
                 body: _story.isNotEmpty
@@ -287,7 +326,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
 
               const SizedBox(height: 10),
 
-              // ── Achievements ──
+              // â”€â”€ Achievements â”€â”€
               _buildInfoCard(
                 title: 'ACHIEVEMENTS',
                 body: 'Add your show awards and recognitions from Settings.',
@@ -295,21 +334,21 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
 
               const SizedBox(height: 10),
 
-              // ── Recent Activity ──
+              // â”€â”€ Recent Activity â”€â”€
               _buildInfoCard(
                 title: 'RECENT ACTIVITY',
                 body:
-                    'Add birds, log updates — activity appears here once your farm is published.',
+                    'Add birds, log updates â€” activity appears here once your farm is published.',
               ),
 
               const SizedBox(height: 24),
 
-              // ── Farm Gallery ──
+              // â”€â”€ Farm Gallery â”€â”€
               _buildFarmGalleryCard(),
 
               const SizedBox(height: 10),
 
-              // ── Promo Card ──
+              // â”€â”€ Promo Card â”€â”€
               _buildPromoCard(),
 
               const SizedBox(height: 24),
@@ -459,7 +498,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                         if (_tagline.isNotEmpty) {
                           subtitleParts.add(_tagline);
                         }
-                        final subtitleText = subtitleParts.join(' · ');
+                        final subtitleText = subtitleParts.join(' Â· ');
                         if (subtitleText.isEmpty) {
                           return const SizedBox.shrink();
                         }
@@ -611,7 +650,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        // Row 3: Years Operating — full width
+        // Row 3: Years Operating â€” full width
         _buildStatCard(
           icon: LucideIcons.calendar,
           value: '$_yearsOperating',
@@ -709,7 +748,10 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(
+    String title, {
+    required VoidCallback onManageTap,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -729,7 +771,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ],
         ),
         GestureDetector(
-          onTap: _openHeritageManager,
+          onTap: onManageTap,
           child: const Text(
             'Manage >',
             style: TextStyle(
@@ -764,60 +806,40 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFDDE7DE)),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 14,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ..._heritageLines
-              .take(3)
-              .map(
-                (line) => Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFAF8F4),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFEDE7DD)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        line.name,
-                        style: const TextStyle(
-                          color: Color(0xFF111827),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                      ),
-                      if (line.description.trim().isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          line.description,
-                          style: const TextStyle(
-                            color: Color(0xFF6B7280),
-                            fontSize: 11,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-          if (_heritageLines.length > 3)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _heritageLines.length > 4 ? 4 : _heritageLines.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1.2,
+            ),
+            itemBuilder: (context, index) =>
+                _buildHeritagePreviewCard(_heritageLines[index]),
+          ),
+          if (_heritageLines.length > 4)
             Padding(
-              padding: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.only(top: 4, left: 2),
               child: Text(
-                '+${_heritageLines.length - 3} more',
+                '+${_heritageLines.length - 4} more',
                 style: const TextStyle(
                   color: AppColors.accentGreen,
                   fontSize: 11,
@@ -841,6 +863,110 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeritagePreviewCard(HeritageLine line) {
+    final traitItems = line.traits
+        .split(',')
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .take(4)
+        .toList();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBF8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDCE8DE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            line.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF111827),
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+            ),
+          ),
+          if (line.originFocus.trim().isNotEmpty) ...[
+            const SizedBox(height: 5),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 1),
+                  child: Icon(
+                    Icons.explore_outlined,
+                    size: 13,
+                    color: AppColors.accentGreen,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    line.originFocus,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF475569),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (traitItems.isNotEmpty) ...[
+            const SizedBox(height: 7),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: traitItems
+                  .take(3)
+                  .map(
+                    (item) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF5EC),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: const Color(0xFFD2E4D4)),
+                      ),
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          color: Color(0xFF1F5134),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+          if (line.generationsBred != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Generations bred: ${line.generationsBred}',
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -872,7 +998,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Showcase your signature breeding lines — the heritage your farm is known for.',
+            'Showcase your signature breeding lines â€” the heritage your farm is known for.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -931,69 +1057,167 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     }
   }
 
-  // ── Featured Birds ─────────────────────────────────────────────────────────
-  Widget _buildFeaturedBirdsCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF8F4),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+  Future<void> _openFeaturedBirdsManager() async {
+    if (_mobileNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login again to manage featured birds.'),
+        ),
+      );
+      return;
+    }
+
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (context) =>
+            _FeaturedBirdsScreen(mobileNumber: _mobileNumber, api: _farmApi),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF0FDF4),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              LucideIcons.bird,
-              size: 20,
-              color: AppColors.accentGreen,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Spotlight your best birds — the ones you\'re proudest of.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 18),
-          ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Feature birds form coming soon!'),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.accentGreen,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(50),
+    );
+
+    if (changed == true) {
+      await _loadFeaturedBirds();
+    }
+  }
+
+  // â”€â”€ Featured Birds â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildFeaturedBirdsCard() {
+    if (_isFeaturedBirdsLoading) {
+      return Container(
+        width: double.infinity,
+        height: 170,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAF8F4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: const CircularProgressIndicator(color: AppColors.accentGreen),
+      );
+    }
+
+    if (_featuredBirds.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAF8F4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF0FDF4),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.bird,
+                size: 20,
+                color: AppColors.accentGreen,
               ),
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Feature birds',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            const SizedBox(height: 14),
+            Text(
+              'Spotlight your best birds - the ones you\'re proudest of.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton(
+              onPressed: _openFeaturedBirdsManager,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentGreen,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
                 ),
-                SizedBox(width: 6),
-                Icon(LucideIcons.chevronRight, size: 12),
-              ],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Add featured birds',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 6),
+                  Icon(LucideIcons.chevronRight, size: 12),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDDE7DE)),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 14,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _featuredBirds.length > 4 ? 4 : _featuredBirds.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.93,
+            ),
+            itemBuilder: (context, index) =>
+                _buildFeaturedBirdPreview(_featuredBirds[index]),
+          ),
+          if (_featuredBirds.length > 4)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 2),
+              child: Text(
+                '+${_featuredBirds.length - 4} more',
+                style: const TextStyle(
+                  color: AppColors.accentGreen,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _openFeaturedBirdsManager,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.accentGreen,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                minimumSize: const Size(0, 28),
+              ),
+              child: const Text(
+                'Manage featured birds',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
@@ -1001,7 +1225,69 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     );
   }
 
-  // ── Info Card (Our Story / Achievements / Recent Activity) ──────────────────
+  Widget _buildFeaturedBirdPreview(FeaturedBird bird) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBF8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDCE8DE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE9F2EA),
+                borderRadius: BorderRadius.circular(10),
+                image: (bird.imageUrl ?? '').trim().isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(bird.imageUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: (bird.imageUrl ?? '').trim().isEmpty
+                  ? const Center(
+                      child: Icon(
+                        LucideIcons.image,
+                        size: 20,
+                        color: Color(0xFF8FA39A),
+                      ),
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            bird.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if (bird.heritageLine.trim().isNotEmpty)
+            Text(
+              bird.heritageLine,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Info Card (Our Story / Achievements / Recent Activity)
   Widget _buildInfoCard({
     required String title,
     required String body,
@@ -1048,7 +1334,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     );
   }
 
-  // ── Farm Gallery ─────────────────────────────────────────────────────────────
+  // â”€â”€ Farm Gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildFarmGalleryCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1127,7 +1413,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     );
   }
 
-  // ── Promo Card ───────────────────────────────────────────────────────────────
+  // â”€â”€ Promo Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildPromoCard() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1259,6 +1545,8 @@ class _HeritageLinesScreenState extends State<_HeritageLinesScreen> {
   Future<void> _addLine() async {
     final result = await _showLineEditor();
     if (result == null) return;
+    if (!mounted) return;
+    await Future<void>.delayed(Duration.zero);
     try {
       await widget.api.addHeritageLine(
         mobileNumber: widget.mobileNumber,
@@ -1281,6 +1569,8 @@ class _HeritageLinesScreenState extends State<_HeritageLinesScreen> {
   Future<void> _editLine(HeritageLine line) async {
     final result = await _showLineEditor(line: line);
     if (result == null) return;
+    if (!mounted) return;
+    await Future<void>.delayed(Duration.zero);
     try {
       await widget.api.updateHeritageLine(
         id: line.id,
@@ -1337,234 +1627,10 @@ class _HeritageLinesScreenState extends State<_HeritageLinesScreen> {
   }
 
   Future<_HeritageLineFormData?> _showLineEditor({HeritageLine? line}) async {
-    final nameController = TextEditingController(text: line?.name ?? '');
-    final originController = TextEditingController(
-      text: line?.originFocus ?? '',
-    );
-    final traitsController = TextEditingController(text: line?.traits ?? '');
-    final generationsController = TextEditingController(
-      text: line?.generationsBred?.toString() ?? '',
-    );
-    try {
-      return await showDialog<_HeritageLineFormData>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 24,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFFAFCFA),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFD4E3D6)),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x29000000),
-                  blurRadius: 26,
-                  offset: Offset(0, 14),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: <Color>[Color(0xFF0E6B3A), Color(0xFF1A8A4E)],
-                    ),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.17),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.eco_outlined,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          line == null
-                              ? 'Add Heritage Line'
-                              : 'Edit Heritage Line',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => Navigator.of(context).pop(),
-                        borderRadius: BorderRadius.circular(100),
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.16),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                  child: Text(
-                    'Save key details of this bloodline so your team can track it across devices.',
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 12,
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-                  child: TextField(
-                    controller: nameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _heritageInputDecoration(
-                      label: 'Line name',
-                      hint: 'Line name (e.g. Mountain Native Line)',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-                  child: TextField(
-                    controller: originController,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: _heritageInputDecoration(
-                      label: 'Origin or focus',
-                      hint: 'Origin or focus (e.g. High egg yield, hardy)',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-                  child: TextField(
-                    controller: traitsController,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: _heritageInputDecoration(
-                      label: 'Traits',
-                      hint: 'Traits, comma-separated (e.g. Hardy, Calm, Heavy)',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
-                  child: TextField(
-                    controller: generationsController,
-                    keyboardType: TextInputType.number,
-                    decoration: _heritageInputDecoration(
-                      label: 'Generations bred',
-                      hint: 'Generations bred (optional)',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.accentGreen,
-                          ),
-                          onPressed: () {
-                            final name = nameController.text.trim();
-                            if (name.isEmpty) {
-                              return;
-                            }
-                            final parsedGen = int.tryParse(
-                              generationsController.text.trim(),
-                            );
-                            Navigator.of(context).pop(
-                              _HeritageLineFormData(
-                                name: name,
-                                originFocus: originController.text.trim(),
-                                traits: traitsController.text.trim(),
-                                generationsBred: parsedGen,
-                              ),
-                            );
-                          },
-                          child: const Text('Save'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } finally {
-      nameController.dispose();
-      originController.dispose();
-      traitsController.dispose();
-      generationsController.dispose();
-    }
-  }
-
-  InputDecoration _heritageInputDecoration({
-    required String label,
-    required String hint,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFF8A9590), fontSize: 13),
-      labelStyle: const TextStyle(
-        color: Color(0xFF1F5134),
-        fontWeight: FontWeight.w700,
-      ),
-      filled: true,
-      fillColor: Colors.white,
-      isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFD4DDD4)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.accentGreen, width: 1.5),
-      ),
+    return showDialog<_HeritageLineFormData>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _HeritageLineEditorDialog(line: line),
     );
   }
 
@@ -1614,88 +1680,191 @@ class _HeritageLinesScreenState extends State<_HeritageLinesScreen> {
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
               itemBuilder: (context, index) {
                 final line = _lines[index];
+                final traitItems = line.traits
+                    .split(',')
+                    .map((item) => item.trim())
+                    .where((item) => item.isNotEmpty)
+                    .toList();
                 return Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFDCE7DE)),
+                    boxShadow: const <BoxShadow>[
+                      BoxShadow(
+                        color: Color(0x12000000),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              line.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF111827),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF3F8F3),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F6B3A),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                'Line ${index + 1}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () => _editLine(line),
-                            icon: const Icon(Icons.edit_outlined, size: 18),
-                            tooltip: 'Edit',
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          IconButton(
-                            onPressed: () => _deleteLine(line),
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              size: 18,
-                              color: Color(0xFFDC2626),
+                            const Spacer(),
+                            _buildCardActionButton(
+                              icon: Icons.edit_outlined,
+                              tooltip: 'Edit',
+                              color: const Color(0xFF0F6B3A),
+                              onPressed: () => _editLine(line),
                             ),
-                            tooltip: 'Delete',
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ],
+                            const SizedBox(width: 6),
+                            _buildCardActionButton(
+                              icon: Icons.delete_outline,
+                              tooltip: 'Delete',
+                              color: const Color(0xFFDC2626),
+                              onPressed: () => _deleteLine(line),
+                            ),
+                          ],
+                        ),
                       ),
-                      if (line.description.trim().isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            line.description,
-                            style: const TextStyle(
-                              color: Color(0xFF6B7280),
-                              fontSize: 12,
-                              height: 1.35,
-                            ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                        child: Text(
+                          line.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            fontSize: 15,
                           ),
                         ),
+                      ),
                       if (line.originFocus.trim().isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            'Origin/Focus: ${line.originFocus}',
-                            style: const TextStyle(
-                              color: Color(0xFF374151),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 1),
+                                child: Icon(
+                                  Icons.explore_outlined,
+                                  size: 14,
+                                  color: Color(0xFF0F6B3A),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  line.originFocus,
+                                  style: const TextStyle(
+                                    color: Color(0xFF334155),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      if (line.traits.trim().isNotEmpty)
+                      if (traitItems.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            'Traits: ${line.traits}',
-                            style: const TextStyle(
-                              color: Color(0xFF4B5563),
-                              fontSize: 11,
-                            ),
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: traitItems
+                                .map(
+                                  (item) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF7F0),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: const Color(0xFFD2E4D4),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      item,
+                                      style: const TextStyle(
+                                        color: Color(0xFF1F5134),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                           ),
                         ),
                       if (line.generationsBred != null)
                         Padding(
-                          padding: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.layers_outlined,
+                                  size: 14,
+                                  color: Color(0xFF475569),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Generations bred: ${line.generationsBred}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF475569),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (line.description.trim().isNotEmpty &&
+                          line.description.trim() != line.originFocus.trim())
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
                           child: Text(
-                            'Generations bred: ${line.generationsBred}',
+                            line.description,
                             style: const TextStyle(
-                              color: Color(0xFF4B5563),
-                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -1712,6 +1881,31 @@ class _HeritageLinesScreenState extends State<_HeritageLinesScreen> {
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Add New Line'),
+      ),
+    );
+  }
+
+  Widget _buildCardActionButton({
+    required IconData icon,
+    required String tooltip,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
       ),
     );
   }
@@ -1734,5 +1928,987 @@ class _HeritageLineFormData {
     if (originFocus.isNotEmpty) return originFocus;
     if (traits.isNotEmpty) return traits;
     return '';
+  }
+}
+
+class _HeritageLineEditorDialog extends StatefulWidget {
+  const _HeritageLineEditorDialog({required this.line});
+
+  final HeritageLine? line;
+
+  @override
+  State<_HeritageLineEditorDialog> createState() =>
+      _HeritageLineEditorDialogState();
+}
+
+class _HeritageLineEditorDialogState extends State<_HeritageLineEditorDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _originController;
+  late final TextEditingController _traitsController;
+  late final TextEditingController _generationsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.line?.name ?? '');
+    _originController = TextEditingController(
+      text: widget.line?.originFocus ?? '',
+    );
+    _traitsController = TextEditingController(text: widget.line?.traits ?? '');
+    _generationsController = TextEditingController(
+      text: widget.line?.generationsBred?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _originController.dispose();
+    _traitsController.dispose();
+    _generationsController.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required String hint,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      hintStyle: const TextStyle(color: Color(0xFF8A9590), fontSize: 13),
+      labelStyle: const TextStyle(
+        color: Color(0xFF1F5134),
+        fontWeight: FontWeight.w700,
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFD4DDD4)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.accentGreen, width: 1.5),
+      ),
+    );
+  }
+
+  void _save() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    final parsedGen = int.tryParse(_generationsController.text.trim());
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pop(
+      _HeritageLineFormData(
+        name: name,
+        originFocus: _originController.text.trim(),
+        traits: _traitsController.text.trim(),
+        generationsBred: parsedGen,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final line = widget.line;
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAFCFA),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFD4E3D6)),
+          boxShadow: const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x29000000),
+              blurRadius: 26,
+              offset: Offset(0, 14),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: <Color>[Color(0xFF0E6B3A), Color(0xFF1A8A4E)],
+                ),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.17),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.eco_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      line == null ? 'Add Heritage Line' : 'Edit Heritage Line',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(100),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+              child: Text(
+                'Save key details of this bloodline so your team can track it across devices.',
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+              child: TextField(
+                controller: _nameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: _inputDecoration(
+                  label: 'Line name',
+                  hint: 'Line name (e.g. Mountain Native Line)',
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+              child: TextField(
+                controller: _originController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: _inputDecoration(
+                  label: 'Origin or focus',
+                  hint: 'Origin or focus (e.g. High egg yield, hardy)',
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+              child: TextField(
+                controller: _traitsController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: _inputDecoration(
+                  label: 'Traits',
+                  hint: 'Traits, comma-separated (e.g. Hardy, Calm, Heavy)',
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+              child: TextField(
+                controller: _generationsController,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration(
+                  label: 'Generations bred',
+                  hint: 'Generations bred (optional)',
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accentGreen,
+                      ),
+                      onPressed: _save,
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedBirdsScreen extends StatefulWidget {
+  const _FeaturedBirdsScreen({required this.mobileNumber, required this.api});
+
+  final String mobileNumber;
+  final FarmApi api;
+
+  @override
+  State<_FeaturedBirdsScreen> createState() => _FeaturedBirdsScreenState();
+}
+
+class _FeaturedBirdsScreenState extends State<_FeaturedBirdsScreen> {
+  bool _isLoading = true;
+  bool _changed = false;
+  List<FeaturedBird> _birds = const <FeaturedBird>[];
+
+  static const List<_FeaturedOption> _sexOptions = <_FeaturedOption>[
+    _FeaturedOption('male', 'Male'),
+    _FeaturedOption('female', 'Female'),
+    _FeaturedOption('unknown', 'Unknown'),
+  ];
+
+  static const List<_FeaturedOption> _badgeOptions = <_FeaturedOption>[
+    _FeaturedOption('no_badge', 'No badge'),
+    _FeaturedOption('champion_show', 'Champion of Show'),
+    _FeaturedOption('breeder', 'Breeder'),
+    _FeaturedOption('top_hen', 'Top Hen'),
+    _FeaturedOption('rising_star', 'Rising Star'),
+    _FeaturedOption('foundation', 'Foundation'),
+    _FeaturedOption('signature', 'Signature'),
+    _FeaturedOption('retired', 'Retired'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _isLoading = true);
+    try {
+      final birds = await widget.api.fetchFeaturedBirds(
+        mobileNumber: widget.mobileNumber,
+      );
+      if (!mounted) return;
+      setState(() {
+        _birds = birds;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _addBird() async {
+    final result = await _showBirdEditor();
+    if (result == null) return;
+    if (!mounted) return;
+    await Future<void>.delayed(Duration.zero);
+    try {
+      await widget.api.addFeaturedBird(
+        mobileNumber: widget.mobileNumber,
+        name: result.name,
+        heritageLine: result.heritageLine,
+        ageLabel: result.ageLabel,
+        sex: result.sex,
+        badge: result.badge,
+        image: result.imageFile,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _editBird(FeaturedBird bird) async {
+    final result = await _showBirdEditor(bird: bird);
+    if (result == null) return;
+    if (!mounted) return;
+    await Future<void>.delayed(Duration.zero);
+    try {
+      await widget.api.updateFeaturedBird(
+        id: bird.id,
+        mobileNumber: widget.mobileNumber,
+        name: result.name,
+        heritageLine: result.heritageLine,
+        ageLabel: result.ageLabel,
+        sex: result.sex,
+        badge: result.badge,
+        image: result.imageFile,
+        removeImage: result.removeImage,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _deleteBird(FeaturedBird bird) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Featured Bird'),
+        content: Text('Delete "${bird.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await widget.api.deleteFeaturedBird(
+        id: bird.id,
+        mobileNumber: widget.mobileNumber,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<_FeaturedBirdFormData?> _showBirdEditor({FeaturedBird? bird}) {
+    return showDialog<_FeaturedBirdFormData>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _FeaturedBirdEditorDialog(
+        bird: bird,
+        sexOptions: _sexOptions,
+        badgeOptions: _badgeOptions,
+      ),
+    );
+  }
+
+  String _badgeLabel(String value) {
+    return _badgeOptions
+            .firstWhere(
+              (option) => option.value == value,
+              orElse: () => const _FeaturedOption('', ''),
+            )
+            .label
+            .trim()
+            .isEmpty
+        ? 'No badge'
+        : _badgeOptions
+              .firstWhere(
+                (option) => option.value == value,
+                orElse: () => const _FeaturedOption('no_badge', 'No badge'),
+              )
+              .label;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(_changed),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF111827)),
+        title: const Text(
+          'Featured Birds',
+          style: TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: _addBird,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add New'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentGreen),
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.accentGreen),
+            )
+          : _birds.isEmpty
+          ? const Center(
+              child: Text(
+                'No featured birds yet.',
+                style: TextStyle(color: Color(0xFF6B7280)),
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              itemBuilder: (context, index) {
+                final bird = _birds[index];
+                return Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFDCE7DE)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 74,
+                        height: 74,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAF3EB),
+                          borderRadius: BorderRadius.circular(12),
+                          image: (bird.imageUrl ?? '').trim().isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(bird.imageUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: (bird.imageUrl ?? '').trim().isEmpty
+                            ? const Icon(
+                                LucideIcons.image,
+                                color: Color(0xFF8FA39A),
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              bird.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            if (bird.heritageLine.trim().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  bird.heritageLine,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                if (bird.ageLabel.trim().isNotEmpty)
+                                  _miniChip(bird.ageLabel),
+                                if (bird.sex.trim().isNotEmpty)
+                                  _miniChip(
+                                    _sexOptions
+                                        .firstWhere(
+                                          (opt) => opt.value == bird.sex,
+                                          orElse: () => const _FeaturedOption(
+                                            'unknown',
+                                            'Unknown',
+                                          ),
+                                        )
+                                        .label,
+                                  ),
+                                _miniChip(_badgeLabel(bird.badge)),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          _iconActionButton(
+                            icon: Icons.edit_outlined,
+                            color: const Color(0xFF0F6B3A),
+                            tooltip: 'Edit',
+                            onTap: () => _editBird(bird),
+                          ),
+                          const SizedBox(height: 6),
+                          _iconActionButton(
+                            icon: Icons.delete_outline,
+                            color: const Color(0xFFDC2626),
+                            tooltip: 'Delete',
+                            onTap: () => _deleteBird(bird),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemCount: _birds.length,
+            ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addBird,
+        backgroundColor: AppColors.accentGreen,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Featured Bird'),
+      ),
+    );
+  }
+
+  Widget _miniChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF7F0),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFD2E4D4)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Color(0xFF1F5134),
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _iconActionButton({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.22)),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedBirdFormData {
+  const _FeaturedBirdFormData({
+    required this.name,
+    required this.heritageLine,
+    required this.ageLabel,
+    required this.sex,
+    required this.badge,
+    required this.imageFile,
+    required this.removeImage,
+  });
+
+  final String name;
+  final String heritageLine;
+  final String ageLabel;
+  final String? sex;
+  final String badge;
+  final File? imageFile;
+  final bool removeImage;
+}
+
+class _FeaturedOption {
+  const _FeaturedOption(this.value, this.label);
+  final String value;
+  final String label;
+}
+
+class _FeaturedBirdEditorDialog extends StatefulWidget {
+  const _FeaturedBirdEditorDialog({
+    required this.bird,
+    required this.sexOptions,
+    required this.badgeOptions,
+  });
+
+  final FeaturedBird? bird;
+  final List<_FeaturedOption> sexOptions;
+  final List<_FeaturedOption> badgeOptions;
+
+  @override
+  State<_FeaturedBirdEditorDialog> createState() =>
+      _FeaturedBirdEditorDialogState();
+}
+
+class _FeaturedBirdEditorDialogState extends State<_FeaturedBirdEditorDialog> {
+  final ImagePicker _picker = ImagePicker();
+
+  late final TextEditingController _nameController;
+  late final TextEditingController _heritageController;
+  late final TextEditingController _ageController;
+
+  String? _selectedSex;
+  late String _selectedBadge;
+  File? _selectedImage;
+  bool _removeImage = false;
+  bool _nameInvalid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final bird = widget.bird;
+    _nameController = TextEditingController(text: bird?.name ?? '');
+    _heritageController = TextEditingController(text: bird?.heritageLine ?? '');
+    _ageController = TextEditingController(text: bird?.ageLabel ?? '');
+
+    _selectedSex = widget.sexOptions.any((option) => option.value == bird?.sex)
+        ? bird?.sex
+        : null;
+    _selectedBadge =
+        widget.badgeOptions.any((option) => option.value == bird?.badge)
+        ? (bird?.badge ?? 'no_badge')
+        : 'no_badge';
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _heritageController.dispose();
+    _ageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+    if (!mounted) return;
+    setState(() {
+      _selectedImage = File(picked.path);
+      _removeImage = false;
+    });
+  }
+
+  void _clearImage() {
+    setState(() {
+      _selectedImage = null;
+      _removeImage = true;
+    });
+  }
+
+  bool get _hasExistingImage {
+    return (widget.bird?.imageUrl ?? '').trim().isNotEmpty;
+  }
+
+  void _save() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      setState(() => _nameInvalid = true);
+      return;
+    }
+    Navigator.of(context).pop(
+      _FeaturedBirdFormData(
+        name: name,
+        heritageLine: _heritageController.text.trim(),
+        ageLabel: _ageController.text.trim(),
+        sex: _selectedSex,
+        badge: _selectedBadge,
+        imageFile: _selectedImage,
+        removeImage: _removeImage,
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({required String hint, String? errorText}) {
+    return InputDecoration(
+      hintText: hint,
+      errorText: errorText,
+      hintStyle: const TextStyle(color: Color(0xFF8A9590), fontSize: 13),
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFD4DDD4)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.accentGreen, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFDC2626), width: 1.5),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bird = widget.bird;
+    final imageUrl = bird?.imageUrl ?? '';
+    final showNetworkImage =
+        _selectedImage == null && !_removeImage && imageUrl.trim().isNotEmpty;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAFCFA),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFD4E3D6)),
+          boxShadow: const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x29000000),
+              blurRadius: 26,
+              offset: Offset(0, 14),
+            ),
+          ],
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Featured Bird',
+                      style: TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close, size: 18),
+                    splashRadius: 18,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4F0EA),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFD8D8D8),
+                      width: 1.2,
+                    ),
+                    image: _selectedImage != null
+                        ? DecorationImage(
+                            image: FileImage(_selectedImage!),
+                            fit: BoxFit.cover,
+                          )
+                        : showNetworkImage
+                        ? DecorationImage(
+                            image: NetworkImage(imageUrl),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: _selectedImage == null && !showNetworkImage
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              LucideIcons.uploadCloud,
+                              color: Color(0xFF6B7280),
+                              size: 26,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Upload photo',
+                              style: TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        )
+                      : null,
+                ),
+              ),
+              if (_selectedImage != null || _hasExistingImage)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: TextButton.icon(
+                    onPressed: _clearImage,
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Remove image'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _nameController,
+                decoration: _inputDecoration(
+                  hint: 'Name (e.g. your animal\'s name or ID)',
+                  errorText: _nameInvalid ? 'Name is required' : null,
+                ),
+                onChanged: (_) {
+                  if (_nameInvalid) setState(() => _nameInvalid = false);
+                },
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _heritageController,
+                decoration: _inputDecoration(
+                  hint: 'Heritage line / variety (optional)',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _ageController,
+                      decoration: _inputDecoration(hint: 'Age (e.g. 2 yrs)'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _selectedSex,
+                      isExpanded: true,
+                      decoration: _inputDecoration(hint: 'Sex (optional)'),
+                      items: widget.sexOptions
+                          .map(
+                            (option) => DropdownMenuItem<String>(
+                              value: option.value,
+                              child: Text(option.label),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _selectedSex = value),
+                      hint: const Text('Sex (optional)'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                initialValue: _selectedBadge,
+                isExpanded: true,
+                decoration: _inputDecoration(hint: 'Badge'),
+                items: widget.badgeOptions
+                    .map(
+                      (option) => DropdownMenuItem<String>(
+                        value: option.value,
+                        child: Text(option.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _selectedBadge = value);
+                },
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accentGreen,
+                      ),
+                      onPressed: _save,
+                      child: Text(bird == null ? 'Add bird' : 'Save changes'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
