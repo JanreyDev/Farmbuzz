@@ -72,11 +72,15 @@ class _FeedStore {
     required String authorName,
     required String content,
     required List<FeedImageUpload> images,
+    String? metaFeeling,
+    String? metaLocation,
   }) async {
     final created = await _api.createPost(
       authorName: authorName,
       content: content,
       images: images,
+      metaFeeling: metaFeeling,
+      metaLocation: metaLocation,
     );
     posts.value = <FeedPost>[created, ...posts.value];
   }
@@ -1395,6 +1399,8 @@ class _CreatePostSheet extends StatefulWidget {
 
 class _CreatePostSheetState extends State<_CreatePostSheet> {
   static const int _maxImageBytes = 20 * 1024 * 1024; // 20MB (matches backend)
+  static const int _maxTotalImageBytes =
+      18 * 1024 * 1024; // keep below server limits
   final TextEditingController _postController = TextEditingController();
   final List<String> _imagePaths = [];
   final List<FeedImageUpload> _imageUploads = [];
@@ -1453,6 +1459,24 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
     return tempFile.path;
   }
 
+  Future<int> _currentTotalImageBytes() async {
+    var total = 0;
+    for (final upload in _imageUploads) {
+      final bytes = upload.bytes;
+      if (bytes != null && bytes.isNotEmpty) {
+        total += bytes.length;
+        continue;
+      }
+      final path = upload.path;
+      if (path == null || path.isEmpty) continue;
+      final file = File(path);
+      if (await file.exists()) {
+        total += await file.length();
+      }
+    }
+    return total;
+  }
+
   Future<void> _pickImage() async {
     try {
       FocusScope.of(context).unfocus();
@@ -1471,6 +1495,8 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       var invalidTypeCount = 0;
       var invalidSizeCount = 0;
       var missingFileCount = 0;
+      var overTotalLimitCount = 0;
+      var runningTotal = await _currentTotalImageBytes();
 
       for (final pickedFile in picked) {
         final path = await _resolveUsableImagePath(pickedFile);
@@ -1492,6 +1518,11 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
           invalidSizeCount++;
           continue;
         }
+        if (runningTotal + size > _maxTotalImageBytes) {
+          overTotalLimitCount++;
+          continue;
+        }
+        runningTotal += size;
         valid.add(path);
         final ext = _extensionFromName(
           pickedFile.name.isEmpty ? path : pickedFile.name,
@@ -1518,15 +1549,19 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       }
 
       final skipped = invalidTypeCount + invalidSizeCount + missingFileCount;
-      if (skipped > 0 && mounted) {
+      final skippedTotal = skipped + overTotalLimitCount;
+      if (skippedTotal > 0 && mounted) {
         final details = <String>[];
         if (invalidTypeCount > 0) details.add('$invalidTypeCount unsupported');
         if (invalidSizeCount > 0) details.add('$invalidSizeCount invalid size');
         if (missingFileCount > 0) details.add('$missingFileCount unreadable');
+        if (overTotalLimitCount > 0) {
+          details.add('$overTotalLimitCount over total limit');
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '$skipped image(s) skipped (${details.join(', ')}). Use JPG/JPEG/PNG/WEBP/GIF/BMP and max 20MB each.',
+              '$skippedTotal image(s) skipped (${details.join(', ')}). Limit: 20MB each, 18MB total per post.',
             ),
           ),
         );
@@ -1965,6 +2000,8 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
         authorName: name,
         content: _postController.text.trim(),
         images: _imageUploads,
+        metaFeeling: _selectedFeeling,
+        metaLocation: _selectedLocation,
       );
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -3367,9 +3404,9 @@ class _PostsSectionState extends State<_PostsSection> {
               userName: post.userName,
               timeAgo: post.timeAgo,
               postText: post.postText,
-              metaEmoji: '',
-              metaFeeling: '',
-              metaLocation: '',
+              metaEmoji: post.metaEmoji,
+              metaFeeling: post.metaFeeling,
+              metaLocation: post.metaLocation,
               likesCount: post.likesCount,
               commentsCount: post.commentsCount,
               topReactions: post.topReactions,
@@ -3449,7 +3486,7 @@ class _PostCardState extends State<_PostCard> {
   }
 
   bool get _hasMetaLine =>
-      widget.metaFeeling.trim().isNotEmpty &&
+      widget.metaFeeling.trim().isNotEmpty ||
       widget.metaLocation.trim().isNotEmpty;
 
   String _reactionLabel(String reaction) {
@@ -3563,27 +3600,38 @@ class _PostCardState extends State<_PostCard> {
                                   height: 1.15,
                                 ),
                                 children: [
-                                  const TextSpan(text: 'is feeling '),
-                                  TextSpan(text: '${widget.metaEmoji} '),
-                                  TextSpan(text: '${widget.metaFeeling} at '),
-                                  WidgetSpan(
-                                    alignment: PlaceholderAlignment.middle,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 3),
-                                      child: Icon(
-                                        Icons.location_on,
-                                        size: 13,
-                                        color: AppColors.accentGreen,
+                                  if (widget.metaFeeling.trim().isNotEmpty) ...[
+                                    const TextSpan(text: 'is feeling '),
+                                    TextSpan(text: '${widget.metaEmoji} '),
+                                    TextSpan(text: widget.metaFeeling.trim()),
+                                  ],
+                                  if (widget.metaFeeling.trim().isNotEmpty &&
+                                      widget.metaLocation.trim().isNotEmpty)
+                                    const TextSpan(text: ' at '),
+                                  if (widget.metaLocation
+                                      .trim()
+                                      .isNotEmpty) ...[
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.middle,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 3,
+                                        ),
+                                        child: Icon(
+                                          Icons.location_on,
+                                          size: 13,
+                                          color: AppColors.accentGreen,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  TextSpan(
-                                    text: widget.metaLocation,
-                                    style: const TextStyle(
-                                      color: AppColors.accentGreen,
-                                      fontWeight: FontWeight.w600,
+                                    TextSpan(
+                                      text: widget.metaLocation.trim(),
+                                      style: const TextStyle(
+                                        color: AppColors.accentGreen,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),

@@ -15,6 +15,24 @@ use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
+    private function emojiForFeeling(?string $feeling): string
+    {
+        $normalized = mb_strtolower(trim((string) $feeling));
+        if ($normalized === '') {
+            return '';
+        }
+
+        return match ($normalized) {
+            'happy', 'grateful', 'blessed', 'proud', 'excited', 'loved' => '😊',
+            'sad', 'hurt', 'lonely', 'disappointed' => '😢',
+            'angry', 'frustrated', 'annoyed' => '😠',
+            'tired', 'sleepy' => '😴',
+            'worried', 'anxious' => '😟',
+            'sick' => '🤒',
+            default => '🙂',
+        };
+    }
+
     private function topReactionsFor(Post $post): array
     {
         return $post->reactions()
@@ -67,6 +85,9 @@ class PostController extends Controller
                     'userAvatar' => $post->author_avatar,
                     'timeAgo' => $post->published_at?->diffForHumans() ?? 'Just now',
                     'postText' => $post->content ?? '',
+                    'metaEmoji' => $this->emojiForFeeling($post->meta_feeling),
+                    'metaFeeling' => (string) ($post->meta_feeling ?? ''),
+                    'metaLocation' => (string) ($post->meta_location ?? ''),
                     'postImageUrl' => null,
                     'imageUrls' => $normalizedImagePaths,
                     'likesCount' => (string) ($post->reactions_count ?? 0),
@@ -103,6 +124,8 @@ class PostController extends Controller
             'author_name' => $request->string('author_name')->toString(),
             'author_avatar' => $request->input('author_avatar'),
             'content' => $request->input('content'),
+            'meta_feeling' => $request->input('meta_feeling'),
+            'meta_location' => $request->input('meta_location'),
             'image_paths' => $storedPaths,
             'published_at' => now(),
         ]);
@@ -115,6 +138,9 @@ class PostController extends Controller
                 'userAvatar' => $post->author_avatar,
                 'timeAgo' => 'Just now',
                 'postText' => $post->content ?? '',
+                'metaEmoji' => $this->emojiForFeeling($post->meta_feeling),
+                'metaFeeling' => (string) ($post->meta_feeling ?? ''),
+                'metaLocation' => (string) ($post->meta_location ?? ''),
                 'postImageUrl' => null,
                 'imageUrls' => collect($post->image_paths ?? [])
                     ->filter(fn ($path): bool => is_string($path))

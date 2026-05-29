@@ -14,6 +14,8 @@ class Post extends Model
         'author_name',
         'author_avatar',
         'content',
+        'meta_feeling',
+        'meta_location',
         'image_paths',
         'likes_count',
         'comments_count',

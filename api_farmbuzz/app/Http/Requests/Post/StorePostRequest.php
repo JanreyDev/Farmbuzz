@@ -17,6 +17,8 @@ class StorePostRequest extends FormRequest
             'author_name' => ['required', 'string', 'max:255'],
             'author_avatar' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'string'],
+            'meta_feeling' => ['nullable', 'string', 'max:120'],
+            'meta_location' => ['nullable', 'string', 'max:255'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:20480'],
             'image_payloads' => ['nullable', 'array'],

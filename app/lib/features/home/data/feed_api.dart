@@ -27,6 +27,9 @@ class FeedPost {
     required this.userAvatar,
     required this.timeAgo,
     required this.postText,
+    required this.metaEmoji,
+    required this.metaFeeling,
+    required this.metaLocation,
     required this.likesCount,
     required this.commentsCount,
     required this.topReactions,
@@ -38,6 +41,9 @@ class FeedPost {
   final String userAvatar;
   final String timeAgo;
   final String postText;
+  final String metaEmoji;
+  final String metaFeeling;
+  final String metaLocation;
   final int likesCount;
   final int commentsCount;
   final List<String> topReactions;
@@ -50,6 +56,9 @@ class FeedPost {
       userAvatar: (json['userAvatar'] as String?) ?? '',
       timeAgo: (json['timeAgo'] as String?) ?? 'Just now',
       postText: (json['postText'] as String?) ?? '',
+      metaEmoji: (json['metaEmoji'] as String?) ?? '',
+      metaFeeling: (json['metaFeeling'] as String?) ?? '',
+      metaLocation: (json['metaLocation'] as String?) ?? '',
       likesCount: int.tryParse('${json['likesCount'] ?? 0}') ?? 0,
       commentsCount: int.tryParse('${json['commentsCount'] ?? 0}') ?? 0,
       topReactions: ((json['topReactions'] as List?) ?? const [])
@@ -65,6 +74,7 @@ class FeedPost {
 class FeedApi {
   FeedApi({http.Client? client}) : _client = client ?? http.Client();
 
+  static const int _maxBase64RetryBytes = 8 * 1024 * 1024; // 8MB raw bytes
   final http.Client _client;
 
   Uri _buildUri(String path) {
@@ -100,12 +110,20 @@ class FeedApi {
     required String authorName,
     required String content,
     required List<FeedImageUpload> images,
+    String? metaFeeling,
+    String? metaLocation,
     String? authorAvatar,
   }) async {
     final request = http.MultipartRequest('POST', _buildUri('/posts'));
     request.headers['Accept'] = 'application/json';
     request.fields['author_name'] = authorName;
     request.fields['content'] = content;
+    if (metaFeeling != null && metaFeeling.trim().isNotEmpty) {
+      request.fields['meta_feeling'] = metaFeeling.trim();
+    }
+    if (metaLocation != null && metaLocation.trim().isNotEmpty) {
+      request.fields['meta_location'] = metaLocation.trim();
+    }
     if (authorAvatar != null && authorAvatar.trim().isNotEmpty) {
       request.fields['author_avatar'] = authorAvatar.trim();
     }
@@ -164,16 +182,24 @@ class FeedApi {
       final shouldRetryBase64 =
           images.isNotEmpty &&
           message != null &&
-          message.toLowerCase().contains('failed to upload');
+          message.toLowerCase().contains('failed to upload') &&
+          _estimateTotalBytes(images) <= _maxBase64RetryBytes;
       if (shouldRetryBase64) {
         return _createPostWithBase64(
           authorName: authorName,
           content: content,
           images: images,
+          metaFeeling: metaFeeling,
+          metaLocation: metaLocation,
           authorAvatar: authorAvatar,
         );
       }
       if (message != null) {
+        if (message.toLowerCase().contains('post data is too large')) {
+          throw Exception(
+            'Selected images are too large. Please upload fewer or smaller photos.',
+          );
+        }
         throw Exception(message);
       }
       throw Exception('Failed to create post.');
@@ -192,6 +218,8 @@ class FeedApi {
     required String authorName,
     required String content,
     required List<FeedImageUpload> images,
+    String? metaFeeling,
+    String? metaLocation,
     String? authorAvatar,
   }) async {
     final payloads = <String>[];
@@ -214,6 +242,13 @@ class FeedApi {
             ? authorAvatar.trim()
             : null,
         'content': content,
+        'meta_feeling': (metaFeeling != null && metaFeeling.trim().isNotEmpty)
+            ? metaFeeling.trim()
+            : null,
+        'meta_location':
+            (metaLocation != null && metaLocation.trim().isNotEmpty)
+            ? metaLocation.trim()
+            : null,
         'image_payloads': payloads,
       }),
     );
@@ -238,6 +273,12 @@ class FeedApi {
           }
         }
       } catch (_) {}
+      final normalized = (message ?? '').toLowerCase();
+      if (normalized.contains('post data is too large')) {
+        throw Exception(
+          'Selected images are too large. Please upload fewer or smaller photos.',
+        );
+      }
       throw Exception(message ?? 'Failed to create post.');
     }
 
@@ -254,5 +295,16 @@ class FeedApi {
     final file = File(path);
     if (!await file.exists()) return null;
     return file.readAsBytes();
+  }
+
+  int _estimateTotalBytes(List<FeedImageUpload> images) {
+    var total = 0;
+    for (final image in images) {
+      final bytes = image.bytes;
+      if (bytes != null && bytes.isNotEmpty) {
+        total += bytes.length;
+      }
+    }
+    return total;
   }
 }
