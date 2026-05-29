@@ -215,6 +215,18 @@ class _ClubsScreenState extends State<ClubsScreen> {
                     role: club['role'] as String? ?? 'member',
                     isFounder: (club['role'] as String? ?? '') == 'founder',
                     imageUrl: (club['imageUrl'] as String?) ?? '',
+                    onEdit: () async {
+                      final updated = await showModalBottomSheet<bool>(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => CreateClubModal(initialClub: club),
+                      );
+                      if (updated == true) {
+                        _loadMyClubs();
+                        _loadDiscover();
+                      }
+                    },
                   )),
 
             const SizedBox(height: 24),

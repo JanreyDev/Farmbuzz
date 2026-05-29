@@ -79,6 +79,48 @@ class ClubApi {
     throw ClubApiException('Invalid upload response.');
   }
 
+  Future<Map<String, dynamic>> updateClub({
+    required int clubId,
+    required String mobileNumber,
+    required String name,
+    String? description,
+    String? category,
+    String? region,
+    List<String>? focusTags,
+    bool? isPublic,
+    int? minBirds,
+    bool? verifiedOnly,
+    String? coverImageUrl,
+  }) async {
+    final bodyData = <String, dynamic>{
+      'mobile_number': mobileNumber,
+      'name': name,
+    };
+    if (description != null) bodyData['description'] = description;
+    if (category != null) bodyData['category'] = category;
+    if (region != null) bodyData['region'] = region;
+    if (focusTags != null) bodyData['focus_tags'] = focusTags;
+    if (isPublic != null) bodyData['is_public'] = isPublic;
+    if (minBirds != null) bodyData['min_birds'] = minBirds;
+    if (verifiedOnly != null) bodyData['verified_only'] = verifiedOnly;
+    if (coverImageUrl != null) bodyData['cover_image_url'] = coverImageUrl;
+
+    final response = await _client.put(
+      _buildUri('/clubs/$clubId'),
+      headers: _jsonHeaders,
+      body: jsonEncode(bodyData),
+    );
+
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ClubApiException(
+        _extractMessage(body, fallback: 'Failed to update club.'),
+      );
+    }
+
+    return body;
+  }
+
   Future<List<Map<String, dynamic>>> getMyClubs({
     required String mobileNumber,
   }) async {

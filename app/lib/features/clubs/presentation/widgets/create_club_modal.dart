@@ -8,14 +8,16 @@ import '../../data/club_api.dart';
 import 'region_picker.dart';
 
 class CreateClubModal extends StatefulWidget {
-  const CreateClubModal({super.key});
+  final Map<String, dynamic>? initialClub;
 
-  static void show(BuildContext context) {
+  const CreateClubModal({super.key, this.initialClub});
+
+  static void show(BuildContext context, {Map<String, dynamic>? initialClub}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const CreateClubModal(),
+      builder: (context) => CreateClubModal(initialClub: initialClub),
     );
   }
 
@@ -40,6 +42,25 @@ class _CreateClubModalState extends State<CreateClubModal> {
   int _minBirds = 0;
   String? _coverPhotoPath;
   bool _isCreating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialClub != null) {
+      final club = widget.initialClub!;
+      _nameController.text = club['title'] ?? '';
+      _descController.text = club['description'] ?? '';
+      _isPublic = club['is_public'] ?? true;
+      _minBirds = club['min_birds'] ?? 0;
+      _verifiedOnly = club['verified_only'] ?? false;
+      _selectedRegion = club['region'] ?? '';
+      
+      final tags = club['focus_tags'];
+      if (tags is List) {
+        _selectedBloodlines.addAll(tags.map((e) => e.toString()));
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -71,18 +92,36 @@ class _CreateClubModalState extends State<CreateClubModal> {
 
       final category = _selectedBloodlines.isNotEmpty ? 'Bloodline' : 'Community';
 
-      await _clubApi.createClub(
-        mobileNumber: mobileNumber,
-        name: name,
-        description: _descController.text.trim(),
-        category: category,
-        region: _selectedRegion,
-        focusTags: _selectedBloodlines.toList(),
-        isPublic: _isPublic,
-        minBirds: _minBirds,
-        verifiedOnly: _verifiedOnly,
-        coverImageUrl: coverImageUrl,
-      );
+      if (widget.initialClub != null) {
+        // Edit mode
+        await _clubApi.updateClub(
+          clubId: widget.initialClub!['id'],
+          mobileNumber: mobileNumber,
+          name: name,
+          description: _descController.text.trim(),
+          category: category,
+          region: _selectedRegion,
+          focusTags: _selectedBloodlines.toList(),
+          isPublic: _isPublic,
+          minBirds: _minBirds,
+          verifiedOnly: _verifiedOnly,
+          coverImageUrl: coverImageUrl, // Will only be sent if a new photo was uploaded
+        );
+      } else {
+        // Create mode
+        await _clubApi.createClub(
+          mobileNumber: mobileNumber,
+          name: name,
+          description: _descController.text.trim(),
+          category: category,
+          region: _selectedRegion,
+          focusTags: _selectedBloodlines.toList(),
+          isPublic: _isPublic,
+          minBirds: _minBirds,
+          verifiedOnly: _verifiedOnly,
+          coverImageUrl: coverImageUrl,
+        );
+      }
 
       if (mounted) {
         Navigator.pop(context, true);
@@ -121,9 +160,9 @@ class _CreateClubModalState extends State<CreateClubModal> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Create Club',
-                  style: TextStyle(
+                Text(
+                  widget.initialClub != null ? 'Edit Club' : 'Create Club',
+                  style: const TextStyle(
                     color: Colors.black87,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -173,9 +212,14 @@ class _CreateClubModalState extends State<CreateClubModal> {
                                 image: FileImage(File(_coverPhotoPath!)),
                                 fit: BoxFit.cover,
                               )
-                            : null,
+                            : (widget.initialClub?['imageUrl']?.isNotEmpty == true
+                                ? DecorationImage(
+                                    image: NetworkImage(widget.initialClub!['imageUrl']),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null),
                       ),
-                      child: _coverPhotoPath == null
+                      child: _coverPhotoPath == null && (widget.initialClub?['imageUrl']?.isEmpty ?? true)
                           ? CustomPaint(
                               painter: _DashRectPainter(color: Colors.grey.shade400),
                               child: Padding(
@@ -370,9 +414,9 @@ class _CreateClubModalState extends State<CreateClubModal> {
                               height: 20,
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
-                          : const Text(
-                              'Create Club',
-                              style: TextStyle(
+                          : Text(
+                              widget.initialClub != null ? 'Save Changes' : 'Create Club',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
