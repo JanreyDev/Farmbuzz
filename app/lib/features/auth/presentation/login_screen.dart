@@ -82,6 +82,19 @@ class _LoginScreenState extends State<LoginScreen> {
         if (name != null && name.isNotEmpty) {
           await prefs.setString('auth_user_name', name);
         }
+        final avatar = [
+          user['avatar_url'],
+          user['avatar'],
+          user['profile_photo_url'],
+          user['profile_picture'],
+          user['photo_url'],
+        ].whereType<String>().map((v) => v.trim()).firstWhere(
+          (v) => v.isNotEmpty,
+          orElse: () => '',
+        );
+        if (avatar.isNotEmpty) {
+          await prefs.setString('auth_user_avatar', avatar);
+        }
       }
 
       if (!mounted) return;

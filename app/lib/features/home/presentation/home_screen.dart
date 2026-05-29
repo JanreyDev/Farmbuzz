@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/data/auth_api.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../data/feed_api.dart';
+import '../data/story_api.dart';
 import '../../clubs/presentation/clubs_screen.dart';
 import 'my_farm_setup_screen.dart';
 import 'my_farm_dashboard_screen.dart';
@@ -52,6 +53,56 @@ void _showBottomToast(BuildContext context, String message) {
   });
 }
 
+class _ViewerProfile {
+  const _ViewerProfile({required this.name, required this.avatarUrl});
+
+  final String name;
+  final String avatarUrl;
+
+  String get initial {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return '?';
+    return trimmed[0].toUpperCase();
+  }
+}
+
+class _ViewerProfileStore {
+  _ViewerProfileStore._();
+  static final _ViewerProfileStore instance = _ViewerProfileStore._();
+
+  final ValueNotifier<_ViewerProfile> profile = ValueNotifier<_ViewerProfile>(
+    const _ViewerProfile(name: '', avatarUrl: ''),
+  );
+
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name =
+        (prefs.getString('auth_user_name') ??
+                prefs.getString('auth_mobile_number') ??
+                '')
+            .trim();
+    final avatar = _firstNonEmpty(<String?>[
+      prefs.getString('auth_user_avatar'),
+      prefs.getString('auth_user_avatar_url'),
+      prefs.getString('auth_avatar'),
+      prefs.getString('user_avatar'),
+      prefs.getString('profile_avatar'),
+      prefs.getString('profile_photo_url'),
+    ]);
+    profile.value = _ViewerProfile(name: name, avatarUrl: avatar);
+  }
+
+  String _firstNonEmpty(List<String?> values) {
+    for (final value in values) {
+      final trimmed = (value ?? '').trim();
+      if (trimmed.isNotEmpty) {
+        return trimmed;
+      }
+    }
+    return '';
+  }
+}
+
 class _FeedStore {
   _FeedStore._();
   static final _FeedStore instance = _FeedStore._();
@@ -63,7 +114,12 @@ class _FeedStore {
   bool loaded = false;
 
   Future<void> load() async {
-    final fetched = await _api.fetchPosts();
+    final prefs = await SharedPreferences.getInstance();
+    final reactorName =
+        prefs.getString('auth_user_name') ??
+        prefs.getString('auth_mobile_number') ??
+        '';
+    final fetched = await _api.fetchPosts(reactorName: reactorName);
     posts.value = fetched;
     loaded = true;
   }
@@ -86,6 +142,38 @@ class _FeedStore {
   }
 }
 
+class _StoryStore {
+  _StoryStore._();
+  static final _StoryStore instance = _StoryStore._();
+
+  final StoryApi _api = StoryApi();
+  final ValueNotifier<List<FeedStory>> stories = ValueNotifier<List<FeedStory>>(
+    <FeedStory>[],
+  );
+  bool loaded = false;
+
+  Future<void> load({bool force = false}) async {
+    if (loaded && !force) return;
+    final fetched = await _api.fetchStories();
+    stories.value = fetched;
+    loaded = true;
+  }
+
+  Future<void> create({
+    required String mobileNumber,
+    String? imagePath,
+    String? textContent,
+  }) async {
+    final created = await _api.createStory(
+      mobileNumber: mobileNumber,
+      imagePath: imagePath,
+      textContent: textContent,
+    );
+    stories.value = <FeedStory>[created, ...stories.value];
+    loaded = true;
+  }
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -103,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _ViewerProfileStore.instance.load();
     _checkFarmStatus();
   }
 
@@ -354,7 +443,6 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomeHeader extends StatelessWidget {
   const _HomeHeader();
 
-  static const String _demoAvatarUrl = 'https://i.pravatar.cc/100?img=12';
   static const int _unreadMessages = 3;
   static const int _unreadNotifications = 7;
 
@@ -411,11 +499,31 @@ class _HomeHeader extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 4),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: const Color(0xFFE8F5E9),
-              backgroundImage: const NetworkImage(_demoAvatarUrl),
-              onBackgroundImageError: (exception, stackTrace) {},
+            child: ValueListenableBuilder<_ViewerProfile>(
+              valueListenable: _ViewerProfileStore.instance.profile,
+              builder: (context, viewer, _) {
+                final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
+                return CircleAvatar(
+                  radius: 16,
+                  backgroundColor: const Color(0xFFE8F5E9),
+                  backgroundImage: hasAvatar
+                      ? NetworkImage(viewer.avatarUrl)
+                      : null,
+                  onBackgroundImageError: hasAvatar
+                      ? (exception, stackTrace) {}
+                      : null,
+                  child: hasAvatar
+                      ? null
+                      : Text(
+                          viewer.initial,
+                          style: const TextStyle(
+                            color: Color(0xFF2E7D32),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                );
+              },
             ),
           ),
         ],
@@ -1340,8 +1448,6 @@ class _NotifItem {
 class _StatusComposer extends StatelessWidget {
   const _StatusComposer();
 
-  static const String _demoAvatarUrl = 'https://i.pravatar.cc/100?img=12';
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1350,11 +1456,31 @@ class _StatusComposer extends StatelessWidget {
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: const Color(0xFFE8F5E9),
-            backgroundImage: const NetworkImage(_demoAvatarUrl),
-            onBackgroundImageError: (exception, stackTrace) {},
+          ValueListenableBuilder<_ViewerProfile>(
+            valueListenable: _ViewerProfileStore.instance.profile,
+            builder: (context, viewer, _) {
+              final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
+              return CircleAvatar(
+                radius: 22,
+                backgroundColor: const Color(0xFFE8F5E9),
+                backgroundImage: hasAvatar
+                    ? NetworkImage(viewer.avatarUrl)
+                    : null,
+                onBackgroundImageError: hasAvatar
+                    ? (exception, stackTrace) {}
+                    : null,
+                child: hasAvatar
+                    ? null
+                    : Text(
+                        viewer.initial,
+                        style: const TextStyle(
+                          color: Color(0xFF2E7D32),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+              );
+            },
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2638,44 +2764,63 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
   }
 }
 
-class _StoriesSection extends StatelessWidget {
+class _StoriesSection extends StatefulWidget {
   const _StoriesSection();
 
   @override
-  Widget build(BuildContext context) {
-    const stories = [
-      (
-        name: 'FarmZzz',
-        time: '5 days ago',
-        imageUrl: 'https://picsum.photos/id/1025/600/900',
-      ),
-      (
-        name: 'FarmZzz',
-        time: '5 days ago',
-        imageUrl: 'https://picsum.photos/id/237/600/900',
-      ),
-      (
-        name: 'FarmZzz',
-        time: '5 days ago',
-        imageUrl: 'https://picsum.photos/id/1062/600/900',
-      ),
-    ];
+  State<_StoriesSection> createState() => _StoriesSectionState();
+}
 
+class _StoriesSectionState extends State<_StoriesSection> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStories();
+  }
+
+  Future<void> _loadStories() async {
+    try {
+      await _StoryStore.instance.load();
+    } catch (_) {}
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       height: 190,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        children: [
-          const _CreateStoryCard(),
-          ...stories.map(
-            (story) => _StoryCard(
-              name: story.name,
-              time: story.time,
-              imageUrl: story.imageUrl,
+      child: ValueListenableBuilder<List<FeedStory>>(
+        valueListenable: _StoryStore.instance.stories,
+        builder: (context, stories, _) => ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          children: [
+            const _CreateStoryCard(),
+            if (_isLoading)
+              const SizedBox(
+                width: 100,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.accentGreen,
+                  ),
+                ),
+              ),
+            ...stories.map(
+              (story) => _StoryCard(
+                name: story.name,
+                time: story.timeAgo,
+                imageUrl: story.imageUrl,
+                avatarUrl: story.avatarUrl,
+                textContent: story.textContent,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2683,8 +2828,6 @@ class _StoriesSection extends StatelessWidget {
 
 class _CreateStoryCard extends StatelessWidget {
   const _CreateStoryCard();
-
-  static const String _demoAvatarUrl = 'https://i.pravatar.cc/200?img=12';
 
   @override
   Widget build(BuildContext context) {
@@ -2706,17 +2849,38 @@ class _CreateStoryCard extends StatelessWidget {
           children: [
             Expanded(
               flex: 6,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    topRight: Radius.circular(12),
-                  ),
-                  image: const DecorationImage(
-                    image: NetworkImage(_demoAvatarUrl),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+              child: ValueListenableBuilder<_ViewerProfile>(
+                valueListenable: _ViewerProfileStore.instance.profile,
+                builder: (context, viewer, _) {
+                  final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                      image: hasAvatar
+                          ? DecorationImage(
+                              image: NetworkImage(viewer.avatarUrl),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      color: const Color(0xFFE8F5E9),
+                    ),
+                    child: hasAvatar
+                        ? null
+                        : Center(
+                            child: Text(
+                              viewer.initial,
+                              style: const TextStyle(
+                                color: Color(0xFF2E7D32),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 34,
+                              ),
+                            ),
+                          ),
+                  );
+                },
               ),
             ),
             Expanded(
@@ -2946,10 +3110,19 @@ class _StoryModeCard extends StatelessWidget {
   }
 }
 
-class _StorySharePreviewSheet extends StatelessWidget {
+class _StorySharePreviewSheet extends StatefulWidget {
   const _StorySharePreviewSheet({required this.paths});
 
   final List<String> paths;
+
+  @override
+  State<_StorySharePreviewSheet> createState() =>
+      _StorySharePreviewSheetState();
+}
+
+class _StorySharePreviewSheetState extends State<_StorySharePreviewSheet> {
+  final TextEditingController _textController = TextEditingController();
+  bool _isSharing = false;
 
   bool _isImage(String path) {
     final lower = path.toLowerCase();
@@ -2970,9 +3143,50 @@ class _StorySharePreviewSheet extends StatelessWidget {
         lower.endsWith('.webm');
   }
 
+  Future<void> _shareStory() async {
+    if (_isSharing) return;
+    setState(() => _isSharing = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final mobile = (prefs.getString('auth_mobile_number') ?? '').trim();
+      if (mobile.isEmpty) {
+        throw Exception('Please login again before creating a story.');
+      }
+
+      final firstImage = widget.paths.firstWhere(_isImage, orElse: () => '');
+      if (firstImage.isEmpty && _textController.text.trim().isEmpty) {
+        throw Exception('Please select an image or add text content.');
+      }
+
+      await _StoryStore.instance.create(
+        mobileNumber: mobile,
+        imagePath: firstImage.isEmpty ? null : firstImage,
+        textContent: _textController.text.trim(),
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Story shared')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final firstPath = paths.first;
+    final firstPath = widget.paths.first;
 
     return SafeArea(
       child: Container(
@@ -3023,9 +3237,9 @@ class _StorySharePreviewSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      paths.length == 1
+                      widget.paths.length == 1
                           ? '1 media selected'
-                          : '${paths.length} media selected',
+                          : '${widget.paths.length} media selected',
                       style: const TextStyle(
                         color: Color(0xFF6B7280),
                         fontWeight: FontWeight.w600,
@@ -3048,9 +3262,32 @@ class _StorySharePreviewSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    if (paths.length > 1)
+                    TextField(
+                      controller: _textController,
+                      minLines: 2,
+                      maxLines: 3,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        hintText: 'Add a caption (optional)',
+                        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFD1D5DB),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFD1D5DB),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (widget.paths.length > 1)
                       Text(
-                        '+${paths.length - 1} more selected',
+                        '+${widget.paths.length - 1} more selected (only first image is used)',
                         style: const TextStyle(
                           color: Color(0xFF6B7280),
                           fontSize: 12,
@@ -3091,12 +3328,7 @@ class _StorySharePreviewSheet extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Story shared')),
-                        );
-                      },
+                      onPressed: _isSharing ? null : _shareStory,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF16A34A),
                         minimumSize: const Size.fromHeight(44),
@@ -3104,9 +3336,9 @@ class _StorySharePreviewSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Share',
-                        style: TextStyle(
+                      child: Text(
+                        _isSharing ? 'Sharing...' : 'Share',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
@@ -3163,25 +3395,35 @@ class _StoryCard extends StatelessWidget {
     required this.name,
     required this.time,
     required this.imageUrl,
+    required this.avatarUrl,
+    required this.textContent,
   });
 
   final String name;
   final String time;
   final String imageUrl;
+  final String avatarUrl;
+  final String textContent;
 
-  static const String _demoAvatarUrl = 'https://i.pravatar.cc/100?img=12';
+  String _initial() {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return 'U';
+    return trimmed.substring(0, 1).toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = imageUrl.trim().isNotEmpty;
+    final hasAvatar = avatarUrl.trim().isNotEmpty;
     return Container(
       width: 100,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        image: DecorationImage(
-          image: NetworkImage(imageUrl),
-          fit: BoxFit.cover,
-        ),
+        color: hasImage ? null : const Color(0xFF14532D),
+        image: hasImage
+            ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
+            : null,
       ),
       child: Stack(
         children: [
@@ -3209,8 +3451,19 @@ class _StoryCard extends StatelessWidget {
               ),
               child: CircleAvatar(
                 radius: 12,
-                backgroundImage: const NetworkImage(_demoAvatarUrl),
-                onBackgroundImageError: (exception, stackTrace) {},
+                backgroundColor: const Color(0xFFE8F5E9),
+                backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+                onBackgroundImageError: hasAvatar ? (_, _) {} : null,
+                child: hasAvatar
+                    ? null
+                    : Text(
+                        _initial(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1B5E20),
+                        ),
+                      ),
               ),
             ),
           ),
@@ -3237,6 +3490,19 @@ class _StoryCard extends StatelessWidget {
                     fontSize: 9,
                   ),
                 ),
+                if (!hasImage && textContent.trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    textContent.trim(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

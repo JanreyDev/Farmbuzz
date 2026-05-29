@@ -143,9 +143,16 @@ class FeedApi {
     return Uri.parse('$base$normalizedPath');
   }
 
-  Future<List<FeedPost>> fetchPosts() async {
+  Future<List<FeedPost>> fetchPosts({String? reactorName}) async {
+    var uri = _buildUri('/posts');
+    final normalizedReactor = reactorName?.trim() ?? '';
+    if (normalizedReactor.isNotEmpty) {
+      uri = uri.replace(
+        queryParameters: <String, String>{'reactor_name': normalizedReactor},
+      );
+    }
     final response = await _client.get(
-      _buildUri('/posts'),
+      uri,
       headers: const {'Accept': 'application/json'},
     );
 
