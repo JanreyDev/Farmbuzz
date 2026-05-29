@@ -8,6 +8,10 @@ class AuthApi {
   AuthApi({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
+  static const Map<String, String> _jsonHeaders = <String, String>{
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
   Uri _buildUri(String path) {
     final base = ApiConfig.baseUrl.endsWith('/')
@@ -23,7 +27,7 @@ class AuthApi {
   }) async {
     final response = await _client.post(
       _buildUri('/auth/register/start'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _jsonHeaders,
       body: jsonEncode({
         'name': name,
         'referral_code': referralCode,
@@ -50,7 +54,7 @@ class AuthApi {
   }) async {
     final response = await _client.post(
       _buildUri('/auth/register/send-otp'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _jsonHeaders,
       body: jsonEncode({
         'registration_id': registrationId,
         'mobile_number': mobileNumber,
@@ -59,7 +63,15 @@ class AuthApi {
 
     final body = _decodeJson(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw AuthApiException(_extractMessage(body, fallback: 'Failed to send OTP.'));
+      throw AuthApiException(
+        _extractMessage(
+          body,
+          fallback: _fallbackFromRaw(
+            raw: response.body,
+            fallback: 'Failed to send OTP.',
+          ),
+        ),
+      );
     }
   }
 
@@ -69,7 +81,7 @@ class AuthApi {
   }) async {
     final response = await _client.post(
       _buildUri('/auth/register/verify-otp'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _jsonHeaders,
       body: jsonEncode({
         'registration_id': registrationId,
         'otp': otp,
@@ -88,7 +100,7 @@ class AuthApi {
   }) async {
     final response = await _client.post(
       _buildUri('/auth/register/set-pin'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _jsonHeaders,
       body: jsonEncode({
         'registration_id': registrationId,
         'pin': pin,
@@ -102,15 +114,77 @@ class AuthApi {
     }
   }
 
+  Future<Map<String, dynamic>> login({
+    required String mobileNumber,
+    required String pin,
+  }) async {
+    final response = await _client.post(
+      _buildUri('/auth/login'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+        'pin': pin,
+      }),
+    );
+
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw AuthApiException(_extractMessage(body, fallback: 'Login failed.'));
+    }
+
+    return body;
+  }
+
+  Future<void> logout({String? mobileNumber}) async {
+    final response = await _client.post(
+      _buildUri('/auth/logout'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+      }),
+    );
+
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw AuthApiException(_extractMessage(body, fallback: 'Logout failed.'));
+    }
+  }
+
   Map<String, dynamic> _decodeJson(String raw) {
     if (raw.trim().isEmpty) {
       return <String, dynamic>{};
     }
-    final decoded = jsonDecode(raw);
-    if (decoded is Map<String, dynamic>) {
-      return decoded;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+    } catch (_) {
+      return <String, dynamic>{};
     }
     return <String, dynamic>{};
+  }
+
+  String _fallbackFromRaw({
+    required String raw,
+    required String fallback,
+  }) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) {
+      return fallback;
+    }
+
+    // When backend/proxy returns HTML (500/503), avoid showing a long page.
+    if (trimmed.startsWith('<!DOCTYPE html') || trimmed.startsWith('<html')) {
+      return fallback;
+    }
+
+    final compact = trimmed.replaceAll(RegExp(r'\s+'), ' ');
+    if (compact.length <= 200) {
+      return compact;
+    }
+
+    return '${compact.substring(0, 200)}...';
   }
 
   String _extractMessage(

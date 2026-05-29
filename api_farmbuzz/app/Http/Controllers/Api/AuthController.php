@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -33,6 +34,20 @@ class AuthController extends Controller
                 'avatar_url' => $this->normalizePublicMediaUrl($user->avatar_url, $request),
                 'cover_photo_url' => $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
             ],
+        ]);
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $mobile = trim((string) $request->input('mobile_number', ''));
+        if ($mobile !== '') {
+            User::query()
+                ->where('mobile_number', $mobile)
+                ->update(['remember_token' => null]);
+        }
+
+        return response()->json([
+            'message' => 'Logout successful.',
         ]);
     }
 

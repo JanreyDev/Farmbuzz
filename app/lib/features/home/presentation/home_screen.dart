@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/data/auth_api.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../clubs/presentation/clubs_screen.dart';
 import 'my_farm_setup_screen.dart';
@@ -430,6 +431,7 @@ class _HomeDrawer extends StatelessWidget {
   const _HomeDrawer({required this.onNavigateTab});
 
   final ValueChanged<int> onNavigateTab;
+  static final AuthApi _authApi = AuthApi();
 
   @override
   Widget build(BuildContext context) {
@@ -568,6 +570,10 @@ class _HomeDrawer extends StatelessWidget {
                     onTap: () async {
                       Navigator.of(context).pop();
                       final prefs = await SharedPreferences.getInstance();
+                      final mobile = prefs.getString('auth_mobile_number');
+                      try {
+                        await _authApi.logout(mobileNumber: mobile);
+                      } catch (_) {}
                       await prefs.clear();
                       if (!context.mounted) return;
                       Navigator.of(context).pushAndRemoveUntil(

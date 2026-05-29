@@ -25,6 +25,7 @@ Route::prefix('auth/register')->group(function (): void {
 });
 
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/logout', [AuthController::class, 'logout']);
 
 Route::get('/profile', [ProfileController::class, 'show']);
 Route::post('/profile/media', [ProfileController::class, 'updateMedia']);

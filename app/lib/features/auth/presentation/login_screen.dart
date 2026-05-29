@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../data/auth_api.dart';
 import 'create_account_card.dart';
 import '../../home/presentation/home_screen.dart';
 import 'widgets/action_button.dart';
@@ -15,12 +17,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthApi _authApi = AuthApi();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _forgotMobileController = TextEditingController();
   final TextEditingController _registerMobileController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _referralController = TextEditingController();
   bool _isLightMode = false;
+  bool _isLoggingIn = false;
   _AuthView _currentView = _AuthView.login;
 
   bool get _canLogin => _mobileController.text.trim().length == 10;
@@ -46,6 +50,67 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
+  }
+
+  Future<void> _attemptLogin() async {
+    if (!_canLogin || _isLoggingIn) {
+      return;
+    }
+
+    final pinController = TextEditingController();
+    final pin = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter PIN'),
+        content: TextField(
+          controller: pinController,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          obscureText: true,
+          decoration: const InputDecoration(hintText: '6-digit PIN'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(pinController.text.trim()),
+            child: const Text('Login'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || pin == null) {
+      return;
+    }
+
+    if (pin.length != 6) {
+      _showPlaceholderMessage('Please enter your 6-digit PIN.');
+      return;
+    }
+
+    setState(() => _isLoggingIn = true);
+    try {
+      final mobile = '+63${_mobileController.text.trim()}';
+      await _authApi.login(mobileNumber: mobile, pin: pin);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_mobile_number', mobile);
+
+      if (!mounted) return;
+      setState(() => _isLoggingIn = false);
+      _goToHome();
+    } on AuthApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoggingIn = false);
+      _showPlaceholderMessage(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoggingIn = false);
+      _showPlaceholderMessage('Login failed. Please try again.');
+    }
   }
 
   @override
@@ -117,7 +182,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           onChanged: (_) => setState(() {}),
                                           onForgotPin: () => setState(() => _currentView = _AuthView.forgotPin),
                                           onCreateAccount: () => setState(() => _currentView = _AuthView.createAccount),
-                                          onLogin: _goToHome,
+                                          onLogin: _attemptLogin,
+                                          isLoggingIn: _isLoggingIn,
                                         )
                                       : _currentView == _AuthView.forgotPin
                                           ? _ForgotPinCard(
@@ -136,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               mobileController: _registerMobileController,
                                               referralController: _referralController,
                                               onBackToLogin: () => setState(() => _currentView = _AuthView.login),
-                                              onComplete: () => setState(() => _currentView = _AuthView.login),
+                                              onComplete: _goToHome,
                                             ),
                                 ),
                               ),
@@ -458,6 +524,7 @@ class _LoginCard extends StatelessWidget {
     required this.onForgotPin,
     required this.onCreateAccount,
     required this.onLogin,
+    required this.isLoggingIn,
   });
 
   final bool isCompact;
@@ -468,6 +535,7 @@ class _LoginCard extends StatelessWidget {
   final VoidCallback onForgotPin;
   final VoidCallback onCreateAccount;
   final VoidCallback onLogin;
+  final bool isLoggingIn;
 
   @override
   Widget build(BuildContext context) {
@@ -526,8 +594,8 @@ class _LoginCard extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ActionButton(
-            label: 'Log In',
-            isEnabled: canLogin,
+            label: isLoggingIn ? 'Logging in...' : 'Log In',
+            isEnabled: canLogin && !isLoggingIn,
             isLightMode: isLightMode,
             onPressed: onLogin,
           ),
