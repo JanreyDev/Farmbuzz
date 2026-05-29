@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   String _city = '';
   String _province = '';
   int _startYear = 0;
+  String _coverPhotoPath = '';
   bool _isLoading = true;
 
   @override
@@ -38,6 +40,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
         _city = prefs.getString('farm_city') ?? '';
         _province = prefs.getString('farm_province') ?? '';
         _startYear = prefs.getInt('farm_year') ?? 0;
+        _coverPhotoPath = prefs.getString('farm_cover_photo') ?? '';
         _isLoading = false;
       });
     } catch (_) {
@@ -183,14 +186,23 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0C4D22),
-            Color(0xFF147A3B),
-          ],
-        ),
+        image: _coverPhotoPath.isNotEmpty
+            ? DecorationImage(
+                image: FileImage(File(_coverPhotoPath)),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.4), BlendMode.darken),
+              )
+            : null,
+        gradient: _coverPhotoPath.isEmpty
+            ? const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF0C4D22),
+                  Color(0xFF147A3B),
+                ],
+              )
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.15),
@@ -260,9 +272,9 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Text(
-                            'CHICKEN · SHOWCASE',
-                            style: TextStyle(
+                          Text(
+                            _farmName.toUpperCase(),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
