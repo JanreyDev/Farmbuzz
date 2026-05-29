@@ -24,6 +24,31 @@ class TxtboxSmsSender implements SmsSender
         $attempts = [];
 
         foreach ($numbers as $number) {
+            // Matches the working Spacall integration.
+            $attempts[] = [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'X-TxtBox-Auth' => $this->apiKey,
+                ],
+                'payload' => [
+                    'number' => $number,
+                    'message' => $message,
+                ],
+            ];
+            $attempts[] = [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'X-TxtBox-Auth' => $this->apiKey,
+                ],
+                'payload' => [
+                    'number' => $number,
+                    'message' => $message,
+                    'sender_name' => $this->senderName,
+                ],
+            ];
+
             $attempts[] = [
                 'headers' => [
                     'Accept' => 'application/json',
