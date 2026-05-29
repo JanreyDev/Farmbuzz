@@ -38,7 +38,7 @@ class RegistrationFlowTest extends TestCase
             'pin_confirmation' => '123456',
         ])->assertOk();
 
-        $user = User::query()->findOrFail($registrationId);
+        $user = User::query()->where('mobile_number', '+639171234567')->firstOrFail();
 
         $this->assertSame('completed', $user->registration_status);
         $this->assertNotNull($user->mobile_verified_at);

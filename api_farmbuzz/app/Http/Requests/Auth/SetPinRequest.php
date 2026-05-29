@@ -14,7 +14,7 @@ class SetPinRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'registration_id' => ['required', 'integer', 'exists:users,id'],
+            'registration_id' => ['required', 'integer', 'exists:registration_sessions,id'],
             'pin' => ['required', 'digits:6', 'confirmed'],
         ];
     }

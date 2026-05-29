@@ -15,12 +15,12 @@ class SendOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'registration_id' => ['required', 'integer', 'exists:users,id'],
+            'registration_id' => ['required', 'integer', 'exists:registration_sessions,id'],
             'mobile_number' => [
                 'required',
                 'string',
                 'regex:/^\+?[1-9]\d{7,14}$/',
-                Rule::unique('users', 'mobile_number')->ignore($this->integer('registration_id')),
+                Rule::unique('users', 'mobile_number'),
             ],
         ];
     }

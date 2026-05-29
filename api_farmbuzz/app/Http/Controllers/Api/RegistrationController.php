@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\SendOtpRequest;
 use App\Http\Requests\Auth\SetPinRequest;
 use App\Http\Requests\Auth\StartRegistrationRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
+use App\Models\RegistrationSession;
 use App\Models\User;
 use App\Support\Sms\SmsManager;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,7 @@ class RegistrationController extends Controller
 
     public function start(StartRegistrationRequest $request): JsonResponse
     {
-        $user = User::query()->create([
+        $registration = RegistrationSession::query()->create([
             'name' => $request->string('name')->toString(),
             'referral_code' => $request->input('referral_code'),
             'is_at_least_18' => true,
@@ -32,21 +33,21 @@ class RegistrationController extends Controller
 
         return response()->json([
             'message' => 'Account setup started.',
-            'registration_id' => $user->id,
+            'registration_id' => $registration->id,
         ], 201);
     }
 
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
-        $user = User::query()->findOrFail($request->integer('registration_id'));
+        $registration = RegistrationSession::query()->findOrFail($request->integer('registration_id'));
 
-        if ($user->registration_status === 'completed') {
+        if ($registration->registration_status === 'completed') {
             return response()->json(['message' => 'Registration is already completed.'], 422);
         }
 
         $otp = $this->resolveOtp();
 
-        $user->forceFill([
+        $registration->forceFill([
             'mobile_number' => $request->string('mobile_number')->toString(),
             'otp_code' => Hash::make($otp),
             'otp_sent_at' => now(),
@@ -91,13 +92,13 @@ class RegistrationController extends Controller
 
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
-        $user = User::query()->findOrFail($request->integer('registration_id'));
+        $registration = RegistrationSession::query()->findOrFail($request->integer('registration_id'));
 
-        if (blank($user->otp_code) || ! Hash::check($request->string('otp')->toString(), $user->otp_code)) {
+        if (blank($registration->otp_code) || ! Hash::check($request->string('otp')->toString(), $registration->otp_code)) {
             return response()->json(['message' => 'Invalid OTP.'], 422);
         }
 
-        $user->forceFill([
+        $registration->forceFill([
             'mobile_verified_at' => now(),
             'registration_status' => 'otp_verified',
         ])->save();
@@ -109,21 +110,40 @@ class RegistrationController extends Controller
 
     public function setPin(SetPinRequest $request): JsonResponse
     {
-        $user = User::query()->findOrFail($request->integer('registration_id'));
+        $registration = RegistrationSession::query()->findOrFail($request->integer('registration_id'));
 
-        if (blank($user->mobile_verified_at)) {
+        if (blank($registration->mobile_verified_at)) {
             return response()->json(['message' => 'Please verify your mobile number first.'], 422);
         }
 
-        $user->forceFill([
+        $mobile = (string) $registration->mobile_number;
+        if (blank($mobile)) {
+            return response()->json(['message' => 'Mobile number is missing. Please request OTP again.'], 422);
+        }
+
+        if (User::query()->where('mobile_number', $mobile)->exists()) {
+            return response()->json(['message' => 'Mobile number is already registered.'], 422);
+        }
+
+        $user = User::query()->create([
+            'name' => (string) $registration->name,
+            'mobile_number' => $mobile,
+            'referral_code' => $registration->referral_code,
+            'is_at_least_18' => (bool) $registration->is_at_least_18,
+            'accepted_terms' => (bool) $registration->accepted_terms,
             'pin' => Hash::make($request->string('pin')->toString()),
             'otp_code' => null,
+            'otp_sent_at' => $registration->otp_sent_at,
+            'mobile_verified_at' => $registration->mobile_verified_at,
             'registration_status' => 'completed',
             'registration_completed_at' => now(),
-        ])->save();
+        ]);
+
+        $registration->delete();
 
         return response()->json([
             'message' => 'PIN set successfully. Registration completed.',
+            'user_id' => $user->id,
         ]);
     }
 
