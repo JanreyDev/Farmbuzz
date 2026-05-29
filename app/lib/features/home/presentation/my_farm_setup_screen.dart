@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,6 +26,7 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
 
   final FarmApi _farmApi = FarmApi();
   bool _isCreating = false;
+  String? _coverPhotoPath;
 
   // Step 1 — Name
   final _farmNameController = TextEditingController();
@@ -74,7 +77,16 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
   }
 
   bool get _canContinue {
-    if (_currentStep == 0) return _farmNameController.text.trim().isNotEmpty;
+    if (_currentStep == 0) {
+      return _farmNameController.text.trim().isNotEmpty &&
+             _taglineController.text.trim().isNotEmpty &&
+             _coverPhotoPath != null;
+    }
+    if (_currentStep == 1) {
+      return _cityController.text.trim().isNotEmpty &&
+             _provinceController.text.trim().isNotEmpty &&
+             _yearController.text.trim().isNotEmpty;
+    }
     return true;
   }
 
@@ -256,13 +268,14 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
         ),
         const SizedBox(height: 16),
         Text(
-          'Optional tagline — one short line under your name',
+          'Tagline — one short line under your name',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
         ),
         const SizedBox(height: 8),
         _buildInput(
           controller: _taglineController,
           hint: 'What makes your farm unique?',
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 32),
         const Text(
@@ -275,45 +288,63 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
         ),
         const SizedBox(height: 6),
         Text(
-          'A wide landscape image works best. You can skip this and add one later.',
+          'A wide landscape image works best.',
           style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
         ),
         const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: CustomPaint(
-            painter: _DashRectPainter(color: Colors.grey.shade400),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(LucideIcons.upload, size: 24, color: Colors.grey.shade500),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tap to choose a photo',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'JPG, PNG, or WEBP · up to 15 MB',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
+        GestureDetector(
+          onTap: () async {
+            final result = await FilePicker.platform.pickFiles(type: FileType.image);
+            if (result != null && result.files.single.path != null) {
+              setState(() {
+                _coverPhotoPath = result.files.single.path;
+              });
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            height: 160,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              image: _coverPhotoPath != null
+                  ? DecorationImage(
+                      image: FileImage(File(_coverPhotoPath!)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
+            child: _coverPhotoPath == null
+                ? CustomPaint(
+                    painter: _DashRectPainter(color: Colors.grey.shade400),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(LucideIcons.upload, size: 24, color: Colors.grey.shade500),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Tap to choose a photo',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'JPG, PNG, or WEBP · up to 15 MB',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : null,
           ),
         ),
       ],
@@ -336,7 +367,7 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
         const SizedBox(height: 8),
         SizedBox(
           width: 140,
-          child: _buildInput(controller: _yearController, hint: 'Year (e.g. 2016)', keyboardType: TextInputType.number),
+          child: _buildInput(controller: _yearController, hint: 'Year (e.g. 2016)', keyboardType: TextInputType.number, onChanged: (_) => setState(() {})),
         ),
         const SizedBox(height: 32),
         const Text(
@@ -565,6 +596,9 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
       await prefs.setString('farm_city', city);
       await prefs.setString('farm_province', province);
       await prefs.setInt('farm_year', year);
+      if (_coverPhotoPath != null) {
+        await prefs.setString('farm_cover_photo', _coverPhotoPath!);
+      }
       await prefs.setBool('farm_created', true);
     } catch (e) {
       if (mounted) {
