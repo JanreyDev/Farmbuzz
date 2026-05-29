@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/club_api.dart';
 import 'region_picker.dart';
 
 class CreateClubModal extends StatefulWidget {
@@ -20,6 +24,10 @@ class CreateClubModal extends StatefulWidget {
 }
 
 class _CreateClubModalState extends State<CreateClubModal> {
+  final ClubApi _clubApi = ClubApi();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descController = TextEditingController();
+
   final List<String> _bloodlines = [
     'Kelso', 'Sweater', 'Hatch', 'Roundhead', 'Albany', 'Lemon',
     'Grey', 'Radio', 'Claret', 'Butcher', 'Other'
@@ -30,6 +38,63 @@ class _CreateClubModalState extends State<CreateClubModal> {
   bool _verifiedOnly = false;
   String _selectedRegion = '';
   int _minBirds = 0;
+  String? _coverPhotoPath;
+  bool _isCreating = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  void _submit() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Club name is required.')),
+      );
+      return;
+    }
+
+    setState(() => _isCreating = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final mobileNumber = prefs.getString('auth_mobile_number') ?? '';
+      
+      final category = _selectedBloodlines.isNotEmpty ? 'Bloodline' : 'Community';
+
+      await _clubApi.createClub(
+        mobileNumber: mobileNumber,
+        name: name,
+        description: _descController.text.trim(),
+        category: category,
+        region: _selectedRegion,
+        focusTags: _selectedBloodlines.toList(),
+        isPublic: _isPublic,
+        minBirds: _minBirds,
+        verifiedOnly: _verifiedOnly,
+      );
+
+      if (mounted) {
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Club created successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCreating = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,56 +146,75 @@ class _CreateClubModalState extends State<CreateClubModal> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Cover Photo
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: CustomPaint(
-                      painter: _DashRectPainter(color: Colors.grey.shade400),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Column(
-                          children: [
-                            Icon(LucideIcons.camera, size: 24, color: Colors.grey.shade500),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Upload Cover Photo',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Upload will land next session',
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
+                  GestureDetector(
+                    onTap: () async {
+                      final result = await FilePicker.platform.pickFiles(type: FileType.image);
+                      if (result != null && result.files.single.path != null) {
+                        setState(() {
+                          _coverPhotoPath = result.files.single.path;
+                        });
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 160,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        image: _coverPhotoPath != null
+                            ? DecorationImage(
+                                image: FileImage(File(_coverPhotoPath!)),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
+                      child: _coverPhotoPath == null
+                          ? CustomPaint(
+                              painter: _DashRectPainter(color: Colors.grey.shade400),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 24),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(LucideIcons.camera, size: 24, color: Colors.grey.shade500),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Upload Cover Photo',
+                                      style: TextStyle(
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Upload will land next session',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 24),
                   
                   // Club Name
                   _buildLabel('CLUB NAME', required: true),
-                  _buildTextField(hint: 'e.g. Pampanga Breeders Alliance'),
+                  _buildTextField(controller: _nameController, hint: 'e.g. Pampanga Breeders Alliance'),
                   const SizedBox(height: 20),
                   
                   // Description
                   _buildLabel('DESCRIPTION'),
-                  _buildTextField(hint: 'What is this club about?', maxLines: 4),
+                  _buildTextField(controller: _descController, hint: 'What is this club about?', maxLines: 4),
                   const SizedBox(height: 20),
                   
                   // Category
                   _buildLabel('CATEGORY', required: true),
-                  _buildTextField(hint: 'Community', readOnly: true),
+                  _buildTextField(hint: _selectedBloodlines.isNotEmpty ? 'Bloodline' : 'Community', readOnly: true),
                   const SizedBox(height: 20),
                   
                   // Bloodline Focus
@@ -263,23 +347,29 @@ class _CreateClubModalState extends State<CreateClubModal> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {}, // Submit action
+                      onPressed: _isCreating ? null : _submit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.grey.shade500,
+                        backgroundColor: AppColors.accentGreen,
+                        foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Create Club',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isCreating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Text(
+                              'Create Club',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ],
@@ -319,8 +409,9 @@ class _CreateClubModalState extends State<CreateClubModal> {
     );
   }
 
-  Widget _buildTextField({required String hint, int maxLines = 1, bool readOnly = false}) {
+  Widget _buildTextField({required String hint, TextEditingController? controller, int maxLines = 1, bool readOnly = false}) {
     return TextField(
+      controller: controller,
       maxLines: maxLines,
       readOnly: readOnly,
       style: const TextStyle(fontSize: 14),
