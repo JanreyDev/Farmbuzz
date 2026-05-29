@@ -219,14 +219,14 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                                 image: FileImage(_selectedCoverPhoto!),
                                                 fit: BoxFit.cover,
                                               )
-                                            : (_coverPhotoUrl != null
+                                            : (_coverPhotoUrl != null && _coverPhotoUrl!.isNotEmpty
                                                 ? DecorationImage(
                                                     image: NetworkImage(_coverPhotoUrl!),
                                                     fit: BoxFit.cover,
                                                   )
                                                 : null),
                                       ),
-                                      child: _selectedCoverPhoto == null && _coverPhotoUrl == null
+                                      child: _selectedCoverPhoto == null && (_coverPhotoUrl == null || _coverPhotoUrl!.isEmpty)
                                           ? CustomPaint(
                                               painter: _DashRectPainter(
                                                 color: const Color(0xFFC99843), // Golden border
@@ -314,14 +314,14 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                                       image: FileImage(_selectedAvatar!),
                                                       fit: BoxFit.cover,
                                                     )
-                                                  : (_avatarUrl != null
+                                                  : (_avatarUrl != null && _avatarUrl!.isNotEmpty
                                                       ? DecorationImage(
                                                           image: NetworkImage(_avatarUrl!),
                                                           fit: BoxFit.cover,
                                                         )
                                                       : null),
                                             ),
-                                            child: _selectedAvatar == null && _avatarUrl == null
+                                            child: _selectedAvatar == null && (_avatarUrl == null || _avatarUrl!.isEmpty)
                                                 ? CustomPaint(
                                                     painter: _DashRectPainter(
                                                       color: Colors.grey.shade400,
