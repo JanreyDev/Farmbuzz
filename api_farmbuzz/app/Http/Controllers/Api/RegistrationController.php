@@ -62,6 +62,14 @@ class RegistrationController extends Controller
                 ->driver()
                 ->send($mobile, "Your FarmBuzz verification code is {$otp}. It expires in {$ttl} minutes.");
         } catch (RuntimeException $e) {
+            if (app()->isLocal() || app()->environment('testing')) {
+                return response()->json([
+                    'message' => 'OTP generated for local/testing. SMS delivery failed.',
+                    'otp' => $otp,
+                    'sms_error' => $e->getMessage(),
+                ]);
+            }
+
             $message = app()->isLocal()
                 ? 'Unable to deliver OTP: '.$e->getMessage()
                 : 'Unable to deliver OTP right now. Please contact support or try again later.';
@@ -70,9 +78,15 @@ class RegistrationController extends Controller
             ], 503);
         }
 
-        return response()->json([
+        $payload = [
             'message' => 'OTP sent successfully.',
-        ]);
+        ];
+
+        if (app()->isLocal() || app()->environment('testing')) {
+            $payload['otp'] = $otp;
+        }
+
+        return response()->json($payload);
     }
 
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
