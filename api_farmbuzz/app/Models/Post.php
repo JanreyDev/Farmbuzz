@@ -11,6 +11,7 @@ class Post extends Model
     use HasFactory;
 
     protected $fillable = [
+        'club_id',
         'author_name',
         'author_avatar',
         'content',
@@ -28,6 +29,11 @@ class Post extends Model
             'image_paths' => 'array',
             'published_at' => 'datetime',
         ];
+    }
+
+    public function club()
+    {
+        return $this->belongsTo(Club::class);
     }
 
     public function comments(): HasMany

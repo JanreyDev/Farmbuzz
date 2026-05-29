@@ -50,6 +50,7 @@ class PostController extends Controller
     {
         $reactorName = trim((string) $request->query('reactor_name', ''));
         $authorName = trim((string) $request->query('author_name', ''));
+        $clubId = $request->query('club_id');
 
         $query = Post::query()
             ->with('reactions')
@@ -60,6 +61,12 @@ class PostController extends Controller
 
         if ($authorName !== '') {
             $query->where('author_name', $authorName);
+        }
+
+        if ($clubId !== null && $clubId !== '') {
+            $query->where('club_id', $clubId);
+        } else {
+            $query->whereNull('club_id');
         }
 
         $posts = $query
@@ -121,6 +128,7 @@ class PostController extends Controller
         }
 
         $post = Post::query()->create([
+            'club_id' => $request->input('club_id'),
             'author_name' => $request->string('author_name')->toString(),
             'author_avatar' => $request->input('author_avatar'),
             'content' => $request->input('content'),
