@@ -143,14 +143,23 @@ class FeedApi {
     return Uri.parse('$base$normalizedPath');
   }
 
-  Future<List<FeedPost>> fetchPosts({String? reactorName}) async {
+  Future<List<FeedPost>> fetchPosts({String? reactorName, int? clubId}) async {
     var uri = _buildUri('/posts');
+    final queryParams = <String, String>{};
+    
     final normalizedReactor = reactorName?.trim() ?? '';
     if (normalizedReactor.isNotEmpty) {
-      uri = uri.replace(
-        queryParameters: <String, String>{'reactor_name': normalizedReactor},
-      );
+      queryParams['reactor_name'] = normalizedReactor;
     }
+    
+    if (clubId != null) {
+      queryParams['club_id'] = clubId.toString();
+    }
+    
+    if (queryParams.isNotEmpty) {
+      uri = uri.replace(queryParameters: queryParams);
+    }
+    
     final response = await _client.get(
       uri,
       headers: const {'Accept': 'application/json'},
@@ -290,11 +299,15 @@ class FeedApi {
     String? metaFeeling,
     String? metaLocation,
     String? authorAvatar,
+    int? clubId,
   }) async {
     final request = http.MultipartRequest('POST', _buildUri('/posts'));
     request.headers['Accept'] = 'application/json';
     request.fields['author_name'] = authorName;
     request.fields['content'] = content;
+    if (clubId != null) {
+      request.fields['club_id'] = clubId.toString();
+    }
     if (metaFeeling != null && metaFeeling.trim().isNotEmpty) {
       request.fields['meta_feeling'] = metaFeeling.trim();
     }
@@ -369,6 +382,7 @@ class FeedApi {
           metaFeeling: metaFeeling,
           metaLocation: metaLocation,
           authorAvatar: authorAvatar,
+          clubId: clubId,
         );
       }
       if (message != null) {
@@ -398,6 +412,7 @@ class FeedApi {
     String? metaFeeling,
     String? metaLocation,
     String? authorAvatar,
+    int? clubId,
   }) async {
     final payloads = <String>[];
     for (final image in images) {
@@ -414,6 +429,7 @@ class FeedApi {
       },
       body: jsonEncode({
         'author_name': authorName,
+        if (clubId != null) 'club_id': clubId,
         'author_avatar':
             (authorAvatar != null && authorAvatar.trim().isNotEmpty)
             ? authorAvatar.trim()
