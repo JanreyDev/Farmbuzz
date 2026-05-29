@@ -7,6 +7,8 @@ use App\Models\Club;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ClubController extends Controller
 {
@@ -28,6 +30,21 @@ class ClubController extends Controller
         return response()->json([
             'data' => $clubs->map(fn (Club $club): array => $this->clubPayload($club, true))->values(),
         ]);
+    }
+
+    public function uploadCover(Request $request): JsonResponse
+    {
+        $request->validate([
+            'cover' => ['required', 'image', 'max:5120'], // 5 MB
+        ]);
+
+        $file = $request->file('cover');
+        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('uploads/clubs'), $filename);
+
+        $url = url('uploads/clubs/' . $filename);
+
+        return response()->json(['url' => $url]);
     }
 
     public function store(Request $request): JsonResponse
