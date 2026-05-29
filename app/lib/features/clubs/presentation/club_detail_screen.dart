@@ -236,44 +236,12 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
               ],
             ),
           ),
-
-          // Join / Edit Button
-          const SizedBox(width: 8),
-          _buildActionButton(),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton() {
-    if (_isFounder) {
-      return OutlinedButton.icon(
-        onPressed: _openEdit,
-        icon: const Icon(LucideIcons.edit2, size: 14),
-        label: const Text('Edit'),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.accentGreen,
-          side: const BorderSide(color: AppColors.accentGreen),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        ),
-      );
-    }
-    return ElevatedButton.icon(
-      onPressed: () {},
-      icon: const Icon(LucideIcons.userCheck, size: 14),
-      label: const Text('Joined'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.accentGreen,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-    );
-  }
+
 
   Widget _buildBadge(String label, Color color, {IconData? icon}) {
     return Container(
