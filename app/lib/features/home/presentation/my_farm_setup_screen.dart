@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../data/farm_api.dart';
 
 class MyFarmSetupScreen extends StatefulWidget {
   final VoidCallback onCreated;
@@ -20,6 +21,9 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
 
   late AnimationController _slideController;
   late Animation<Offset> _slideAnimation;
+
+  final FarmApi _farmApi = FarmApi();
+  bool _isCreating = false;
 
   // Step 1 — Name
   final _farmNameController = TextEditingController();
@@ -446,12 +450,12 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
 
           // Right: Continue or Create my farm
           GestureDetector(
-            onTap: (_canContinue || !isFirstStep) ? (isLastStep ? _createFarm : _goNext) : null,
+            onTap: (_canContinue || !isFirstStep) && !_isCreating ? (isLastStep ? _createFarm : _goNext) : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               decoration: BoxDecoration(
-                color: (_canContinue || !isFirstStep)
+                color: ((_canContinue || !isFirstStep) && !_isCreating)
                     ? AppColors.accentGreen
                     : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(50),
@@ -459,17 +463,26 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isLastStep)
+                  if (isLastStep && !_isCreating)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: Icon(LucideIcons.checkCircle, size: 15, color: Colors.white),
                     ),
+                  if (_isCreating)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 8),
+                      child: SizedBox(
+                        width: 15,
+                        height: 15,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    ),
                   Text(
-                    isLastStep ? 'Create my farm' : 'Continue',
+                    isLastStep ? (_isCreating ? 'Creating...' : 'Create my farm') : 'Continue',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: (_canContinue || !isFirstStep)
+                      color: ((_canContinue || !isFirstStep) && !_isCreating)
                           ? Colors.white
                           : Colors.grey.shade500,
                     ),
@@ -523,6 +536,8 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
   }
 
   Future<void> _createFarm() async {
+    if (_isCreating) return;
+
     final name = _farmNameController.text.trim();
     final tagline = _taglineController.text.trim();
     final city = _cityController.text.trim();
@@ -530,8 +545,21 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
     final yearStr = _yearController.text.trim();
     final year = int.tryParse(yearStr) ?? 0;
 
+    setState(() => _isCreating = true);
+
     try {
       final prefs = await SharedPreferences.getInstance();
+      final mobileNumber = prefs.getString('auth_mobile_number');
+
+      if (mobileNumber != null && mobileNumber.isNotEmpty) {
+        await _farmApi.createFarm(
+          mobileNumber: mobileNumber,
+          name: name,
+          city: city.isNotEmpty ? city : (province.isNotEmpty ? province : null),
+          startedYear: year > 0 ? year : null,
+        );
+      }
+
       await prefs.setString('farm_name', name);
       await prefs.setString('farm_tagline', tagline);
       await prefs.setString('farm_city', city);
@@ -539,13 +567,17 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
       await prefs.setInt('farm_year', year);
       await prefs.setBool('farm_created', true);
     } catch (e) {
-      // Fallback to memory store if SharedPreferences is not compiled/linked yet
-      FallbackFarmStore.farmCreated = true;
-      FallbackFarmStore.farmName = name;
-      FallbackFarmStore.farmTagline = tagline;
-      FallbackFarmStore.farmCity = city;
-      FallbackFarmStore.farmProvince = province;
-      FallbackFarmStore.farmYear = year;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        setState(() => _isCreating = false);
+      }
+      return;
     }
 
     if (mounted) {
