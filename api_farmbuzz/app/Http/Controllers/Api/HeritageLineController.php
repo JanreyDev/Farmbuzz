@@ -38,6 +38,9 @@ class HeritageLineController extends Controller
             'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
             'name' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:500'],
+            'origin_focus' => ['nullable', 'string', 'max:160'],
+            'traits' => ['nullable', 'string', 'max:300'],
+            'generations_bred' => ['nullable', 'integer', 'between:0,1000'],
         ]);
 
         $farm = $this->resolveFarmForMobile($request);
@@ -49,6 +52,9 @@ class HeritageLineController extends Controller
             'farm_id' => $farm->id,
             'name' => trim((string) $validated['name']),
             'description' => isset($validated['description']) ? trim((string) $validated['description']) : null,
+            'origin_focus' => isset($validated['origin_focus']) ? trim((string) $validated['origin_focus']) : null,
+            'traits' => isset($validated['traits']) ? trim((string) $validated['traits']) : null,
+            'generations_bred' => $validated['generations_bred'] ?? null,
         ]);
 
         return response()->json([
@@ -63,6 +69,9 @@ class HeritageLineController extends Controller
             'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
             'name' => ['required', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:500'],
+            'origin_focus' => ['nullable', 'string', 'max:160'],
+            'traits' => ['nullable', 'string', 'max:300'],
+            'generations_bred' => ['nullable', 'integer', 'between:0,1000'],
         ]);
 
         $farm = $this->resolveFarmForMobile($request);
@@ -72,6 +81,9 @@ class HeritageLineController extends Controller
 
         $heritageLine->name = trim((string) $validated['name']);
         $heritageLine->description = isset($validated['description']) ? trim((string) $validated['description']) : null;
+        $heritageLine->origin_focus = isset($validated['origin_focus']) ? trim((string) $validated['origin_focus']) : null;
+        $heritageLine->traits = isset($validated['traits']) ? trim((string) $validated['traits']) : null;
+        $heritageLine->generations_bred = $validated['generations_bred'] ?? null;
         $heritageLine->save();
 
         return response()->json([
@@ -104,6 +116,9 @@ class HeritageLineController extends Controller
             'id' => $line->id,
             'name' => $line->name,
             'description' => $line->description ?? '',
+            'origin_focus' => $line->origin_focus ?? '',
+            'traits' => $line->traits ?? '',
+            'generations_bred' => $line->generations_bred,
             'created_at' => optional($line->created_at)?->toIso8601String() ?? '',
         ];
     }
@@ -137,4 +152,3 @@ class HeritageLineController extends Controller
         return $farm;
     }
 }
-

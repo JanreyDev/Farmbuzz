@@ -64,12 +64,18 @@ class HeritageLine {
     required this.id,
     required this.name,
     required this.description,
+    required this.originFocus,
+    required this.traits,
+    this.generationsBred,
     required this.createdAt,
   });
 
   final int id;
   final String name;
   final String description;
+  final String originFocus;
+  final String traits;
+  final int? generationsBred;
   final String createdAt;
 
   factory HeritageLine.fromJson(Map<String, dynamic> json) {
@@ -77,6 +83,9 @@ class HeritageLine {
       id: (json['id'] as int?) ?? 0,
       name: (json['name'] as String?) ?? '',
       description: (json['description'] as String?) ?? '',
+      originFocus: (json['origin_focus'] as String?) ?? '',
+      traits: (json['traits'] as String?) ?? '',
+      generationsBred: json['generations_bred'] as int?,
       createdAt: (json['created_at'] as String?) ?? '',
     );
   }
@@ -275,6 +284,9 @@ class FarmApi {
     required String mobileNumber,
     required String name,
     String? description,
+    String? originFocus,
+    String? traits,
+    int? generationsBred,
   }) async {
     final response = await _client.post(
       _buildUri('/farm/heritage-lines'),
@@ -283,6 +295,9 @@ class FarmApi {
         'mobile_number': mobileNumber,
         'name': name,
         'description': description ?? '',
+        'origin_focus': originFocus ?? '',
+        'traits': traits ?? '',
+        'generations_bred': generationsBred,
       }),
     );
     final body = _decodeJson(response.body);
@@ -299,6 +314,9 @@ class FarmApi {
     required String mobileNumber,
     required String name,
     String? description,
+    String? originFocus,
+    String? traits,
+    int? generationsBred,
   }) async {
     final response = await _client.put(
       _buildUri('/farm/heritage-lines/$id'),
@@ -307,6 +325,9 @@ class FarmApi {
         'mobile_number': mobileNumber,
         'name': name,
         'description': description ?? '',
+        'origin_focus': originFocus ?? '',
+        'traits': traits ?? '',
+        'generations_bred': generationsBred,
       }),
     );
     final body = _decodeJson(response.body);

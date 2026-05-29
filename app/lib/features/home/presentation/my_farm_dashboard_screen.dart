@@ -919,12 +919,11 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       return;
     }
 
-    final changed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          _HeritageLinesSheet(mobileNumber: _mobileNumber, api: _farmApi),
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (context) =>
+            _HeritageLinesScreen(mobileNumber: _mobileNumber, api: _farmApi),
+      ),
     );
 
     if (changed == true) {
@@ -1216,17 +1215,17 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   }
 }
 
-class _HeritageLinesSheet extends StatefulWidget {
-  const _HeritageLinesSheet({required this.mobileNumber, required this.api});
+class _HeritageLinesScreen extends StatefulWidget {
+  const _HeritageLinesScreen({required this.mobileNumber, required this.api});
 
   final String mobileNumber;
   final FarmApi api;
 
   @override
-  State<_HeritageLinesSheet> createState() => _HeritageLinesSheetState();
+  State<_HeritageLinesScreen> createState() => _HeritageLinesScreenState();
 }
 
-class _HeritageLinesSheetState extends State<_HeritageLinesSheet> {
+class _HeritageLinesScreenState extends State<_HeritageLinesScreen> {
   bool _isLoading = true;
   bool _changed = false;
   List<HeritageLine> _lines = const <HeritageLine>[];
@@ -1263,8 +1262,11 @@ class _HeritageLinesSheetState extends State<_HeritageLinesSheet> {
     try {
       await widget.api.addHeritageLine(
         mobileNumber: widget.mobileNumber,
-        name: result.$1,
-        description: result.$2,
+        name: result.name,
+        description: result.legacyDescription,
+        originFocus: result.originFocus,
+        traits: result.traits,
+        generationsBred: result.generationsBred,
       );
       _changed = true;
       await _load();
@@ -1283,8 +1285,11 @@ class _HeritageLinesSheetState extends State<_HeritageLinesSheet> {
       await widget.api.updateHeritageLine(
         id: line.id,
         mobileNumber: widget.mobileNumber,
-        name: result.$1,
-        description: result.$2,
+        name: result.name,
+        description: result.legacyDescription,
+        originFocus: result.originFocus,
+        traits: result.traits,
+        generationsBred: result.generationsBred,
       );
       _changed = true;
       await _load();
@@ -1331,212 +1336,403 @@ class _HeritageLinesSheetState extends State<_HeritageLinesSheet> {
     }
   }
 
-  Future<(String, String)?> _showLineEditor({HeritageLine? line}) async {
+  Future<_HeritageLineFormData?> _showLineEditor({HeritageLine? line}) async {
     final nameController = TextEditingController(text: line?.name ?? '');
-    final descriptionController = TextEditingController(
-      text: line?.description ?? '',
+    final originController = TextEditingController(
+      text: line?.originFocus ?? '',
+    );
+    final traitsController = TextEditingController(text: line?.traits ?? '');
+    final generationsController = TextEditingController(
+      text: line?.generationsBred?.toString() ?? '',
     );
     try {
-      return await showDialog<(String, String)>(
+      return await showDialog<_HeritageLineFormData>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            line == null ? 'Add Heritage Line' : 'Edit Heritage Line',
+        barrierDismissible: false,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 24,
           ),
-          content: SizedBox(
-            width: 340,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAFCFA),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFD4E3D6)),
+              boxShadow: const <BoxShadow>[
+                BoxShadow(
+                  color: Color(0x29000000),
+                  blurRadius: 26,
+                  offset: Offset(0, 14),
+                ),
+              ],
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Line Name',
-                    hintText: 'e.g. Kelso',
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: <Color>[Color(0xFF0E6B3A), Color(0xFF1A8A4E)],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.17),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.eco_outlined,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          line == null
+                              ? 'Add Heritage Line'
+                              : 'Edit Heritage Line',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.of(context).pop(),
+                        borderRadius: BorderRadius.circular(100),
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: descriptionController,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                    hintText: 'Short details about this line',
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                  child: Text(
+                    'Save key details of this bloodline so your team can track it across devices.',
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+                  child: TextField(
+                    controller: nameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: _heritageInputDecoration(
+                      label: 'Line name',
+                      hint: 'Line name (e.g. Mountain Native Line)',
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                  child: TextField(
+                    controller: originController,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: _heritageInputDecoration(
+                      label: 'Origin or focus',
+                      hint: 'Origin or focus (e.g. High egg yield, hardy)',
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                  child: TextField(
+                    controller: traitsController,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: _heritageInputDecoration(
+                      label: 'Traits',
+                      hint: 'Traits, comma-separated (e.g. Hardy, Calm, Heavy)',
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                  child: TextField(
+                    controller: generationsController,
+                    keyboardType: TextInputType.number,
+                    decoration: _heritageInputDecoration(
+                      label: 'Generations bred',
+                      hint: 'Generations bred (optional)',
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.accentGreen,
+                          ),
+                          onPressed: () {
+                            final name = nameController.text.trim();
+                            if (name.isEmpty) {
+                              return;
+                            }
+                            final parsedGen = int.tryParse(
+                              generationsController.text.trim(),
+                            );
+                            Navigator.of(context).pop(
+                              _HeritageLineFormData(
+                                name: name,
+                                originFocus: originController.text.trim(),
+                                traits: traitsController.text.trim(),
+                                generationsBred: parsedGen,
+                              ),
+                            );
+                          },
+                          child: const Text('Save'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final name = nameController.text.trim();
-                if (name.isEmpty) return;
-                Navigator.of(
-                  context,
-                ).pop((name, descriptionController.text.trim()));
-              },
-              child: const Text('Save'),
-            ),
-          ],
         ),
       );
     } finally {
       nameController.dispose();
-      descriptionController.dispose();
+      originController.dispose();
+      traitsController.dispose();
+      generationsController.dispose();
     }
+  }
+
+  InputDecoration _heritageInputDecoration({
+    required String label,
+    required String hint,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      hintStyle: const TextStyle(color: Color(0xFF8A9590), fontSize: 13),
+      labelStyle: const TextStyle(
+        color: Color(0xFF1F5134),
+        fontWeight: FontWeight.w700,
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFD4DDD4)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.accentGreen, width: 1.5),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        height: MediaQuery.of(context).size.height * 0.78,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(18),
-            topRight: Radius.circular(18),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(_changed),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF111827)),
+        title: const Text(
+          'Heritage Lines',
+          style: TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD1D5DB),
-                borderRadius: BorderRadius.circular(99),
+        actions: [
+          TextButton.icon(
+            onPressed: _addLine,
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add New'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentGreen),
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.accentGreen),
+            )
+          : _lines.isEmpty
+          ? const Center(
+              child: Text(
+                'No heritage lines yet.',
+                style: TextStyle(color: Color(0xFF6B7280)),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
-              child: Row(
-                children: [
-                  const Text(
-                    'Heritage Lines',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF111827),
-                    ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              itemBuilder: (context, index) {
+                final line = _lines[index];
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
-                  const Spacer(),
-                  TextButton.icon(
-                    onPressed: _addLine,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.accentGreen,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.accentGreen,
-                      ),
-                    )
-                  : _lines.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No heritage lines yet.',
-                        style: TextStyle(color: Color(0xFF6B7280)),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                      itemBuilder: (context, index) {
-                        final line = _lines[index];
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFAF8F4),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFEDE7DD)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      line.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF111827),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () => _editLine(line),
-                                    icon: const Icon(
-                                      Icons.edit_outlined,
-                                      size: 18,
-                                    ),
-                                    tooltip: 'Edit',
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                  IconButton(
-                                    onPressed: () => _deleteLine(line),
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      size: 18,
-                                      color: Color(0xFFDC2626),
-                                    ),
-                                    tooltip: 'Delete',
-                                    visualDensity: VisualDensity.compact,
-                                  ),
-                                ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              line.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF111827),
                               ),
-                              if (line.description.trim().isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 2),
-                                  child: Text(
-                                    line.description,
-                                    style: const TextStyle(
-                                      color: Color(0xFF6B7280),
-                                      fontSize: 12,
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                ),
-                            ],
+                            ),
                           ),
-                        );
-                      },
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 8),
-                      itemCount: _lines.length,
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(_changed),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accentGreen,
+                          IconButton(
+                            onPressed: () => _editLine(line),
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            tooltip: 'Edit',
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          IconButton(
+                            onPressed: () => _deleteLine(line),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              size: 18,
+                              color: Color(0xFFDC2626),
+                            ),
+                            tooltip: 'Delete',
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ],
+                      ),
+                      if (line.description.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            line.description,
+                            style: const TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      if (line.originFocus.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            'Origin/Focus: ${line.originFocus}',
+                            style: const TextStyle(
+                              color: Color(0xFF374151),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      if (line.traits.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            'Traits: ${line.traits}',
+                            style: const TextStyle(
+                              color: Color(0xFF4B5563),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      if (line.generationsBred != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            'Generations bred: ${line.generationsBred}',
+                            style: const TextStyle(
+                              color: Color(0xFF4B5563),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  child: const Text('Done'),
-                ),
-              ),
+                );
+              },
+              separatorBuilder: (context, index) => const SizedBox(height: 8),
+              itemCount: _lines.length,
             ),
-          ],
-        ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addLine,
+        backgroundColor: AppColors.accentGreen,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Add New Line'),
       ),
     );
+  }
+}
+
+class _HeritageLineFormData {
+  const _HeritageLineFormData({
+    required this.name,
+    required this.originFocus,
+    required this.traits,
+    required this.generationsBred,
+  });
+
+  final String name;
+  final String originFocus;
+  final String traits;
+  final int? generationsBred;
+
+  String get legacyDescription {
+    if (originFocus.isNotEmpty) return originFocus;
+    if (traits.isNotEmpty) return traits;
+    return '';
   }
 }

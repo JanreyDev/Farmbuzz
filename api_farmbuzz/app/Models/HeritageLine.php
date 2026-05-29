@@ -14,6 +14,9 @@ class HeritageLine extends Model
         'farm_id',
         'name',
         'description',
+        'origin_focus',
+        'traits',
+        'generations_bred',
     ];
 
     public function farm(): BelongsTo
@@ -21,4 +24,3 @@ class HeritageLine extends Model
         return $this->belongsTo(Farm::class);
     }
 }
-
