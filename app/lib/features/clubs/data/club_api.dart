@@ -71,7 +71,7 @@ class ClubApi {
     final streamed = await request.send();
     final raw = await streamed.stream.bytesToString();
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
-      throw ClubApiException('Failed to upload cover photo.');
+      throw ClubApiException('Failed to upload cover photo. Server said: $raw');
     }
     final decoded = jsonDecode(raw) as Map<String, dynamic>;
     final url = decoded['url'];
