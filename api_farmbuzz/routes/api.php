@@ -63,6 +63,7 @@ Route::post('/posts/{post}/comments', [PostController::class, 'addComment']);
 
 Route::get('/clubs', [ClubController::class, 'index']);
 Route::post('/clubs', [ClubController::class, 'store']);
+Route::put('/clubs/{club}', [ClubController::class, 'update']);
 Route::get('/clubs/discover', [ClubController::class, 'discover']);
 Route::post('/clubs/upload-cover', [ClubController::class, 'uploadCover']);
 

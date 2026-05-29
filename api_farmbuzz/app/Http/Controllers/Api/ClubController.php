@@ -88,6 +88,48 @@ class ClubController extends Controller
         ], 201);
     }
 
+    public function update(Request $request, Club $club): JsonResponse
+    {
+        $validated = $request->validate([
+            'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:4000'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'region' => ['nullable', 'string', 'max:100'],
+            'focus_tags' => ['nullable', 'array'],
+            'focus_tags.*' => ['string', 'max:100'],
+            'is_public' => ['nullable', 'boolean'],
+            'min_birds' => ['nullable', 'integer', 'min:0'],
+            'verified_only' => ['nullable', 'boolean'],
+            'cover_image_url' => ['nullable', 'string', 'max:2048'],
+        ]);
+
+        $user = User::query()
+            ->where('mobile_number', $validated['mobile_number'])
+            ->firstOrFail();
+
+        if ($club->user_id !== $user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $club->update([
+            'name' => trim((string) $validated['name']),
+            'description' => isset($validated['description']) ? trim((string) $validated['description']) : null,
+            'category' => $validated['category'] ?? 'Community',
+            'region' => isset($validated['region']) ? trim((string) $validated['region']) : null,
+            'focus_tags' => $validated['focus_tags'] ?? [],
+            'is_public' => $validated['is_public'] ?? true,
+            'min_birds' => $validated['min_birds'] ?? 0,
+            'verified_only' => $validated['verified_only'] ?? false,
+            'cover_image_url' => isset($validated['cover_image_url']) ? trim((string) $validated['cover_image_url']) : $club->cover_image_url,
+        ]);
+
+        return response()->json([
+            'message' => 'Club updated successfully.',
+            'data' => $this->clubPayload($club, true),
+        ]);
+    }
+
     public function discover(Request $request): JsonResponse
     {
         $validated = $request->validate([
