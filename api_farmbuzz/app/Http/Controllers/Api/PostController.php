@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
@@ -89,6 +90,14 @@ class PostController extends Controller
                 $storedPaths[] = $this->storePublicPostImage($image, $request);
             }
         }
+        foreach ((array) $request->input('image_payloads', []) as $payload) {
+            if (is_string($payload) && trim($payload) !== '') {
+                $stored = $this->storePublicPostImageFromBase64($payload, $request);
+                if ($stored !== null) {
+                    $storedPaths[] = $stored;
+                }
+            }
+        }
 
         $post = Post::query()->create([
             'author_name' => $request->string('author_name')->toString(),
@@ -135,6 +144,57 @@ class PostController extends Controller
         );
 
         $file->move($directory, $filename);
+
+        return rtrim($request->getSchemeAndHttpHost(), '/') . '/uploads/posts/' . $filename;
+    }
+
+    private function storePublicPostImageFromBase64(string $payload, Request $request): ?string
+    {
+        $normalized = trim($payload);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $raw = $normalized;
+        $declaredMime = null;
+        if (preg_match('/^data:(?<mime>[-\w.]+\/[-\w.+]+);base64,(?<data>.+)$/', $normalized, $matches) === 1) {
+            $declaredMime = $matches['mime'] ?? null;
+            $raw = $matches['data'] ?? '';
+        }
+
+        $raw = preg_replace('/\s+/', '', $raw) ?? '';
+        $binary = base64_decode($raw, true);
+        if ($binary === false || $binary === '') {
+            return null;
+        }
+
+        $detectedMime = (string) ((new \finfo(FILEINFO_MIME_TYPE))->buffer($binary) ?: '');
+        $mime = $detectedMime !== '' ? $detectedMime : (string) $declaredMime;
+        $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+            'image/bmp' => 'bmp',
+        ];
+        if (! array_key_exists($mime, $allowed)) {
+            return null;
+        }
+
+        $directory = public_path('uploads/posts');
+        if (! File::isDirectory($directory)) {
+            File::makeDirectory($directory, 0755, true);
+        }
+
+        $filename = sprintf(
+            'post_%s_%s.%s',
+            now()->format('YmdHisv'),
+            Str::lower(Str::random(8)),
+            $allowed[$mime],
+        );
+
+        $target = $directory . DIRECTORY_SEPARATOR . $filename;
+        File::put($target, $binary);
 
         return rtrim($request->getSchemeAndHttpHost(), '/') . '/uploads/posts/' . $filename;
     }

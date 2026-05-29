@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/data/auth_api.dart';
 import '../../auth/presentation/login_screen.dart';
+import '../data/feed_api.dart';
 import '../../clubs/presentation/clubs_screen.dart';
 import 'my_farm_setup_screen.dart';
 import 'my_farm_dashboard_screen.dart';
@@ -48,6 +50,36 @@ void _showBottomToast(BuildContext context, String message) {
   Future<void>.delayed(const Duration(milliseconds: 1700), () {
     entry.remove();
   });
+}
+
+class _FeedStore {
+  _FeedStore._();
+  static final _FeedStore instance = _FeedStore._();
+
+  final FeedApi _api = FeedApi();
+  final ValueNotifier<List<FeedPost>> posts = ValueNotifier<List<FeedPost>>(
+    <FeedPost>[],
+  );
+  bool loaded = false;
+
+  Future<void> load() async {
+    final fetched = await _api.fetchPosts();
+    posts.value = fetched;
+    loaded = true;
+  }
+
+  Future<void> create({
+    required String authorName,
+    required String content,
+    required List<FeedImageUpload> images,
+  }) async {
+    final created = await _api.createPost(
+      authorName: authorName,
+      content: content,
+      images: images,
+    );
+    posts.value = <FeedPost>[created, ...posts.value];
+  }
 }
 
 class HomeScreen extends StatefulWidget {
@@ -1362,11 +1394,64 @@ class _CreatePostSheet extends StatefulWidget {
 }
 
 class _CreatePostSheetState extends State<_CreatePostSheet> {
+  static const int _maxImageBytes = 20 * 1024 * 1024; // 20MB (matches backend)
   final TextEditingController _postController = TextEditingController();
   final List<String> _imagePaths = [];
+  final List<FeedImageUpload> _imageUploads = [];
   final List<String> _videoPaths = [];
   String? _selectedFeeling;
   String? _selectedLocation;
+  bool _isPosting = false;
+
+  bool _isSupportedImagePath(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.bmp');
+  }
+
+  String _extensionFromName(String name) {
+    final dot = name.lastIndexOf('.');
+    if (dot < 0 || dot == name.length - 1) return '.jpg';
+    return name.substring(dot).toLowerCase();
+  }
+
+  MediaType _mediaTypeForExt(String ext) {
+    switch (ext) {
+      case '.png':
+        return MediaType('image', 'png');
+      case '.webp':
+        return MediaType('image', 'webp');
+      case '.gif':
+        return MediaType('image', 'gif');
+      case '.bmp':
+        return MediaType('image', 'bmp');
+      default:
+        return MediaType('image', 'jpeg');
+    }
+  }
+
+  Future<String?> _resolveUsableImagePath(PlatformFile file) async {
+    final path = file.path;
+    if (path != null && path.isNotEmpty) {
+      final diskFile = File(path);
+      if (await diskFile.exists()) return path;
+    }
+
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) return null;
+
+    final ext = _extensionFromName(file.name);
+    final tempDir = Directory.systemTemp;
+    final tempPath =
+        '${tempDir.path}${Platform.pathSeparator}farmbuzz_${DateTime.now().microsecondsSinceEpoch}$ext';
+    final tempFile = File(tempPath);
+    await tempFile.writeAsBytes(bytes, flush: true);
+    return tempFile.path;
+  }
 
   Future<void> _pickImage() async {
     try {
@@ -1375,11 +1460,77 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
+        withData: true,
       );
       if (!mounted || result == null) return;
-      final picked = result.paths.whereType<String>().toList();
+      final picked = result.files;
       if (picked.isEmpty) return;
-      setState(() => _imagePaths.addAll(picked));
+
+      final valid = <String>[];
+      final validUploads = <FeedImageUpload>[];
+      var invalidTypeCount = 0;
+      var invalidSizeCount = 0;
+      var missingFileCount = 0;
+
+      for (final pickedFile in picked) {
+        final path = await _resolveUsableImagePath(pickedFile);
+        if (path == null) {
+          missingFileCount++;
+          continue;
+        }
+        if (!_isSupportedImagePath(path)) {
+          invalidTypeCount++;
+          continue;
+        }
+        final file = File(path);
+        if (!await file.exists()) {
+          missingFileCount++;
+          continue;
+        }
+        final size = await file.length();
+        if (size <= 0 || size > _maxImageBytes) {
+          invalidSizeCount++;
+          continue;
+        }
+        valid.add(path);
+        final ext = _extensionFromName(
+          pickedFile.name.isEmpty ? path : pickedFile.name,
+        );
+        validUploads.add(
+          FeedImageUpload(
+            path: path,
+            bytes: (pickedFile.bytes != null && pickedFile.bytes!.isNotEmpty)
+                ? pickedFile.bytes
+                : null,
+            fileName: pickedFile.name.isNotEmpty
+                ? pickedFile.name
+                : path.split(Platform.pathSeparator).last,
+            contentType: _mediaTypeForExt(ext),
+          ),
+        );
+      }
+
+      if (valid.isNotEmpty) {
+        setState(() {
+          _imagePaths.addAll(valid);
+          _imageUploads.addAll(validUploads);
+        });
+      }
+
+      final skipped = invalidTypeCount + invalidSizeCount + missingFileCount;
+      if (skipped > 0 && mounted) {
+        final details = <String>[];
+        if (invalidTypeCount > 0) details.add('$invalidTypeCount unsupported');
+        if (invalidSizeCount > 0) details.add('$invalidSizeCount invalid size');
+        if (missingFileCount > 0) details.add('$missingFileCount unreadable');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '$skipped image(s) skipped (${details.join(', ')}). Use JPG/JPEG/PNG/WEBP/GIF/BMP and max 20MB each.',
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1643,6 +1794,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
                             GestureDetector(
                               onTap: () => setState(() {
                                 _imagePaths.clear();
+                                _imageUploads.clear();
                                 _videoPaths.clear();
                               }),
                               child: const Text(
@@ -1766,24 +1918,27 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isEnabled
-                            ? const Color(0xFF15A352)
-                            : const Color(0xFFE8EBEF),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Post',
-                        style: TextStyle(
-                          color: isEnabled
-                              ? Colors.white
-                              : const Color(0xFFB8BEC5),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 20,
+                    GestureDetector(
+                      onTap: (!isEnabled || _isPosting) ? null : _submitPost,
+                      child: Container(
+                        width: double.infinity,
+                        height: 44,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: (isEnabled && !_isPosting)
+                              ? const Color(0xFF15A352)
+                              : const Color(0xFFE8EBEF),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          _isPosting ? 'Posting...' : 'Post',
+                          style: TextStyle(
+                            color: (isEnabled && !_isPosting)
+                                ? Colors.white
+                                : const Color(0xFFB8BEC5),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -1795,6 +1950,32 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
         ),
       ),
     );
+  }
+
+  Future<void> _submitPost() async {
+    if (_isPosting) return;
+    setState(() => _isPosting = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name =
+          prefs.getString('auth_user_name') ??
+          prefs.getString('auth_mobile_number') ??
+          'FarmBuzz User';
+      await _FeedStore.instance.create(
+        authorName: name,
+        content: _postController.text.trim(),
+        images: _imageUploads,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      _showBottomToast(context, 'Post created.');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isPosting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   Widget _buildImagePreviewGrid() {
@@ -1908,7 +2089,15 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
             top: 6,
             right: 6,
             child: GestureDetector(
-              onTap: () => setState(() => _imagePaths.remove(path)),
+              onTap: () => setState(() {
+                final index = _imagePaths.indexOf(path);
+                if (index >= 0) {
+                  _imagePaths.removeAt(index);
+                  if (index < _imageUploads.length) {
+                    _imageUploads.removeAt(index);
+                  }
+                }
+              }),
               child: Container(
                 width: 22,
                 height: 22,
@@ -3131,106 +3320,64 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _PostsSection extends StatelessWidget {
+class _PostsSection extends StatefulWidget {
   const _PostsSection();
 
   @override
-  Widget build(BuildContext context) {
-    const posts = [
-      (
-        userName: 'Adrian ddraig',
-        timeAgo: '31 minutes ago',
-        postText: 'Morning drop from the farm, all birds are healthy.',
-        metaEmoji: '',
-        metaFeeling: '',
-        metaLocation: '',
-        likes: 4,
-        comments: 1,
-        topReactions: <String>['\u{2764}\u{FE0F}', '\u{1F44D}', '\u{1F602}'],
-        imageUrls: <String>[
-          'https://picsum.photos/id/1025/1000/1000',
-          'https://picsum.photos/id/237/1000/1000',
-          'https://picsum.photos/id/1062/1000/1000',
-        ],
-      ),
-      (
-        userName: 'Rey rey',
-        timeAgo: '2 hours ago',
-        postText: 'Weekend gallery update, check all these shots.',
-        metaEmoji: '\u{1F525}',
-        metaFeeling: 'hyped',
-        metaLocation: 'Nueva Ecija',
-        likes: 12,
-        comments: 6,
-        topReactions: <String>['\u{1F44D}', '\u{2764}\u{FE0F}', '\u{1F62E}'],
-        imageUrls: <String>[
-          'https://picsum.photos/id/1025/1000/1000',
-          'https://picsum.photos/id/237/1000/1000',
-          'https://picsum.photos/id/1062/1000/1000',
-          'https://picsum.photos/id/1074/1000/1000',
-          'https://picsum.photos/id/1084/1000/1000',
-          'https://picsum.photos/id/169/1000/1000',
-        ],
-      ),
-      (
-        userName: 'Kiko Bantay',
-        timeAgo: '1 day ago',
-        postText: 'New hatchlings this morning.',
-        metaEmoji: '',
-        metaFeeling: '',
-        metaLocation: '',
-        likes: 14,
-        comments: 3,
-        topReactions: <String>['\u{1F602}', '\u{1F44D}', '\u{2764}\u{FE0F}'],
-        imageUrls: <String>[
-          'https://picsum.photos/id/1074/1000/1000',
-          'https://picsum.photos/id/169/1000/1000',
-        ],
-      ),
-      (
-        userName: 'Lara Mae',
-        timeAgo: '2 days ago',
-        postText:
-            'No photos today, just sharing that feed schedule worked well.',
-        metaEmoji: '\u{1F642}',
-        metaFeeling: 'happy',
-        metaLocation: 'Laguna',
-        likes: 2,
-        comments: 0,
-        topReactions: <String>['\u{2764}\u{FE0F}', '\u{1F622}'],
-        imageUrls: <String>[],
-      ),
-      (
-        userName: 'Bong R.',
-        timeAgo: '3 days ago',
-        postText: 'Caption only post. Farm routine complete.',
-        metaEmoji: '',
-        metaFeeling: '',
-        metaLocation: '',
-        likes: 1,
-        comments: 0,
-        topReactions: <String>['\u{1F44D}'],
-        imageUrls: <String>[],
-      ),
-    ];
+  State<_PostsSection> createState() => _PostsSectionState();
+}
 
-    return Column(
-      children: [
-        for (final post in posts)
-          _PostCard(
-            userName: post.userName,
-            timeAgo: post.timeAgo,
-            postText: post.postText,
-            metaEmoji: post.metaEmoji,
-            metaFeeling: post.metaFeeling,
-            metaLocation: post.metaLocation,
-            likesCount: post.likes,
-            commentsCount: post.comments,
-            topReactions: post.topReactions,
-            imageUrls: post.imageUrls,
-          ),
-        const SizedBox(height: 20),
-      ],
+class _PostsSectionState extends State<_PostsSection> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      if (!_FeedStore.instance.loaded) {
+        await _FeedStore.instance.load();
+      }
+    } catch (_) {}
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.accentGreen),
+        ),
+      );
+    }
+
+    return ValueListenableBuilder<List<FeedPost>>(
+      valueListenable: _FeedStore.instance.posts,
+      builder: (context, posts, _) => Column(
+        children: [
+          for (final post in posts)
+            _PostCard(
+              userName: post.userName,
+              timeAgo: post.timeAgo,
+              postText: post.postText,
+              metaEmoji: '',
+              metaFeeling: '',
+              metaLocation: '',
+              likesCount: post.likesCount,
+              commentsCount: post.commentsCount,
+              topReactions: post.topReactions,
+              imageUrls: post.imageUrls,
+            ),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 }

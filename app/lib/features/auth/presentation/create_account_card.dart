@@ -116,17 +116,30 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
   }
 
   Future<void> _sendOtp() async {
-    final registrationId = _registrationId;
-    if (!_canSendCode || _isLoading || registrationId == null) {
+    if (!_canSendCode || _isLoading) {
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      await _authApi.sendOtp(
-        registrationId: registrationId,
-        mobileNumber: '+63${widget.mobileController.text.trim()}',
-      );
+      var registrationId = _registrationId ?? await _createFreshRegistration();
+      try {
+        await _authApi.sendOtp(
+          registrationId: registrationId,
+          mobileNumber: '+63${widget.mobileController.text.trim()}',
+        );
+      } on AuthApiException catch (e) {
+        final message = e.message.toLowerCase();
+        if (message.contains('registration id') && message.contains('invalid')) {
+          registrationId = await _createFreshRegistration();
+          await _authApi.sendOtp(
+            registrationId: registrationId,
+            mobileNumber: '+63${widget.mobileController.text.trim()}',
+          );
+        } else {
+          rethrow;
+        }
+      }
       if (!mounted) {
         return;
       }
@@ -149,6 +162,21 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
       setState(() => _isLoading = false);
       _showMessage('Failed to send OTP. Please try again.');
     }
+  }
+
+  Future<int> _createFreshRegistration() async {
+    final registrationId = await _authApi.startRegistration(
+      name: widget.nameController.text.trim(),
+      referralCode: widget.referralController.text.trim().isEmpty
+          ? null
+          : widget.referralController.text.trim(),
+    );
+    if (mounted) {
+      setState(() => _registrationId = registrationId);
+    } else {
+      _registrationId = registrationId;
+    }
+    return registrationId;
   }
 
   Future<void> _verifyOtp() async {

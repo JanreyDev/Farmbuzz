@@ -8,6 +8,8 @@ import 'create_account_card.dart';
 import '../../home/presentation/home_screen.dart';
 import 'widgets/action_button.dart';
 import 'widgets/mobile_input.dart';
+import 'widgets/numeric_keypad.dart';
+import 'widgets/pin_dots.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -57,31 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final pinController = TextEditingController();
-    final pin = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Enter PIN'),
-        content: TextField(
-          controller: pinController,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-          obscureText: true,
-          decoration: const InputDecoration(hintText: '6-digit PIN'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(pinController.text.trim()),
-            child: const Text('Login'),
-          ),
-        ],
-      ),
-    );
-
+    final pin = await _promptPin();
     if (!mounted || pin == null) {
       return;
     }
@@ -94,10 +72,17 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoggingIn = true);
     try {
       final mobile = '+63${_mobileController.text.trim()}';
-      await _authApi.login(mobileNumber: mobile, pin: pin);
+      final login = await _authApi.login(mobileNumber: mobile, pin: pin);
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_mobile_number', mobile);
+      final user = login['user'];
+      if (user is Map<String, dynamic>) {
+        final name = (user['name'] as String?)?.trim();
+        if (name != null && name.isNotEmpty) {
+          await prefs.setString('auth_user_name', name);
+        }
+      }
 
       if (!mounted) return;
       setState(() => _isLoggingIn = false);
@@ -111,6 +96,79 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoggingIn = false);
       _showPlaceholderMessage('Login failed. Please try again.');
     }
+  }
+
+  Future<String?> _promptPin() async {
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        String pin = '';
+        return StatefulBuilder(
+          builder: (context, setModalState) => Container(
+            margin: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: _isLightMode
+                    ? const Color(0xFFBFD1C2)
+                    : AppColors.accentGreen.withValues(alpha: 0.15),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: _isLightMode
+                    ? const [Color(0xFFF1F3EF), Color(0xFFE6E9E4)]
+                    : [
+                        AppColors.cardDarkGreen.withValues(alpha: 0.94),
+                        AppColors.cardDeepGreen.withValues(alpha: 0.98),
+                      ],
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Enter your PIN',
+                    style: TextStyle(
+                      color: _isLightMode ? const Color(0xFF1E2821) : const Color(0xFFEAF7ED),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  PinDots(count: pin.length, isLightMode: _isLightMode),
+                  const SizedBox(height: 16),
+                  NumericKeypad(
+                    isLightMode: _isLightMode,
+                    onTap: (value) {
+                      if (pin.length >= 6) return;
+                      setModalState(() => pin += value);
+                      if (pin.length == 6) {
+                        Navigator.of(context).pop(pin);
+                      }
+                    },
+                    onDelete: () {
+                      if (pin.isEmpty) return;
+                      setModalState(() => pin = pin.substring(0, pin.length - 1));
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
