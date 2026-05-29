@@ -20,44 +20,59 @@ class TxtboxSmsSender implements SmsSender
         if (blank($this->url) || blank($this->apiKey)) {
             throw new RuntimeException('Txtbox SMS credentials are not configured.');
         }
-        $attempts = [
-            [
+        $numbers = $this->candidateNumbers($to);
+        $attempts = [];
+
+        foreach ($numbers as $number) {
+            $attempts[] = [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                     'X-API-KEY' => $this->apiKey,
                 ],
                 'payload' => [
-                    'number' => $to,
+                    'number' => $number,
                     'message' => $message,
                     'sender_name' => $this->senderName,
                 ],
-            ],
-            [
+            ];
+            $attempts[] = [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
-                    'X-API-KEY' => $this->apiKey,
+                    'X-Api-Key' => $this->apiKey,
                 ],
                 'payload' => [
-                    'number' => $to,
+                    'number' => $number,
                     'message' => $message,
                     'sendername' => $this->senderName,
                 ],
-            ],
-            [
+            ];
+            $attempts[] = [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'apikey' => $this->apiKey,
+                ],
+                'payload' => [
+                    'number' => $number,
+                    'message' => $message,
+                    'sender_name' => $this->senderName,
+                ],
+            ];
+            $attempts[] = [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                 ],
                 'payload' => [
                     'apikey' => $this->apiKey,
-                    'number' => $to,
+                    'number' => $number,
                     'message' => $message,
                     'sender_name' => $this->senderName,
                 ],
-            ],
-        ];
+            ];
+        }
 
         $lastResponseStatus = null;
         $lastResponseBody = null;
@@ -93,5 +108,27 @@ class TxtboxSmsSender implements SmsSender
             (string) ($lastResponseBody ?? 'n/a'),
             (string) ($lastError ?? 'n/a')
         ));
+    }
+
+    private function candidateNumbers(string $to): array
+    {
+        $raw = trim($to);
+        $digits = preg_replace('/\D+/', '', $raw) ?? '';
+
+        $candidates = [$raw];
+
+        if ($digits !== '') {
+            $candidates[] = $digits;
+        }
+
+        // Philippines fallback variants: +639XXXXXXXXX, 639XXXXXXXXX, 09XXXXXXXXX
+        if (str_starts_with($digits, '63') && strlen($digits) === 12) {
+            $candidates[] = '0'.substr($digits, 2);
+        } elseif (str_starts_with($digits, '09') && strlen($digits) === 11) {
+            $candidates[] = '63'.substr($digits, 1);
+            $candidates[] = '+63'.substr($digits, 1);
+        }
+
+        return array_values(array_unique(array_filter($candidates)));
     }
 }
