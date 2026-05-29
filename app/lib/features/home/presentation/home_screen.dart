@@ -14,6 +14,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/data/auth_api.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../data/feed_api.dart';
+import '../data/farm_api.dart';
 import '../data/story_api.dart';
 import '../../clubs/presentation/clubs_screen.dart';
 import 'my_farm_setup_screen.dart';
@@ -191,6 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _hasFarm = false;
   bool _isFarmLoading = true;
   bool _isChecking = false;
+  final FarmApi _farmApi = FarmApi();
 
   @override
   void initState() {
@@ -204,6 +206,26 @@ class _HomeScreenState extends State<HomeScreen> {
     _isChecking = true;
     try {
       final prefs = await SharedPreferences.getInstance();
+      final mobileNumber = (prefs.getString('auth_mobile_number') ?? '').trim();
+      if (mobileNumber.isNotEmpty) {
+        try {
+          final profile = await _farmApi.fetchFarm(mobileNumber: mobileNumber);
+          final hasFarmOnBackend = profile != null;
+          if (mounted) {
+            setState(() {
+              _hasFarm = hasFarmOnBackend;
+              _isFarmLoading = false;
+              _isChecking = false;
+            });
+          }
+          if (hasFarmOnBackend) {
+            await prefs.setBool('farm_created', true);
+            return;
+          }
+        } catch (_) {
+          // Fall back to local cache when backend is unavailable.
+        }
+      }
       if (mounted) {
         setState(() {
           _hasFarm = prefs.getBool('farm_created') ?? false;
@@ -2814,29 +2836,26 @@ class _StoriesSectionState extends State<_StoriesSection> {
                   ),
                 ),
               ),
-            ...List.generate(
-              stories.length,
-              (index) {
-                final story = stories[index];
-                return _StoryCard(
-                  name: story.name,
-                  time: story.timeAgo,
-                  imageUrl: story.imageUrl,
-                  avatarUrl: story.avatarUrl,
-                  textContent: story.textContent,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => StoryViewerScreen(
-                          stories: stories,
-                          initialIndex: index,
-                        ),
+            ...List.generate(stories.length, (index) {
+              final story = stories[index];
+              return _StoryCard(
+                name: story.name,
+                time: story.timeAgo,
+                imageUrl: story.imageUrl,
+                avatarUrl: story.avatarUrl,
+                textContent: story.textContent,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => StoryViewerScreen(
+                        stories: stories,
+                        initialIndex: index,
                       ),
-                    );
-                  },
-                );
-              },
-            ),
+                    ),
+                  );
+                },
+              );
+            }),
           ],
         ),
       ),
@@ -3045,9 +3064,11 @@ class _CreateStoryOptionsSheet extends StatelessWidget {
                         onTap: () {
                           // Pop the bottom sheet first, then open the editor fullscreen
                           Navigator.of(context).pop();
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => const _TextStoryEditorSheet(),
-                          ));
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const _TextStoryEditorSheet(),
+                            ),
+                          );
                         },
                         color: const Color(0xFF3A73E3),
                         icon: Icons.text_fields,
@@ -3448,96 +3469,100 @@ class _StoryCard extends StatelessWidget {
         width: 100,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: hasImage ? null : const Color(0xFF14532D),
-        image: hasImage
-            ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
-            : null,
-      ),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.20),
-                  Colors.black.withValues(alpha: 0.70),
-                ],
+          borderRadius: BorderRadius.circular(12),
+          color: hasImage ? null : const Color(0xFF14532D),
+          image: hasImage
+              ? DecorationImage(
+                  image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,
+                )
+              : null,
+        ),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.20),
+                    Colors.black.withValues(alpha: 0.70),
+                  ],
+                ),
               ),
             ),
-          ),
-          Positioned(
-            top: 8,
-            left: 8,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: const BoxDecoration(
-                color: AppColors.accentGreen,
-                shape: BoxShape.circle,
-              ),
-              child: CircleAvatar(
-                radius: 12,
-                backgroundColor: const Color(0xFFE8F5E9),
-                backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
-                onBackgroundImageError: hasAvatar ? (_, _) {} : null,
-                child: hasAvatar
-                    ? null
-                    : Text(
-                        _initial(),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1B5E20),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: AppColors.accentGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: CircleAvatar(
+                  radius: 12,
+                  backgroundColor: const Color(0xFFE8F5E9),
+                  backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+                  onBackgroundImageError: hasAvatar ? (_, _) {} : null,
+                  child: hasAvatar
+                      ? null
+                      : Text(
+                          _initial(),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1B5E20),
+                          ),
                         ),
-                      ),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  time,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.75),
-                    fontSize: 9,
-                  ),
-                ),
-                if (!hasImage && textContent.trim().isNotEmpty) ...[
-                  const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    textContent.trim(),
-                    maxLines: 2,
+                    name,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 9,
+                    ),
+                  ),
+                  if (!hasImage && textContent.trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      textContent.trim(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ));
+    );
   }
 }
 
@@ -4837,9 +4862,6 @@ class _ReactionGlyph extends StatelessWidget {
   }
 }
 
-
-
-
 class _TextStoryEditorSheet extends StatefulWidget {
   const _TextStoryEditorSheet();
 
@@ -4940,10 +4962,12 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
       _isEditing = false;
     });
     // wait for keyboard to close and layout to settle so text paints in RepaintBoundary
-    await Future<void>.delayed(const Duration(milliseconds: 600)); 
+    await Future<void>.delayed(const Duration(milliseconds: 600));
 
     try {
-      final boundary = _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary =
+          _globalKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
       if (boundary == null) throw Exception('Unable to capture story.');
 
       final image = await boundary.toImage(pixelRatio: 3.0);
@@ -4951,12 +4975,16 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
       final pngBytes = byteData!.buffer.asUint8List();
 
       final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/text_story_${DateTime.now().millisecondsSinceEpoch}.png');
+      final file = File(
+        '${tempDir.path}/text_story_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
       await file.writeAsBytes(pngBytes);
 
       final prefs = await SharedPreferences.getInstance();
       final mobile = (prefs.getString('auth_mobile_number') ?? '').trim();
-      if (mobile.isEmpty) throw Exception('Please login again before creating a story.');
+      if (mobile.isEmpty) {
+        throw Exception('Please login again before creating a story.');
+      }
 
       await _StoryStore.instance.create(
         mobileNumber: mobile,
@@ -4966,7 +4994,9 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
 
       if (mounted) {
         Navigator.of(context).pop(); // pop this editor
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Story shared')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Story shared')));
       }
     } catch (e) {
       if (mounted) {
@@ -5012,7 +5042,12 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                           Transform(
                             alignment: Alignment.center,
                             transform: Matrix4.identity()
-                              ..translateByDouble(_offset.dx, _offset.dy, 0.0, 1.0)
+                              ..translateByDouble(
+                                _offset.dx,
+                                _offset.dy,
+                                0.0,
+                                1.0,
+                              )
                               ..scaleByDouble(_scale, _scale, 1.0, 1.0)
                               ..rotateZ(_rotation),
                             child: GestureDetector(
@@ -5059,16 +5094,26 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                     ),
                     const Spacer(),
                     GestureDetector(
-                      onTap: () => setState(() => _textIndex = (_textIndex + 1) % _textColors.length),
+                      onTap: () => setState(
+                        () =>
+                            _textIndex = (_textIndex + 1) % _textColors.length,
+                      ),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.45),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.text_format, color: Colors.white, size: 20),
+                            const Icon(
+                              Icons.text_format,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Container(
                               width: 16,
@@ -5076,7 +5121,10 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                               decoration: BoxDecoration(
                                 color: _textColors[_textIndex],
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ],
@@ -5085,16 +5133,25 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () => setState(() => _bgIndex = (_bgIndex + 1) % _bgColors.length),
+                      onTap: () => setState(
+                        () => _bgIndex = (_bgIndex + 1) % _bgColors.length,
+                      ),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.45),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.format_color_fill, color: Colors.white, size: 20),
+                            const Icon(
+                              Icons.format_color_fill,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Container(
                               width: 16,
@@ -5102,7 +5159,10 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                               decoration: BoxDecoration(
                                 color: _bgColors[_bgIndex],
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ],
@@ -5153,14 +5213,20 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                 child: GestureDetector(
                   onTap: () => _focusNode.unfocus(),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
                       'Done',
-                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -5174,7 +5240,10 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                 child: GestureDetector(
                   onTap: _shareStory,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
@@ -5199,7 +5268,11 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                         ),
                         if (!_isSharing) ...[
                           const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.black),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                            color: Colors.black,
+                          ),
                         ],
                       ],
                     ),

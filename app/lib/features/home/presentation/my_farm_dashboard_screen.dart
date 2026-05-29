@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/network/api_config.dart';
 
 import 'my_farm_edit_screen.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -28,8 +31,11 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   String _avatarUrl = '';
   String _story = '';
   String _ownerName = '';
+  String _mobileNumber = '';
+  List<HeritageLine> _heritageLines = const <HeritageLine>[];
 
   bool _isLoading = true;
+  bool _isHeritageLoading = true;
 
   @override
   void initState() {
@@ -40,23 +46,34 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   Future<void> _loadFarmData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final mobileNumber = prefs.getString('mobile_number');
+      final mobileNumber =
+          prefs.getString('auth_mobile_number') ??
+          prefs.getString('mobile_number');
+      _mobileNumber = (mobileNumber ?? '').trim();
 
       if (mobileNumber != null) {
         final profile = await _farmApi.fetchFarm(mobileNumber: mobileNumber);
         if (profile != null) {
+          final savedCoverFromPrefs =
+              (prefs.getString('farm_cover_photo_url') ?? '').trim().isNotEmpty
+              ? (prefs.getString('farm_cover_photo_url') ?? '').trim()
+              : (prefs.getString('farm_cover_photo') ?? '');
+          final coverFromBackend = (profile.coverPhotoUrl ?? '').trim();
           setState(() {
             _farmName = profile.name.isNotEmpty ? profile.name : 'Farming Farm';
             _tagline = profile.tagline;
             _city = profile.city;
             _province = profile.province;
             _startYear = profile.startedYear ?? 0;
-            _coverPhotoUrl = profile.coverPhotoUrl ?? '';
+            _coverPhotoUrl = coverFromBackend.isNotEmpty
+                ? coverFromBackend
+                : savedCoverFromPrefs;
             _avatarUrl = profile.avatarUrl ?? '';
             _story = profile.story;
             _ownerName = profile.ownerName;
             _isLoading = false;
           });
+          await _loadHeritageLines();
           return;
         }
       }
@@ -65,20 +82,59 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       setState(() {
         _farmName = prefs.getString('farm_name') ?? FallbackFarmStore.farmName;
         if (_farmName.isEmpty) _farmName = 'Farming Farm';
-        _tagline = prefs.getString('farm_tagline') ?? FallbackFarmStore.farmTagline;
+        _tagline =
+            prefs.getString('farm_tagline') ?? FallbackFarmStore.farmTagline;
         _city = prefs.getString('farm_city') ?? FallbackFarmStore.farmCity;
-        _province = prefs.getString('farm_province') ?? FallbackFarmStore.farmProvince;
+        _province =
+            prefs.getString('farm_province') ?? FallbackFarmStore.farmProvince;
         _startYear = prefs.getInt('farm_year') ?? FallbackFarmStore.farmYear;
+        _coverPhotoUrl =
+            (prefs.getString('farm_cover_photo_url') ?? '').trim().isNotEmpty
+            ? (prefs.getString('farm_cover_photo_url') ?? '').trim()
+            : (prefs.getString('farm_cover_photo') ?? '');
         _isLoading = false;
       });
+      await _loadHeritageLines();
     } catch (_) {
       setState(() {
-        _farmName = FallbackFarmStore.farmName.isEmpty ? 'Farming Farm' : FallbackFarmStore.farmName;
+        _farmName = FallbackFarmStore.farmName.isEmpty
+            ? 'Farming Farm'
+            : FallbackFarmStore.farmName;
         _tagline = FallbackFarmStore.farmTagline;
         _city = FallbackFarmStore.farmCity;
         _province = FallbackFarmStore.farmProvince;
         _startYear = FallbackFarmStore.farmYear;
         _isLoading = false;
+        _isHeritageLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadHeritageLines() async {
+    if (_mobileNumber.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _heritageLines = const <HeritageLine>[];
+          _isHeritageLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final lines = await _farmApi.fetchHeritageLines(
+        mobileNumber: _mobileNumber,
+      );
+      if (!mounted) return;
+      setState(() {
+        _heritageLines = lines;
+        _isHeritageLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _heritageLines = const <HeritageLine>[];
+        _isHeritageLoading = false;
       });
     }
   }
@@ -95,6 +151,37 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     if (_city.isEmpty) return _province;
     if (_province.isEmpty) return _city;
     return '$_city, $_province';
+  }
+
+  ImageProvider<Object>? _resolveCoverImage(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return NetworkImage(trimmed);
+    }
+
+    if (trimmed.startsWith('/uploads/')) {
+      final base = ApiConfig.baseUrl.endsWith('/')
+          ? ApiConfig.baseUrl.substring(0, ApiConfig.baseUrl.length - 1)
+          : ApiConfig.baseUrl;
+      return NetworkImage('$base$trimmed');
+    }
+
+    final uri = Uri.tryParse(trimmed);
+    if (uri != null && uri.scheme == 'file') {
+      final filePath = uri.toFilePath(windows: Platform.isWindows);
+      final file = File(filePath);
+      if (file.existsSync()) {
+        return FileImage(file);
+      }
+    }
+
+    final file = File(trimmed);
+    if (file.existsSync()) {
+      return FileImage(file);
+    }
+    return null;
   }
 
   @override
@@ -132,8 +219,8 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
 
               const SizedBox(height: 12),
 
-              // ── Heritage Lines Empty State ──
-              _buildEmptyStateCard(),
+              // ── Heritage Lines ──
+              _buildHeritageLinesSection(),
 
               const SizedBox(height: 24),
 
@@ -147,7 +234,9 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               // ── Our Story ──
               _buildInfoCard(
                 title: 'OUR STORY',
-                body: _story.isNotEmpty ? _story : 'Tell visitors about your journey. Edit from Settings.',
+                body: _story.isNotEmpty
+                    ? _story
+                    : 'Tell visitors about your journey. Edit from Settings.',
                 footer: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -156,9 +245,15 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                         CircleAvatar(
                           radius: 16,
                           backgroundColor: Colors.grey.shade200,
-                          backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
+                          backgroundImage: _avatarUrl.isNotEmpty
+                              ? NetworkImage(_avatarUrl)
+                              : null,
                           child: _avatarUrl.isEmpty
-                              ? const Icon(LucideIcons.user, size: 16, color: Colors.grey)
+                              ? const Icon(
+                                  LucideIcons.user,
+                                  size: 16,
+                                  color: Colors.grey,
+                                )
                               : null,
                         ),
                         const SizedBox(width: 8),
@@ -203,7 +298,8 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               // ── Recent Activity ──
               _buildInfoCard(
                 title: 'RECENT ACTIVITY',
-                body: 'Add birds, log updates — activity appears here once your farm is published.',
+                body:
+                    'Add birds, log updates — activity appears here once your farm is published.',
               ),
 
               const SizedBox(height: 24),
@@ -225,26 +321,28 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   }
 
   Widget _buildHeaderCard() {
+    final coverImage = _resolveCoverImage(_coverPhotoUrl);
+
     return Container(
       width: double.infinity,
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        image: _coverPhotoUrl.isNotEmpty
+        image: coverImage != null
             ? DecorationImage(
-                image: NetworkImage(_coverPhotoUrl),
+                image: coverImage,
                 fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.4), BlendMode.darken),
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withValues(alpha: 0.4),
+                  BlendMode.darken,
+                ),
               )
             : null,
-        gradient: _coverPhotoUrl.isEmpty
+        gradient: coverImage == null
             ? const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF0C4D22),
-                  Color(0xFF147A3B),
-                ],
+                colors: [Color(0xFF0C4D22), Color(0xFF147A3B)],
               )
             : null,
         boxShadow: [
@@ -273,7 +371,9 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                       label: 'Share',
                       onTap: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Share functionality coming soon!')),
+                          const SnackBar(
+                            content: Text('Share functionality coming soon!'),
+                          ),
                         );
                       },
                     ),
@@ -303,7 +403,10 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                   children: [
                     // Pill label
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -357,7 +460,9 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                           subtitleParts.add(_tagline);
                         }
                         final subtitleText = subtitleParts.join(' · ');
-                        if (subtitleText.isEmpty) return const SizedBox.shrink();
+                        if (subtitleText.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
@@ -406,10 +511,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                       ),
                       Text(
                         'Followers',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 8,
-                        ),
+                        style: TextStyle(color: Colors.white70, fontSize: 8),
                       ),
                     ],
                   ),
@@ -462,19 +564,23 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: _buildStatCard(
-                icon: LucideIcons.egg,
-                value: '0',
-                label: 'Total Birds',
-                subtitle: 'Across all categories',
-              )),
+              Expanded(
+                child: _buildStatCard(
+                  icon: LucideIcons.egg,
+                  value: '0',
+                  label: 'Total Birds',
+                  subtitle: 'Across all categories',
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _buildStatCard(
-                icon: LucideIcons.gitFork,
-                value: '0',
-                label: 'Heritage Lines',
-                subtitle: 'Pure & cross',
-              )),
+              Expanded(
+                child: _buildStatCard(
+                  icon: LucideIcons.gitFork,
+                  value: '${_heritageLines.length}',
+                  label: 'Heritage Lines',
+                  subtitle: 'Pure & cross',
+                ),
+              ),
             ],
           ),
         ),
@@ -484,19 +590,23 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: _buildStatCard(
-                icon: LucideIcons.trophy,
-                value: '0',
-                label: 'Recognitions',
-                subtitle: 'Awards & shows',
-              )),
+              Expanded(
+                child: _buildStatCard(
+                  icon: LucideIcons.trophy,
+                  value: '0',
+                  label: 'Recognitions',
+                  subtitle: 'Awards & shows',
+                ),
+              ),
               const SizedBox(width: 10),
-              Expanded(child: _buildStatCard(
-                icon: LucideIcons.checkCircle2,
-                value: '0',
-                label: 'Chicks Hatched',
-                subtitle: 'This year',
-              )),
+              Expanded(
+                child: _buildStatCard(
+                  icon: LucideIcons.checkCircle2,
+                  value: '0',
+                  label: 'Chicks Hatched',
+                  subtitle: 'This year',
+                ),
+              ),
             ],
           ),
         ),
@@ -520,8 +630,8 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     required String subtitle,
     bool fullWidth = false,
   }) {
-    final cardWidth = fullWidth 
-        ? double.infinity 
+    final cardWidth = fullWidth
+        ? double.infinity
         : (MediaQuery.of(context).size.width - 32 - 10) / 2;
     return Container(
       width: cardWidth,
@@ -550,50 +660,50 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             ),
           ),
           child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: AppColors.accentGreen),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 18, color: AppColors.accentGreen),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF111827),
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF111827),
-                    height: 1,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
         ),
       ),
     );
@@ -605,11 +715,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       children: [
         Row(
           children: [
-            Container(
-              width: 8,
-              height: 2,
-              color: AppColors.golden,
-            ),
+            Container(width: 8, height: 2, color: AppColors.golden),
             SizedBox(width: 6),
             Text(
               title,
@@ -623,11 +729,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ],
         ),
         GestureDetector(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Manage Heritage Lines coming soon!')),
-            );
-          },
+          onTap: _openHeritageManager,
           child: const Text(
             'Manage >',
             style: TextStyle(
@@ -638,6 +740,109 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHeritageLinesSection() {
+    if (_isHeritageLoading) {
+      return Container(
+        width: double.infinity,
+        height: 170,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAF8F4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: const CircularProgressIndicator(color: AppColors.accentGreen),
+      );
+    }
+
+    if (_heritageLines.isEmpty) {
+      return _buildEmptyStateCard();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ..._heritageLines
+              .take(3)
+              .map(
+                (line) => Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF8F4),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFEDE7DD)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        line.name,
+                        style: const TextStyle(
+                          color: Color(0xFF111827),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                      if (line.description.trim().isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          line.description,
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+          if (_heritageLines.length > 3)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '+${_heritageLines.length - 3} more',
+                style: const TextStyle(
+                  color: AppColors.accentGreen,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          const SizedBox(height: 2),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: _openHeritageManager,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.accentGreen,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                minimumSize: const Size(0, 28),
+              ),
+              child: const Text(
+                'Manage heritage lines',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -677,11 +882,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Add heritage line form coming soon!')),
-              );
-            },
+            onPressed: _openHeritageManager,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accentGreen,
               foregroundColor: Colors.white,
@@ -696,10 +897,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               children: [
                 Text(
                   'Add heritage lines',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(width: 6),
                 Icon(LucideIcons.chevronRight, size: 12),
@@ -709,6 +907,29 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openHeritageManager() async {
+    if (_mobileNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login again to manage heritage lines.'),
+        ),
+      );
+      return;
+    }
+
+    final changed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          _HeritageLinesSheet(mobileNumber: _mobileNumber, api: _farmApi),
+    );
+
+    if (changed == true) {
+      await _loadHeritageLines();
+    }
   }
 
   // ── Featured Birds ─────────────────────────────────────────────────────────
@@ -730,19 +951,29 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               color: Color(0xFFF0FDF4),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.bird, size: 20, color: AppColors.accentGreen),
+            child: const Icon(
+              LucideIcons.bird,
+              size: 20,
+              color: AppColors.accentGreen,
+            ),
           ),
           const SizedBox(height: 14),
           Text(
             'Spotlight your best birds — the ones you\'re proudest of.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 18),
           ElevatedButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Feature birds form coming soon!')),
+                const SnackBar(
+                  content: Text('Feature birds form coming soon!'),
+                ),
               );
             },
             style: ElevatedButton.styleFrom(
@@ -750,12 +981,17 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(50),
+              ),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Feature birds', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                Text(
+                  'Feature birds',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
                 SizedBox(width: 6),
                 Icon(LucideIcons.chevronRight, size: 12),
               ],
@@ -801,7 +1037,11 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           const SizedBox(height: 10),
           Text(
             body,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              height: 1.5,
+            ),
           ),
           if (footer != null) ...[const SizedBox(height: 12), footer],
         ],
@@ -907,7 +1147,10 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.golden.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
@@ -944,7 +1187,9 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                 GestureDetector(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Verification application coming soon!')),
+                      const SnackBar(
+                        content: Text('Verification application coming soon!'),
+                      ),
                     );
                   },
                   child: const Text(
@@ -960,8 +1205,337 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          const Icon(LucideIcons.shieldCheck, size: 48, color: AppColors.golden),
+          const Icon(
+            LucideIcons.shieldCheck,
+            size: 48,
+            color: AppColors.golden,
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeritageLinesSheet extends StatefulWidget {
+  const _HeritageLinesSheet({required this.mobileNumber, required this.api});
+
+  final String mobileNumber;
+  final FarmApi api;
+
+  @override
+  State<_HeritageLinesSheet> createState() => _HeritageLinesSheetState();
+}
+
+class _HeritageLinesSheetState extends State<_HeritageLinesSheet> {
+  bool _isLoading = true;
+  bool _changed = false;
+  List<HeritageLine> _lines = const <HeritageLine>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _isLoading = true);
+    try {
+      final lines = await widget.api.fetchHeritageLines(
+        mobileNumber: widget.mobileNumber,
+      );
+      if (!mounted) return;
+      setState(() {
+        _lines = lines;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _addLine() async {
+    final result = await _showLineEditor();
+    if (result == null) return;
+    try {
+      await widget.api.addHeritageLine(
+        mobileNumber: widget.mobileNumber,
+        name: result.$1,
+        description: result.$2,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _editLine(HeritageLine line) async {
+    final result = await _showLineEditor(line: line);
+    if (result == null) return;
+    try {
+      await widget.api.updateHeritageLine(
+        id: line.id,
+        mobileNumber: widget.mobileNumber,
+        name: result.$1,
+        description: result.$2,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _deleteLine(HeritageLine line) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Heritage Line'),
+        content: Text('Delete "${line.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await widget.api.deleteHeritageLine(
+        id: line.id,
+        mobileNumber: widget.mobileNumber,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<(String, String)?> _showLineEditor({HeritageLine? line}) async {
+    final nameController = TextEditingController(text: line?.name ?? '');
+    final descriptionController = TextEditingController(
+      text: line?.description ?? '',
+    );
+    try {
+      return await showDialog<(String, String)>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            line == null ? 'Add Heritage Line' : 'Edit Heritage Line',
+          ),
+          content: SizedBox(
+            width: 340,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Line Name',
+                    hintText: 'e.g. Kelso',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optional)',
+                    hintText: 'Short details about this line',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                if (name.isEmpty) return;
+                Navigator.of(
+                  context,
+                ).pop((name, descriptionController.text.trim()));
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      nameController.dispose();
+      descriptionController.dispose();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.78,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD1D5DB),
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+              child: Row(
+                children: [
+                  const Text(
+                    'Heritage Lines',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: _addLine,
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Add'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.accentGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.accentGreen,
+                      ),
+                    )
+                  : _lines.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No heritage lines yet.',
+                        style: TextStyle(color: Color(0xFF6B7280)),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                      itemBuilder: (context, index) {
+                        final line = _lines[index];
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFAF8F4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFEDE7DD)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      line.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => _editLine(line),
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      size: 18,
+                                    ),
+                                    tooltip: 'Edit',
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  IconButton(
+                                    onPressed: () => _deleteLine(line),
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      size: 18,
+                                      color: Color(0xFFDC2626),
+                                    ),
+                                    tooltip: 'Delete',
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ],
+                              ),
+                              if (line.description.trim().isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    line.description,
+                                    style: const TextStyle(
+                                      color: Color(0xFF6B7280),
+                                      fontSize: 12,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
+                      itemCount: _lines.length,
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(_changed),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accentGreen,
+                  ),
+                  child: const Text('Done'),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

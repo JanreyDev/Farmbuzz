@@ -41,20 +41,43 @@ class FarmProfile {
 
   factory FarmProfile.fromJson(Map<String, dynamic> json) {
     return FarmProfile(
-      id:             json['id'] as int?,
-      name:           (json['name'] as String?) ?? '',
-      tagline:        (json['tagline'] as String?) ?? '',
-      farmType:       (json['farm_type'] as String?) ?? '',
-      city:           (json['city'] as String?) ?? '',
-      province:       (json['province'] as String?) ?? '',
-      startedYear:    json['started_year'] as int?,
-      story:          (json['story'] as String?) ?? '',
-      avatarUrl:      json['avatar_url'] as String?,
-      coverPhotoUrl:  json['cover_photo_url'] as String?,
-      birdsCount:     (json['birds_count'] as int?) ?? 0,
-      activeCycles:   (json['active_cycles'] as int?) ?? 0,
+      id: json['id'] as int?,
+      name: (json['name'] as String?) ?? '',
+      tagline: (json['tagline'] as String?) ?? '',
+      farmType: (json['farm_type'] as String?) ?? '',
+      city: (json['city'] as String?) ?? '',
+      province: (json['province'] as String?) ?? '',
+      startedYear: json['started_year'] as int?,
+      story: (json['story'] as String?) ?? '',
+      avatarUrl: json['avatar_url'] as String?,
+      coverPhotoUrl: json['cover_photo_url'] as String?,
+      birdsCount: (json['birds_count'] as int?) ?? 0,
+      activeCycles: (json['active_cycles'] as int?) ?? 0,
       eggsIncubating: (json['eggs_incubating'] as int?) ?? 0,
-      ownerName:      (json['owner_name'] as String?) ?? '',
+      ownerName: (json['owner_name'] as String?) ?? '',
+    );
+  }
+}
+
+class HeritageLine {
+  const HeritageLine({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String name;
+  final String description;
+  final String createdAt;
+
+  factory HeritageLine.fromJson(Map<String, dynamic> json) {
+    return HeritageLine(
+      id: (json['id'] as int?) ?? 0,
+      name: (json['name'] as String?) ?? '',
+      description: (json['description'] as String?) ?? '',
+      createdAt: (json['created_at'] as String?) ?? '',
     );
   }
 }
@@ -81,9 +104,9 @@ class FarmApi {
 
   // GET /farm
   Future<FarmProfile?> fetchFarm({required String mobileNumber}) async {
-    final uri = _buildUri('/farm').replace(
-      queryParameters: {'mobile_number': mobileNumber},
-    );
+    final uri = _buildUri(
+      '/farm',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
     final response = await _client.get(uri, headers: _jsonHeaders);
     final body = _decodeJson(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -111,12 +134,24 @@ class FarmApi {
       'mobile_number': mobileNumber,
       'name': name,
     };
-    if (tagline != null) bodyData['tagline'] = tagline;
-    if (farmType != null && farmType.isNotEmpty) bodyData['farm_type'] = farmType;
-    if (city != null && city.isNotEmpty) bodyData['city'] = city;
-    if (province != null && province.isNotEmpty) bodyData['province'] = province;
-    if (startedYear != null && startedYear > 0) bodyData['started_year'] = startedYear;
-    if (story != null) bodyData['story'] = story;
+    if (tagline != null) {
+      bodyData['tagline'] = tagline;
+    }
+    if (farmType != null && farmType.isNotEmpty) {
+      bodyData['farm_type'] = farmType;
+    }
+    if (city != null && city.isNotEmpty) {
+      bodyData['city'] = city;
+    }
+    if (province != null && province.isNotEmpty) {
+      bodyData['province'] = province;
+    }
+    if (startedYear != null && startedYear > 0) {
+      bodyData['started_year'] = startedYear;
+    }
+    if (story != null) {
+      bodyData['story'] = story;
+    }
 
     final response = await _client.post(
       _buildUri('/farm'),
@@ -138,28 +173,29 @@ class FarmApi {
     File? avatar,
     File? coverPhoto,
   }) async {
-    final request = http.MultipartRequest(
-      'POST',
-      _buildUri('/farm/media'),
-    );
+    final request = http.MultipartRequest('POST', _buildUri('/farm/media'));
     request.fields['mobile_number'] = mobileNumber;
 
     if (avatar != null) {
       final ext = avatar.path.split('.').last.toLowerCase();
-      request.files.add(await http.MultipartFile.fromPath(
-        'avatar',
-        avatar.path,
-        contentType: MediaType('image', ext),
-      ));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'avatar',
+          avatar.path,
+          contentType: MediaType('image', ext),
+        ),
+      );
     }
 
     if (coverPhoto != null) {
       final ext = coverPhoto.path.split('.').last.toLowerCase();
-      request.files.add(await http.MultipartFile.fromPath(
-        'cover_photo',
-        coverPhoto.path,
-        contentType: MediaType('image', ext),
-      ));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'cover_photo',
+          coverPhoto.path,
+          contentType: MediaType('image', ext),
+        ),
+      );
     }
 
     final streamed = await request.send();
@@ -173,7 +209,7 @@ class FarmApi {
     }
 
     return {
-      'avatar_url':      body['avatar_url'] as String?,
+      'avatar_url': body['avatar_url'] as String?,
       'cover_photo_url': body['cover_photo_url'] as String?,
     };
   }
@@ -190,9 +226,15 @@ class FarmApi {
       'mobile_number': mobileNumber,
       'name': name,
     };
-    if (farmType != null && farmType.isNotEmpty) bodyData['farm_type'] = farmType;
-    if (city != null && city.isNotEmpty) bodyData['city'] = city;
-    if (startedYear != null && startedYear > 0) bodyData['started_year'] = startedYear;
+    if (farmType != null && farmType.isNotEmpty) {
+      bodyData['farm_type'] = farmType;
+    }
+    if (city != null && city.isNotEmpty) {
+      bodyData['city'] = city;
+    }
+    if (startedYear != null && startedYear > 0) {
+      bodyData['started_year'] = startedYear;
+    }
 
     final response = await _client.post(
       _buildUri('/farm'),
@@ -208,6 +250,91 @@ class FarmApi {
     return body;
   }
 
+  Future<List<HeritageLine>> fetchHeritageLines({
+    required String mobileNumber,
+  }) async {
+    final uri = _buildUri(
+      '/farm/heritage-lines',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
+    final response = await _client.get(uri, headers: _jsonHeaders);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to load heritage lines.'),
+      );
+    }
+    final raw = body['data'];
+    if (raw is! List) return const <HeritageLine>[];
+    return raw
+        .whereType<Map>()
+        .map((e) => HeritageLine.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<HeritageLine> addHeritageLine({
+    required String mobileNumber,
+    required String name,
+    String? description,
+  }) async {
+    final response = await _client.post(
+      _buildUri('/farm/heritage-lines'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+        'name': name,
+        'description': description ?? '',
+      }),
+    );
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to add heritage line.'),
+      );
+    }
+    return HeritageLine.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  Future<HeritageLine> updateHeritageLine({
+    required int id,
+    required String mobileNumber,
+    required String name,
+    String? description,
+  }) async {
+    final response = await _client.put(
+      _buildUri('/farm/heritage-lines/$id'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+        'name': name,
+        'description': description ?? '',
+      }),
+    );
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to update heritage line.'),
+      );
+    }
+    return HeritageLine.fromJson(body['data'] as Map<String, dynamic>);
+  }
+
+  Future<void> deleteHeritageLine({
+    required int id,
+    required String mobileNumber,
+  }) async {
+    final response = await _client.delete(
+      _buildUri('/farm/heritage-lines/$id'),
+      headers: _jsonHeaders,
+      body: jsonEncode({'mobile_number': mobileNumber}),
+    );
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to delete heritage line.'),
+      );
+    }
+  }
+
   Map<String, dynamic> _decodeJson(String raw) {
     if (raw.trim().isEmpty) return <String, dynamic>{};
     try {
@@ -219,7 +346,10 @@ class FarmApi {
     return <String, dynamic>{};
   }
 
-  String _extractMessage(Map<String, dynamic> body, {required String fallback}) {
+  String _extractMessage(
+    Map<String, dynamic> body, {
+    required String fallback,
+  }) {
     final message = body['message'];
     if (message is String && message.trim().isNotEmpty) return message;
     final errors = body['errors'];

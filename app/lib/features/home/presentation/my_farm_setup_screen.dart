@@ -79,19 +79,20 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
   bool get _canContinue {
     if (_currentStep == 0) {
       return _farmNameController.text.trim().isNotEmpty &&
-             _taglineController.text.trim().isNotEmpty &&
-             _coverPhotoPath != null;
+          _taglineController.text.trim().isNotEmpty &&
+          _coverPhotoPath != null;
     }
     if (_currentStep == 1) {
       return _cityController.text.trim().isNotEmpty &&
-             _provinceController.text.trim().isNotEmpty &&
-             _yearController.text.trim().isNotEmpty;
+          _provinceController.text.trim().isNotEmpty &&
+          _yearController.text.trim().isNotEmpty;
     }
     return true;
   }
 
-  String get _farmName =>
-      _farmNameController.text.trim().isEmpty ? 'My Farm' : _farmNameController.text.trim();
+  String get _farmName => _farmNameController.text.trim().isEmpty
+      ? 'My Farm'
+      : _farmNameController.text.trim();
 
   String get _location {
     final city = _cityController.text.trim();
@@ -233,26 +234,35 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
   // ── Step titles & subtitles ────────────────────────────────────────────────
   String get _stepTitle {
     switch (_currentStep) {
-      case 0: return 'Name your farm';
-      case 1: return 'Where are you located?';
-      default: return '';
+      case 0:
+        return 'Name your farm';
+      case 1:
+        return 'Where are you located?';
+      default:
+        return '';
     }
   }
 
   String get _stepSubtitle {
     switch (_currentStep) {
-      case 0: return 'This is what visitors see at the top of your page. You can change it later.';
-      case 1: return 'City-level only — your exact address is never shown publicly.';
-      default: return '';
+      case 0:
+        return 'This is what visitors see at the top of your page. You can change it later.';
+      case 1:
+        return 'City-level only — your exact address is never shown publicly.';
+      default:
+        return '';
     }
   }
 
   // ── Step body content ──────────────────────────────────────────────────────
   Widget _buildStepContent() {
     switch (_currentStep) {
-      case 0: return _buildStep1();
-      case 1: return _buildStep2();
-      default: return const SizedBox();
+      case 0:
+        return _buildStep1();
+      case 1:
+        return _buildStep2();
+      default:
+        return const SizedBox();
     }
   }
 
@@ -289,12 +299,18 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
         const SizedBox(height: 6),
         Text(
           'A wide landscape image works best.',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade600,
+            height: 1.4,
+          ),
         ),
         const SizedBox(height: 16),
         GestureDetector(
           onTap: () async {
-            final result = await FilePicker.platform.pickFiles(type: FileType.image);
+            final result = await FilePicker.platform.pickFiles(
+              type: FileType.image,
+            );
             if (result != null && result.files.single.path != null) {
               setState(() {
                 _coverPhotoPath = result.files.single.path;
@@ -322,7 +338,11 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(LucideIcons.upload, size: 24, color: Colors.grey.shade500),
+                          Icon(
+                            LucideIcons.upload,
+                            size: 24,
+                            color: Colors.grey.shade500,
+                          ),
                           const SizedBox(height: 8),
                           const Text(
                             'Tap to choose a photo',
@@ -356,9 +376,17 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
     return ListView(
       physics: const BouncingScrollPhysics(),
       children: [
-        _buildInput(controller: _cityController, hint: 'City (e.g. San Pablo)', onChanged: (_) => setState(() {})),
+        _buildInput(
+          controller: _cityController,
+          hint: 'City (e.g. San Pablo)',
+          onChanged: (_) => setState(() {}),
+        ),
         const SizedBox(height: 10),
-        _buildInput(controller: _provinceController, hint: 'Province / Region (e.g. Laguna)', onChanged: (_) => setState(() {})),
+        _buildInput(
+          controller: _provinceController,
+          hint: 'Province / Region (e.g. Laguna)',
+          onChanged: (_) => setState(() {}),
+        ),
         const SizedBox(height: 16),
         Text(
           'When did you start operating?',
@@ -367,7 +395,12 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
         const SizedBox(height: 8),
         SizedBox(
           width: 140,
-          child: _buildInput(controller: _yearController, hint: 'Year (e.g. 2016)', keyboardType: TextInputType.number, onChanged: (_) => setState(() {})),
+          child: _buildInput(
+            controller: _yearController,
+            hint: 'Year (e.g. 2016)',
+            keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
+          ),
         ),
         const SizedBox(height: 32),
         const Text(
@@ -381,7 +414,11 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
         const SizedBox(height: 6),
         Text(
           'Your farm starts as a draft — only you can see it. Once you add a story and feature your best animals, you can publish it to the community.',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade600,
+            height: 1.4,
+          ),
         ),
         const SizedBox(height: 16),
         // Farm preview card
@@ -390,7 +427,9 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
           decoration: BoxDecoration(
             color: const Color(0xFFF0FDF4),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.accentGreen.withValues(alpha: 0.3)),
+            border: Border.all(
+              color: AppColors.accentGreen.withValues(alpha: 0.3),
+            ),
           ),
           child: Row(
             children: [
@@ -465,7 +504,11 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
             child: Row(
               children: [
                 if (!isFirstStep)
-                  Icon(LucideIcons.arrowLeft, size: 15, color: Colors.grey.shade700),
+                  Icon(
+                    LucideIcons.arrowLeft,
+                    size: 15,
+                    color: Colors.grey.shade700,
+                  ),
                 if (!isFirstStep) const SizedBox(width: 4),
                 Text(
                   isFirstStep ? 'Skip for now' : 'Back',
@@ -481,7 +524,9 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
 
           // Right: Continue or Create my farm
           GestureDetector(
-            onTap: (_canContinue || !isFirstStep) && !_isCreating ? (isLastStep ? _createFarm : _goNext) : null,
+            onTap: (_canContinue || !isFirstStep) && !_isCreating
+                ? (isLastStep ? _createFarm : _goNext)
+                : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
@@ -497,7 +542,11 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
                   if (isLastStep && !_isCreating)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: Icon(LucideIcons.checkCircle, size: 15, color: Colors.white),
+                      child: Icon(
+                        LucideIcons.checkCircle,
+                        size: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   if (_isCreating)
                     const Padding(
@@ -505,11 +554,16 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
                       child: SizedBox(
                         width: 15,
                         height: 15,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   Text(
-                    isLastStep ? (_isCreating ? 'Creating...' : 'Create my farm') : 'Continue',
+                    isLastStep
+                        ? (_isCreating ? 'Creating...' : 'Create my farm')
+                        : 'Continue',
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -521,7 +575,11 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
                   if (!isLastStep)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
-                      child: Icon(LucideIcons.arrowRight, size: 15, color: Colors.white),
+                      child: Icon(
+                        LucideIcons.arrowRight,
+                        size: 15,
+                        color: Colors.white,
+                      ),
                     ),
                 ],
               ),
@@ -549,14 +607,20 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.accentGreen, width: 1.5),
+          borderSide: const BorderSide(
+            color: AppColors.accentGreen,
+            width: 1.5,
+          ),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -580,14 +644,35 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final mobileNumber = prefs.getString('auth_mobile_number');
+      final mobileNumber = (prefs.getString('auth_mobile_number') ?? '').trim();
 
-      if (mobileNumber != null && mobileNumber.isNotEmpty) {
-        await _farmApi.createFarm(
+      if (mobileNumber.isEmpty) {
+        throw Exception('Please login again before creating your farm.');
+      }
+
+      final saved = await _farmApi.saveFarm(
+        mobileNumber: mobileNumber,
+        name: name,
+        tagline: tagline,
+        city: city,
+        province: province,
+        startedYear: year > 0 ? year : null,
+      );
+
+      if (_coverPhotoPath != null && _coverPhotoPath!.trim().isNotEmpty) {
+        final media = await _farmApi.uploadFarmMedia(
           mobileNumber: mobileNumber,
-          name: name,
-          city: city.isNotEmpty ? city : (province.isNotEmpty ? province : null),
-          startedYear: year > 0 ? year : null,
+          coverPhoto: File(_coverPhotoPath!),
+        );
+        final uploadedCover = (media['cover_photo_url'] ?? '').trim();
+        if (uploadedCover.isNotEmpty) {
+          await prefs.setString('farm_cover_photo_url', uploadedCover);
+        }
+      } else if (saved.coverPhotoUrl != null &&
+          saved.coverPhotoUrl!.trim().isNotEmpty) {
+        await prefs.setString(
+          'farm_cover_photo_url',
+          saved.coverPhotoUrl!.trim(),
         );
       }
 
@@ -620,7 +705,9 @@ class _MyFarmSetupScreenState extends State<MyFarmSetupScreen>
           content: Text('🎉 ${name.isEmpty ? 'My Farm' : name} created!'),
           backgroundColor: AppColors.accentGreen,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       widget.onCreated();
@@ -651,22 +738,57 @@ class _DashRectPainter extends CustomPainter {
 
     const dashWidth = 5.0;
     const dashSpace = 5.0;
-    
+
     // Draw top line
-    _drawDashedLine(canvas, paint, const Offset(0, 0), Offset(size.width, 0), dashWidth, dashSpace);
+    _drawDashedLine(
+      canvas,
+      paint,
+      const Offset(0, 0),
+      Offset(size.width, 0),
+      dashWidth,
+      dashSpace,
+    );
     // Draw right line
-    _drawDashedLine(canvas, paint, Offset(size.width, 0), Offset(size.width, size.height), dashWidth, dashSpace);
+    _drawDashedLine(
+      canvas,
+      paint,
+      Offset(size.width, 0),
+      Offset(size.width, size.height),
+      dashWidth,
+      dashSpace,
+    );
     // Draw bottom line
-    _drawDashedLine(canvas, paint, Offset(size.width, size.height), Offset(0, size.height), dashWidth, dashSpace);
+    _drawDashedLine(
+      canvas,
+      paint,
+      Offset(size.width, size.height),
+      Offset(0, size.height),
+      dashWidth,
+      dashSpace,
+    );
     // Draw left line
-    _drawDashedLine(canvas, paint, Offset(0, size.height), const Offset(0, 0), dashWidth, dashSpace);
+    _drawDashedLine(
+      canvas,
+      paint,
+      Offset(0, size.height),
+      const Offset(0, 0),
+      dashWidth,
+      dashSpace,
+    );
   }
 
-  void _drawDashedLine(Canvas canvas, Paint paint, Offset start, Offset end, double dashWidth, double dashSpace) {
+  void _drawDashedLine(
+    Canvas canvas,
+    Paint paint,
+    Offset start,
+    Offset end,
+    double dashWidth,
+    double dashSpace,
+  ) {
     double distance = (end - start).distance;
     double currentDistance = 0;
     final direction = (end - start) / distance;
-    
+
     while (currentDistance < distance) {
       final endDistance = (currentDistance + dashWidth).clamp(0.0, distance);
       canvas.drawLine(
