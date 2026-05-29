@@ -304,7 +304,7 @@ class PostController extends Controller
                 return [
                     'id' => $comment->id,
                     'name' => $comment->author_name,
-                    'avatar' => $comment->author_avatar ?? 'https://i.pravatar.cc/150?u=farmbuzz-comment',
+                    'avatar' => $comment->author_avatar,
                     'text' => $comment->content,
                     'time' => $comment->published_at?->diffForHumans() ?? 'now',
                 ];
@@ -334,7 +334,7 @@ class PostController extends Controller
             'comment' => [
                 'id' => $comment->id,
                 'name' => $comment->author_name,
-                'avatar' => $comment->author_avatar ?? 'https://i.pravatar.cc/150?u=farmbuzz-comment',
+                'avatar' => $comment->author_avatar,
                 'text' => $comment->content,
                 'time' => 'now',
             ],

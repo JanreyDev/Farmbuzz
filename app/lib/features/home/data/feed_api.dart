@@ -33,6 +33,7 @@ class FeedPost {
     required this.likesCount,
     required this.commentsCount,
     required this.topReactions,
+    required this.userReaction,
     required this.imageUrls,
   });
 
@@ -47,6 +48,7 @@ class FeedPost {
   final int likesCount;
   final int commentsCount;
   final List<String> topReactions;
+  final String userReaction;
   final List<String> imageUrls;
 
   factory FeedPost.fromJson(Map<String, dynamic> json) {
@@ -64,11 +66,67 @@ class FeedPost {
       topReactions: ((json['topReactions'] as List?) ?? const [])
           .whereType<String>()
           .toList(),
+      userReaction: (json['userReaction'] as String?) ?? '',
       imageUrls: ((json['imageUrls'] as List?) ?? const [])
           .whereType<String>()
           .toList(),
     );
   }
+}
+
+class FeedComment {
+  FeedComment({
+    required this.id,
+    required this.name,
+    required this.avatar,
+    required this.text,
+    required this.time,
+  });
+
+  final int id;
+  final String name;
+  final String avatar;
+  final String text;
+  final String time;
+
+  factory FeedComment.fromJson(Map<String, dynamic> json) {
+    return FeedComment(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] as String?) ?? 'FarmBuzz User',
+      avatar: (json['avatar'] as String?) ?? '',
+      text: (json['text'] as String?) ?? '',
+      time: (json['time'] as String?) ?? 'now',
+    );
+  }
+
+  Map<String, String> toMap() {
+    return {
+      'id': '$id',
+      'name': name,
+      'avatar': avatar,
+      'text': text,
+      'time': time,
+    };
+  }
+}
+
+class FeedLikeResult {
+  FeedLikeResult({
+    required this.likesCount,
+    required this.userReaction,
+    required this.topReactions,
+  });
+
+  final int likesCount;
+  final String userReaction;
+  final List<String> topReactions;
+}
+
+class FeedAddCommentResult {
+  FeedAddCommentResult({required this.comment, required this.commentsCount});
+
+  final FeedComment comment;
+  final int commentsCount;
 }
 
 class FeedApi {
@@ -104,6 +162,118 @@ class FeedApi {
         .whereType<Map>()
         .map((e) => FeedPost.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+  }
+
+  Future<FeedLikeResult> likePost({
+    required int postId,
+    required String reactorName,
+    required String reaction,
+  }) async {
+    final response = await _client.post(
+      _buildUri('/posts/$postId/like'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'reactor_name': reactorName, 'reaction': reaction}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to like post.');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception('Invalid like response.');
+    }
+    return FeedLikeResult(
+      likesCount: int.tryParse('${decoded['likesCount'] ?? 0}') ?? 0,
+      userReaction: (decoded['userReaction'] as String?) ?? '',
+      topReactions: ((decoded['topReactions'] as List?) ?? const [])
+          .whereType<String>()
+          .toList(),
+    );
+  }
+
+  Future<FeedLikeResult> unlikePost({
+    required int postId,
+    required String reactorName,
+  }) async {
+    final response = await _client.post(
+      _buildUri('/posts/$postId/unlike'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'reactor_name': reactorName}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to unlike post.');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception('Invalid unlike response.');
+    }
+    return FeedLikeResult(
+      likesCount: int.tryParse('${decoded['likesCount'] ?? 0}') ?? 0,
+      userReaction: (decoded['userReaction'] as String?) ?? '',
+      topReactions: ((decoded['topReactions'] as List?) ?? const [])
+          .whereType<String>()
+          .toList(),
+    );
+  }
+
+  Future<List<FeedComment>> fetchComments({required int postId}) async {
+    final response = await _client.get(
+      _buildUri('/posts/$postId/comments'),
+      headers: const {'Accept': 'application/json'},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to fetch comments.');
+    }
+    final decoded = jsonDecode(response.body);
+    final data =
+        (decoded is Map<String, dynamic> ? decoded['data'] : null) as List?;
+    if (data == null) return <FeedComment>[];
+    return data
+        .whereType<Map>()
+        .map((e) => FeedComment.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<FeedAddCommentResult> addComment({
+    required int postId,
+    required String authorName,
+    required String content,
+    String? authorAvatar,
+  }) async {
+    final response = await _client.post(
+      _buildUri('/posts/$postId/comments'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'author_name': authorName,
+        'author_avatar': authorAvatar,
+        'content': content,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to add comment.');
+    }
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception('Invalid comment response.');
+    }
+    final rawComment = decoded['comment'];
+    final commentMap = rawComment is Map<String, dynamic>
+        ? rawComment
+        : <String, dynamic>{};
+    return FeedAddCommentResult(
+      comment: FeedComment.fromJson(commentMap),
+      commentsCount: int.tryParse('${decoded['commentsCount'] ?? 0}') ?? 0,
+    );
   }
 
   Future<FeedPost> createPost({
