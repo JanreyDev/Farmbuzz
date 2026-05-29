@@ -60,6 +60,25 @@ class ClubApi {
     return body;
   }
 
+  /// Uploads a local image file to the server and returns the hosted URL.
+  Future<String> uploadCoverPhoto(String filePath) async {
+    final base = ApiConfig.baseUrl.endsWith('/')
+        ? ApiConfig.baseUrl.substring(0, ApiConfig.baseUrl.length - 1)
+        : ApiConfig.baseUrl;
+    final uri = Uri.parse('$base/clubs/upload-cover');
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('cover', filePath));
+    final streamed = await request.send();
+    final raw = await streamed.stream.bytesToString();
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      throw ClubApiException('Failed to upload cover photo.');
+    }
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    final url = decoded['url'];
+    if (url is String && url.isNotEmpty) return url;
+    throw ClubApiException('Invalid upload response.');
+  }
+
   Future<List<Map<String, dynamic>>> getMyClubs({
     required String mobileNumber,
   }) async {

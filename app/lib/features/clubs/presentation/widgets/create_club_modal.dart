@@ -62,7 +62,13 @@ class _CreateClubModalState extends State<CreateClubModal> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final mobileNumber = prefs.getString('auth_mobile_number') ?? '';
-      
+
+      // Upload cover photo first if one was picked
+      String? coverImageUrl;
+      if (_coverPhotoPath != null) {
+        coverImageUrl = await _clubApi.uploadCoverPhoto(_coverPhotoPath!);
+      }
+
       final category = _selectedBloodlines.isNotEmpty ? 'Bloodline' : 'Community';
 
       await _clubApi.createClub(
@@ -75,6 +81,7 @@ class _CreateClubModalState extends State<CreateClubModal> {
         isPublic: _isPublic,
         minBirds: _minBirds,
         verifiedOnly: _verifiedOnly,
+        coverImageUrl: coverImageUrl,
       );
 
       if (mounted) {
