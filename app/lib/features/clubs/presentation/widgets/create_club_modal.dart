@@ -414,7 +414,7 @@ class _CreateClubModalState extends State<CreateClubModal> {
       controller: controller,
       maxLines: maxLines,
       readOnly: readOnly,
-      style: const TextStyle(fontSize: 14),
+      style: const TextStyle(fontSize: 14, color: Colors.black87),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade500),

@@ -41,10 +41,12 @@ class DiscoverClubItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFFDE68A), // Fallback color
               borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: NetworkImage(imageUrl),
-                fit: BoxFit.cover,
-              ),
+              image: imageUrl.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
           ),
           const SizedBox(width: 12),

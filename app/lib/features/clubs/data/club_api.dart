@@ -60,6 +60,49 @@ class ClubApi {
     return body;
   }
 
+  Future<List<Map<String, dynamic>>> getMyClubs({
+    required String mobileNumber,
+  }) async {
+    final uri = _buildUri('/clubs').replace(
+      queryParameters: {'mobile_number': mobileNumber},
+    );
+    final response = await _client.get(uri, headers: _jsonHeaders);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ClubApiException(
+        _extractMessage(body, fallback: 'Failed to load clubs.'),
+      );
+    }
+    final data = body['data'];
+    if (data is List) {
+      return data.whereType<Map<String, dynamic>>().toList();
+    }
+    return [];
+  }
+
+  Future<List<Map<String, dynamic>>> discoverClubs({
+    required String mobileNumber,
+    String? category,
+  }) async {
+    final params = <String, String>{'mobile_number': mobileNumber};
+    if (category != null && category != 'All') {
+      params['category'] = category;
+    }
+    final uri = _buildUri('/clubs/discover').replace(queryParameters: params);
+    final response = await _client.get(uri, headers: _jsonHeaders);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ClubApiException(
+        _extractMessage(body, fallback: 'Failed to load discover clubs.'),
+      );
+    }
+    final data = body['data'];
+    if (data is List) {
+      return data.whereType<Map<String, dynamic>>().toList();
+    }
+    return [];
+  }
+
   Map<String, dynamic> _decodeJson(String raw) {
     if (raw.trim().isEmpty) {
       return <String, dynamic>{};

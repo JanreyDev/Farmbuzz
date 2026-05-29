@@ -6,12 +6,14 @@ class SuggestedClubCard extends StatelessWidget {
   final String title;
   final int memberCount;
   final bool isJoined;
+  final String imageUrl;
 
   const SuggestedClubCard({
     super.key,
     required this.title,
     required this.memberCount,
     this.isJoined = false,
+    this.imageUrl = '',
   });
 
   @override
