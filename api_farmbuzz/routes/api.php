@@ -34,6 +34,7 @@ Route::delete('/profile', [ProfileController::class, 'destroy']);
 
 Route::get('/farm', [FarmController::class, 'show']);
 Route::post('/farm', [FarmController::class, 'store']);
+Route::post('/farm/media', [FarmController::class, 'updateMedia']);
 Route::delete('/farm', [FarmController::class, 'destroy']);
 Route::get('/breeding/collections', [EggCollectionController::class, 'index']);
 Route::post('/breeding/collections', [EggCollectionController::class, 'store']);

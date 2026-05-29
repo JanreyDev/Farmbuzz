@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
+import 'widgets/story_viewer_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http_parser/http_parser.dart';
@@ -2813,14 +2814,28 @@ class _StoriesSectionState extends State<_StoriesSection> {
                   ),
                 ),
               ),
-            ...stories.map(
-              (story) => _StoryCard(
-                name: story.name,
-                time: story.timeAgo,
-                imageUrl: story.imageUrl,
-                avatarUrl: story.avatarUrl,
-                textContent: story.textContent,
-              ),
+            ...List.generate(
+              stories.length,
+              (index) {
+                final story = stories[index];
+                return _StoryCard(
+                  name: story.name,
+                  time: story.timeAgo,
+                  imageUrl: story.imageUrl,
+                  avatarUrl: story.avatarUrl,
+                  textContent: story.textContent,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => StoryViewerScreen(
+                          stories: stories,
+                          initialIndex: index,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),
@@ -3406,7 +3421,10 @@ class _StoryCard extends StatelessWidget {
     required this.imageUrl,
     required this.avatarUrl,
     required this.textContent,
+    this.onTap,
   });
+
+  final VoidCallback? onTap;
 
   final String name;
   final String time;
@@ -3424,10 +3442,12 @@ class _StoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasImage = imageUrl.trim().isNotEmpty;
     final hasAvatar = avatarUrl.trim().isNotEmpty;
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 100,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: hasImage ? null : const Color(0xFF14532D),
         image: hasImage
@@ -3517,7 +3537,7 @@ class _StoryCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 
@@ -4914,9 +4934,13 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
       return;
     }
 
-    setState(() => _isSharing = true);
     FocusScope.of(context).unfocus();
-    await Future<void>.delayed(const Duration(milliseconds: 300)); // wait for keyboard to close and layout to settle
+    setState(() {
+      _isSharing = true;
+      _isEditing = false;
+    });
+    // wait for keyboard to close and layout to settle so text paints in RepaintBoundary
+    await Future<void>.delayed(const Duration(milliseconds: 600)); 
 
     try {
       final boundary = _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -4942,7 +4966,6 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
 
       if (mounted) {
         Navigator.of(context).pop(); // pop this editor
-        Navigator.of(context).pop(); // pop the create story options menu
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Story shared')));
       }
     } catch (e) {
@@ -4980,7 +5003,7 @@ class _TextStoryEditorSheetState extends State<_TextStoryEditorSheet> {
                     }
                   },
                   child: Container(
-                    color: _bgColors[_bgIndex],
+                    decoration: BoxDecoration(color: _bgColors[_bgIndex]),
                     clipBehavior: Clip.hardEdge,
                     child: Stack(
                       alignment: Alignment.center,

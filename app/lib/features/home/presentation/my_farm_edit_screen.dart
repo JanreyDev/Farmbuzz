@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
-import 'my_farm_setup_screen.dart'; // For FallbackFarmStore
+import '../data/farm_api.dart';
 
 class MyFarmEditScreen extends StatefulWidget {
   const MyFarmEditScreen({super.key});
@@ -12,12 +14,23 @@ class MyFarmEditScreen extends StatefulWidget {
 }
 
 class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'Farming Farm');
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _taglineController = TextEditingController();
   final TextEditingController _storyController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _provinceController = TextEditingController();
-  final TextEditingController _yearController = TextEditingController(text: '2016');
+  final TextEditingController _yearController = TextEditingController();
+
+  final FarmApi _farmApi = FarmApi();
+  final ImagePicker _picker = ImagePicker();
+
+  bool _isLoading = true;
+  String? _mobileNumber;
+  String? _avatarUrl;
+  String? _coverPhotoUrl;
+
+  File? _selectedAvatar;
+  File? _selectedCoverPhoto;
 
   @override
   void initState() {
@@ -26,63 +39,104 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
   }
 
   Future<void> _loadFarmData() async {
+    setState(() => _isLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
+      _mobileNumber = prefs.getString('mobile_number');
+      if (_mobileNumber != null) {
+        final profile = await _farmApi.fetchFarm(mobileNumber: _mobileNumber!);
+        if (profile != null) {
+          _nameController.text = profile.name;
+          _taglineController.text = profile.tagline;
+          _storyController.text = profile.story;
+          _cityController.text = profile.city;
+          _provinceController.text = profile.province;
+          _yearController.text = profile.startedYear != null && profile.startedYear! > 0
+              ? profile.startedYear.toString()
+              : '';
+          _avatarUrl = profile.avatarUrl;
+          _coverPhotoUrl = profile.coverPhotoUrl;
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load farm: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _pickImage(bool isCover) async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
       setState(() {
-        _nameController.text = prefs.getString('farm_name') ?? 'Farming Farm';
-        _taglineController.text = prefs.getString('farm_tagline') ?? '';
-        _storyController.text = prefs.getString('farm_story') ?? '';
-        _cityController.text = prefs.getString('farm_city') ?? '';
-        _provinceController.text = prefs.getString('farm_province') ?? '';
-        final year = prefs.getInt('farm_year') ?? 2016;
-        _yearController.text = year > 0 ? year.toString() : '';
-      });
-    } catch (_) {
-      setState(() {
-        _nameController.text = FallbackFarmStore.farmName.isEmpty ? 'Farming Farm' : FallbackFarmStore.farmName;
-        _taglineController.text = FallbackFarmStore.farmTagline;
-        _cityController.text = FallbackFarmStore.farmCity;
-        _provinceController.text = FallbackFarmStore.farmProvince;
-        final year = FallbackFarmStore.farmYear;
-        _yearController.text = year > 0 ? year.toString() : '';
+        if (isCover) {
+          _selectedCoverPhoto = File(picked.path);
+        } else {
+          _selectedAvatar = File(picked.path);
+        }
       });
     }
   }
 
   Future<void> _saveFarmData({bool publish = false}) async {
-    final name = _nameController.text.trim();
-    final tagline = _taglineController.text.trim();
-    final story = _storyController.text.trim();
-    final city = _cityController.text.trim();
-    final province = _provinceController.text.trim();
-    final year = int.tryParse(_yearController.text.trim()) ?? 0;
+    if (_mobileNumber == null) return;
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('farm_name', name);
-      await prefs.setString('farm_tagline', tagline);
-      await prefs.setString('farm_story', story);
-      await prefs.setString('farm_city', city);
-      await prefs.setString('farm_province', province);
-      await prefs.setInt('farm_year', year);
-    } catch (_) {
-      FallbackFarmStore.farmName = name;
-      FallbackFarmStore.farmTagline = tagline;
-      FallbackFarmStore.farmCity = city;
-      FallbackFarmStore.farmProvince = province;
-      FallbackFarmStore.farmYear = year;
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Farm Name is required')),
+      );
+      return;
     }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(publish ? '🎉 Farm published successfully!' : '💾 Farm settings saved successfully!'),
-          backgroundColor: AppColors.accentGreen,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+    setState(() => _isLoading = true);
+
+    try {
+      await _farmApi.saveFarm(
+        mobileNumber: _mobileNumber!,
+        name: name,
+        tagline: _taglineController.text.trim(),
+        city: _cityController.text.trim(),
+        province: _provinceController.text.trim(),
+        startedYear: int.tryParse(_yearController.text.trim()),
+        story: _storyController.text.trim(),
       );
-      Navigator.pop(context);
+
+      if (_selectedAvatar != null || _selectedCoverPhoto != null) {
+        await _farmApi.uploadFarmMedia(
+          mobileNumber: _mobileNumber!,
+          avatar: _selectedAvatar,
+          coverPhoto: _selectedCoverPhoto,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(publish ? '🎉 Farm published successfully!' : '💾 Farm settings saved successfully!'),
+            backgroundColor: AppColors.accentGreen,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save farm: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -135,256 +189,302 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
             ),
 
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    // ── Profile Banner Stack (Cover & Founder overlap) ──
-                    SizedBox(
-                      height: 250,
-                      child: Stack(
-                        clipBehavior: Clip.none,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
                         children: [
-                          // Cover Photo (Banner)
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: 180,
-                            child: Container(
-                              margin: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFAF8F4),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: CustomPaint(
-                                painter: _DashRectPainter(
-                                  color: const Color(0xFFC99843), // Golden border color as requested
-                                  borderRadius: 16,
-                                  strokeWidth: 2,
-                                ),
-                                child: Stack(
-                                  children: [
-                                    const Center(
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(LucideIcons.image, size: 32, color: Color(0xFFC99843)),
-                                          SizedBox(height: 6),
-                                          Text(
-                                            'Cover Photo',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFFC99843),
+                          // ── Profile Banner Stack (Cover & Founder overlap) ──
+                          SizedBox(
+                            height: 250,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Cover Photo (Banner)
+                                Positioned(
+                                  top: 0,
+                                  left: 0,
+                                  right: 0,
+                                  height: 180,
+                                  child: GestureDetector(
+                                    onTap: () => _pickImage(true),
+                                    child: Container(
+                                      margin: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFAF8F4),
+                                        borderRadius: BorderRadius.circular(16),
+                                        image: _selectedCoverPhoto != null
+                                            ? DecorationImage(
+                                                image: FileImage(_selectedCoverPhoto!),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : (_coverPhotoUrl != null
+                                                ? DecorationImage(
+                                                    image: NetworkImage(_coverPhotoUrl!),
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : null),
+                                      ),
+                                      child: _selectedCoverPhoto == null && _coverPhotoUrl == null
+                                          ? CustomPaint(
+                                              painter: _DashRectPainter(
+                                                color: const Color(0xFFC99843), // Golden border
+                                                borderRadius: 16,
+                                                strokeWidth: 2,
+                                              ),
+                                              child: Stack(
+                                                children: [
+                                                  const Center(
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Icon(LucideIcons.image, size: 32, color: Color(0xFFC99843)),
+                                                        SizedBox(height: 6),
+                                                        Text(
+                                                          'Cover Photo',
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Color(0xFFC99843),
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          'Tap camera to upload',
+                                                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    bottom: 12,
+                                                    right: 12,
+                                                    child: CircleAvatar(
+                                                      radius: 18,
+                                                      backgroundColor: Colors.white.withValues(alpha: 0.9),
+                                                      child: const Icon(LucideIcons.camera, size: 16, color: Colors.black87),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          : Stack(
+                                              children: [
+                                                Positioned(
+                                                  bottom: 12,
+                                                  right: 12,
+                                                  child: CircleAvatar(
+                                                    radius: 18,
+                                                    backgroundColor: Colors.white.withValues(alpha: 0.9),
+                                                    child: const Icon(LucideIcons.camera, size: 16, color: Colors.black87),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Founder Photo (Circular Overlay)
+                                Positioned(
+                                  top: 120,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(
+                                    child: GestureDetector(
+                                      onTap: () => _pickImage(false),
+                                      child: Stack(
+                                        children: [
+                                          Container(
+                                            width: 110,
+                                            height: 110,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: const Color(0xFFFAF8F4),
+                                              border: Border.all(color: Colors.white, width: 4),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.1),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                              image: _selectedAvatar != null
+                                                  ? DecorationImage(
+                                                      image: FileImage(_selectedAvatar!),
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : (_avatarUrl != null
+                                                      ? DecorationImage(
+                                                          image: NetworkImage(_avatarUrl!),
+                                                          fit: BoxFit.cover,
+                                                        )
+                                                      : null),
+                                            ),
+                                            child: _selectedAvatar == null && _avatarUrl == null
+                                                ? CustomPaint(
+                                                    painter: _DashRectPainter(
+                                                      color: Colors.grey.shade400,
+                                                      isCircular: true,
+                                                      strokeWidth: 1.5,
+                                                    ),
+                                                    child: const Center(
+                                                      child: Column(
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: [
+                                                          Icon(LucideIcons.user, size: 28, color: Colors.grey),
+                                                          SizedBox(height: 2),
+                                                          Text(
+                                                            'Portrait',
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  )
+                                                : null,
                                           ),
-                                          Text(
-                                            'Tap camera to upload',
-                                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                                          Positioned(
+                                            bottom: 0,
+                                            right: 0,
+                                            child: CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: AppColors.accentGreen,
+                                              child: const Icon(LucideIcons.camera, size: 14, color: Colors.white),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    Positioned(
-                                      bottom: 12,
-                                      right: 12,
-                                      child: CircleAvatar(
-                                        radius: 18,
-                                        backgroundColor: Colors.white.withValues(alpha: 0.9),
-                                        child: const Icon(LucideIcons.camera, size: 16, color: Colors.black87),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
 
-                          // Founder Photo (Circular Overlay)
-                          Positioned(
-                            top: 120,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: Stack(
+                          const SizedBox(height: 16),
+
+                          // ── Card 1: Basic Info ──
+                          _buildCardWrapper(
+                            title: 'Basic Information',
+                            icon: LucideIcons.info,
+                            children: [
+                              _buildTextField(
+                                label: 'Farm Name',
+                                controller: _nameController,
+                                hint: 'Enter your farm name',
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                label: 'Tagline',
+                                subtitle: 'One short line shown under your name. Up to 160 characters.',
+                                hint: 'What makes your farm unique?',
+                                controller: _taglineController,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                label: 'Established Year',
+                                subtitle: 'When your farm started operating in the real world.',
+                                controller: _yearController,
+                                width: 140,
+                                hint: 'e.g. 2016',
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // ── Card 2: Story & Location ──
+                          _buildCardWrapper(
+                            title: 'Story & Location',
+                            icon: LucideIcons.mapPin,
+                            children: [
+                              Row(
                                 children: [
-                                  Container(
-                                    width: 110,
-                                    height: 110,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: const Color(0xFFFAF8F4),
-                                      border: Border.all(color: Colors.white, width: 4),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.1),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: CustomPaint(
-                                      painter: _DashRectPainter(
-                                        color: Colors.grey.shade400,
-                                        isCircular: true,
-                                        strokeWidth: 1.5,
-                                      ),
-                                      child: const Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(LucideIcons.user, size: 28, color: Colors.grey),
-                                            SizedBox(height: 2),
-                                            Text(
-                                              'Portrait',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      label: 'City',
+                                      hint: 'e.g. San Pablo',
+                                      controller: _cityController,
                                     ),
                                   ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: CircleAvatar(
-                                      radius: 16,
-                                      backgroundColor: AppColors.accentGreen,
-                                      child: const Icon(LucideIcons.camera, size: 14, color: Colors.white),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      label: 'Province / Region',
+                                      hint: 'e.g. Laguna',
+                                      controller: _provinceController,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                label: 'Our Story',
+                                subtitle: 'Your journey, philosophy, what you\'re known for. At least 10 words to publish.',
+                                hint: 'Tell visitors about your farm...',
+                                controller: _storyController,
+                                maxLines: 5,
+                              ),
+                            ],
                           ),
+
+                          const SizedBox(height: 16),
+
+                          // ── Card 3: Showcase & Gallery ──
+                          _buildCardWrapper(
+                            title: 'Showcase & Gallery',
+                            icon: LucideIcons.imagePlus,
+                            children: [
+                              _buildSectionHeader(
+                                title: 'Farm Gallery',
+                                subtitle: 'Facilities, animals, daily life. 0 photos uploaded.',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildUploadContainer(
+                                height: 100,
+                                icon: LucideIcons.imagePlus,
+                                label: 'Add photos to gallery',
+                                color: const Color(0xFFFAF8F4),
+                              ),
+                              const SizedBox(height: 24),
+                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                              const SizedBox(height: 16),
+                              _buildSectionHeader(
+                                title: 'Heritage Lines',
+                                subtitle: 'Your signature breeding lines — the heritage your farm is known for. 0 listed.',
+                              ),
+                              const SizedBox(height: 12),
+                              _buildAddButton(icon: LucideIcons.plus, label: 'Add heritage line'),
+                              const SizedBox(height: 24),
+                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                              const SizedBox(height: 16),
+                              _buildSectionHeader(
+                                title: 'Featured Spotlight',
+                                subtitle: 'Hand-picked stock you want visitors to see. 0 on showcase.',
+                              ),
+                              const SizedBox(height: 12),
+                              _buildAddButton(icon: LucideIcons.plus, label: 'Feature a spotlight'),
+                              const SizedBox(height: 24),
+                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                              const SizedBox(height: 16),
+                              _buildSectionHeader(
+                                title: 'Achievements',
+                                subtitle: 'Show awards, recognitions, certifications. 0 listed.',
+                              ),
+                              const SizedBox(height: 12),
+                              _buildAddButton(icon: LucideIcons.plus, label: 'Add achievement'),
+                            ],
+                          ),
+
+                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Card 1: Basic Info ──
-                    _buildCardWrapper(
-                      title: 'Basic Information',
-                      icon: LucideIcons.info,
-                      children: [
-                        _buildTextField(
-                          label: 'Farm Name',
-                          controller: _nameController,
-                          hint: 'Enter your farm name',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          label: 'Tagline',
-                          subtitle: 'One short line shown under your name. Up to 160 characters.',
-                          hint: 'What makes your farm unique?',
-                          controller: _taglineController,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          label: 'Established Year',
-                          subtitle: 'When your farm started operating in the real world.',
-                          controller: _yearController,
-                          width: 140,
-                          hint: 'e.g. 2016',
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Card 2: Story & Location ──
-                    _buildCardWrapper(
-                      title: 'Story & Location',
-                      icon: LucideIcons.mapPin,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                label: 'City',
-                                hint: 'e.g. San Pablo',
-                                controller: _cityController,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildTextField(
-                                label: 'Province / Region',
-                                hint: 'e.g. Laguna',
-                                controller: _provinceController,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          label: 'Our Story',
-                          subtitle: 'Your journey, philosophy, what you\'re known for. At least 10 words to publish.',
-                          hint: 'Tell visitors about your farm...',
-                          controller: _storyController,
-                          maxLines: 5,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Card 3: Showcase & Gallery ──
-                    _buildCardWrapper(
-                      title: 'Showcase & Gallery',
-                      icon: LucideIcons.imagePlus,
-                      children: [
-                        _buildSectionHeader(
-                          title: 'Farm Gallery',
-                          subtitle: 'Facilities, animals, daily life. 0 photos uploaded.',
-                        ),
-                        const SizedBox(height: 8),
-                        _buildUploadContainer(
-                          height: 100,
-                          icon: LucideIcons.imagePlus,
-                          label: 'Add photos to gallery',
-                          color: const Color(0xFFFAF8F4),
-                        ),
-                        const SizedBox(height: 24),
-                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                        const SizedBox(height: 16),
-                        _buildSectionHeader(
-                          title: 'Heritage Lines',
-                          subtitle: 'Your signature breeding lines — the heritage your farm is known for. 0 listed.',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildAddButton(icon: LucideIcons.plus, label: 'Add heritage line'),
-                        const SizedBox(height: 24),
-                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                        const SizedBox(height: 16),
-                        _buildSectionHeader(
-                          title: 'Featured Spotlight',
-                          subtitle: 'Hand-picked stock you want visitors to see. 0 on showcase.',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildAddButton(icon: LucideIcons.plus, label: 'Feature a spotlight'),
-                        const SizedBox(height: 24),
-                        const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                        const SizedBox(height: 16),
-                        _buildSectionHeader(
-                          title: 'Achievements',
-                          subtitle: 'Show awards, recognitions, certifications. 0 listed.',
-                        ),
-                        const SizedBox(height: 12),
-                        _buildAddButton(icon: LucideIcons.plus, label: 'Add achievement'),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
@@ -408,7 +508,7 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _saveFarmData(publish: false),
+                  onPressed: _isLoading ? null : () => _saveFarmData(publish: false),
                   icon: const Icon(LucideIcons.save, size: 16),
                   label: const Text('Save draft'),
                   style: OutlinedButton.styleFrom(
@@ -424,7 +524,7 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _saveFarmData(publish: true),
+                  onPressed: _isLoading ? null : () => _saveFarmData(publish: true),
                   icon: const Icon(LucideIcons.send, size: 16),
                   label: const Text('Publish farm'),
                   style: ElevatedButton.styleFrom(

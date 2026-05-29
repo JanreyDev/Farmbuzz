@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'my_farm_edit_screen.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'my_farm_setup_screen.dart';
+import '../data/farm_api.dart';
 
 class MyFarmDashboardScreen extends StatefulWidget {
   final VoidCallback onReset;
@@ -17,12 +17,18 @@ class MyFarmDashboardScreen extends StatefulWidget {
 }
 
 class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
+  final FarmApi _farmApi = FarmApi();
+
   String _farmName = 'Farming Farm';
   String _tagline = 'Showcase showcase';
   String _city = '';
   String _province = '';
   int _startYear = 0;
-  String _coverPhotoPath = '';
+  String _coverPhotoUrl = '';
+  String _avatarUrl = '';
+  String _story = '';
+  String _ownerName = '';
+
   bool _isLoading = true;
 
   @override
@@ -34,17 +40,38 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   Future<void> _loadFarmData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final mobileNumber = prefs.getString('mobile_number');
+
+      if (mobileNumber != null) {
+        final profile = await _farmApi.fetchFarm(mobileNumber: mobileNumber);
+        if (profile != null) {
+          setState(() {
+            _farmName = profile.name.isNotEmpty ? profile.name : 'Farming Farm';
+            _tagline = profile.tagline;
+            _city = profile.city;
+            _province = profile.province;
+            _startYear = profile.startedYear ?? 0;
+            _coverPhotoUrl = profile.coverPhotoUrl ?? '';
+            _avatarUrl = profile.avatarUrl ?? '';
+            _story = profile.story;
+            _ownerName = profile.ownerName;
+            _isLoading = false;
+          });
+          return;
+        }
+      }
+
+      // Fallback if network fails or no profile
       setState(() {
-        _farmName = prefs.getString('farm_name') ?? 'Farming Farm';
-        _tagline = prefs.getString('farm_tagline') ?? 'Showcase showcase';
-        _city = prefs.getString('farm_city') ?? '';
-        _province = prefs.getString('farm_province') ?? '';
-        _startYear = prefs.getInt('farm_year') ?? 0;
-        _coverPhotoPath = prefs.getString('farm_cover_photo') ?? '';
+        _farmName = prefs.getString('farm_name') ?? FallbackFarmStore.farmName;
+        if (_farmName.isEmpty) _farmName = 'Farming Farm';
+        _tagline = prefs.getString('farm_tagline') ?? FallbackFarmStore.farmTagline;
+        _city = prefs.getString('farm_city') ?? FallbackFarmStore.farmCity;
+        _province = prefs.getString('farm_province') ?? FallbackFarmStore.farmProvince;
+        _startYear = prefs.getInt('farm_year') ?? FallbackFarmStore.farmYear;
         _isLoading = false;
       });
     } catch (_) {
-      // Fallback if SharedPreferences isn't compiled/linked yet
       setState(() {
         _farmName = FallbackFarmStore.farmName.isEmpty ? 'Farming Farm' : FallbackFarmStore.farmName;
         _tagline = FallbackFarmStore.farmTagline;
@@ -69,7 +96,6 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     if (_province.isEmpty) return _city;
     return '$_city, $_province';
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -121,26 +147,44 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               // ── Our Story ──
               _buildInfoCard(
                 title: 'OUR STORY',
-                body: 'Tell visitors about your journey. Edit from Settings.',
+                body: _story.isNotEmpty ? _story : 'Tell visitors about your journey. Edit from Settings.',
                 footer: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _farmName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                    const Text(
-                      'Founder & Breeder',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF6B7280),
-                      ),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.grey.shade200,
+                          backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
+                          child: _avatarUrl.isEmpty
+                              ? const Icon(LucideIcons.user, size: 16, color: Colors.grey)
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _ownerName.isNotEmpty ? _ownerName : _farmName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontStyle: FontStyle.italic,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            const Text(
+                              'Founder & Breeder',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -186,14 +230,14 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        image: _coverPhotoPath.isNotEmpty
+        image: _coverPhotoUrl.isNotEmpty
             ? DecorationImage(
-                image: FileImage(File(_coverPhotoPath)),
+                image: NetworkImage(_coverPhotoUrl),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.4), BlendMode.darken),
               )
             : null,
-        gradient: _coverPhotoPath.isEmpty
+        gradient: _coverPhotoUrl.isEmpty
             ? const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -243,7 +287,11 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                           MaterialPageRoute(
                             builder: (context) => const MyFarmEditScreen(),
                           ),
-                        ).then((_) => _loadFarmData());
+                        ).then((result) {
+                          if (result == true) {
+                            _loadFarmData();
+                          }
+                        });
                       },
                     ),
                   ],
@@ -271,7 +319,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          SizedBox(width: 6),
                           Text(
                             _farmName.toUpperCase(),
                             style: const TextStyle(
@@ -391,7 +439,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 12, color: Colors.white),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               label,
               style: const TextStyle(
@@ -562,7 +610,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               height: 2,
               color: AppColors.golden,
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               title,
               style: const TextStyle(
@@ -726,6 +774,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -737,7 +786,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           Row(
             children: [
               Container(width: 8, height: 2, color: AppColors.golden),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(
                 title,
                 style: const TextStyle(
@@ -778,7 +827,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               Row(
                 children: [
                   Container(width: 8, height: 2, color: AppColors.golden),
-                  const SizedBox(width: 6),
+                  SizedBox(width: 6),
                   const Text(
                     'FARM GALLERY',
                     style: TextStyle(
@@ -808,38 +857,29 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          // Empty state for gallery
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            height: 120,
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
             ),
-            child: CustomPaint(
-              painter: _DashRectPainter(color: Colors.grey.shade400),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Column(
-                  children: [
-                    Icon(LucideIcons.camera, size: 24, color: Colors.grey.shade500),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Upload Farm Photos',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w600,
-                      ),
+            child: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(LucideIcons.imagePlus, size: 28, color: Colors.grey),
+                  SizedBox(height: 8),
+                  Text(
+                    'No photos uploaded yet',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Upload will land next session',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -851,93 +891,78 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   // ── Promo Card ───────────────────────────────────────────────────────────────
   Widget _buildPromoCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
         gradient: const LinearGradient(
+          colors: [Color(0xFF1B4D3E), Color(0xFF0F2922)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0C4D22), Color(0xFF1A7A40)],
         ),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.golden.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'PREMIUM FEATURE',
+                    style: TextStyle(
+                      color: AppColors.golden,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Get Your Farm Verified',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Stand out in the community and unlock advanced analytics.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Verification application coming soon!')),
+                    );
+                  },
+                  child: const Text(
+                    'Apply now ->',
+                    style: TextStyle(
+                      color: AppColors.golden,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            child: const Icon(LucideIcons.egg, size: 18, color: Colors.white),
           ),
-          const SizedBox(height: 14),
-          const Text(
-            'Quality Birds.\nTrusted Lineage.',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              height: 1.25,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Showcase your best birds to keepers and breeders across the community.',
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.white.withValues(alpha: 0.8),
-              height: 1.5,
-            ),
-          ),
+          const SizedBox(width: 16),
+          const Icon(LucideIcons.shieldCheck, size: 48, color: AppColors.golden),
         ],
       ),
     );
   }
-
-}
-
-class _DashRectPainter extends CustomPainter {
-  final Color color;
-
-  _DashRectPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    const dashWidth = 5.0;
-    const dashSpace = 5.0;
-    
-    // Draw top line
-    _drawDashedLine(canvas, paint, const Offset(0, 0), Offset(size.width, 0), dashWidth, dashSpace);
-    // Draw right line
-    _drawDashedLine(canvas, paint, Offset(size.width, 0), Offset(size.width, size.height), dashWidth, dashSpace);
-    // Draw bottom line
-    _drawDashedLine(canvas, paint, Offset(size.width, size.height), Offset(0, size.height), dashWidth, dashSpace);
-    // Draw left line
-    _drawDashedLine(canvas, paint, Offset(0, size.height), const Offset(0, 0), dashWidth, dashSpace);
-  }
-
-  void _drawDashedLine(Canvas canvas, Paint paint, Offset start, Offset end, double dashWidth, double dashSpace) {
-    double distance = (end - start).distance;
-    double currentDistance = 0;
-    final direction = (end - start) / distance;
-    
-    while (currentDistance < distance) {
-      final endDistance = (currentDistance + dashWidth).clamp(0.0, distance);
-      canvas.drawLine(
-        start + direction * currentDistance,
-        start + direction * endDistance,
-        paint,
-      );
-      currentDistance += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
