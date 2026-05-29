@@ -72,15 +72,23 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
   }
 
   Future<void> _pickImage(bool isCover) async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        if (isCover) {
-          _selectedCoverPhoto = File(picked.path);
-        } else {
-          _selectedAvatar = File(picked.path);
-        }
-      });
+    try {
+      final picked = await _picker.pickImage(source: ImageSource.gallery);
+      if (picked != null) {
+        setState(() {
+          if (isCover) {
+            _selectedCoverPhoto = File(picked.path);
+          } else {
+            _selectedAvatar = File(picked.path);
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
     }
   }
 
