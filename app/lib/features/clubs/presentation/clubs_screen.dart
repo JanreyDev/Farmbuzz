@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/club_api.dart';
+import 'club_detail_screen.dart';
 import 'widgets/club_card.dart';
 import 'widgets/suggested_club_card.dart';
 import 'widgets/discover_club_item.dart';
@@ -208,25 +209,39 @@ class _ClubsScreenState extends State<ClubsScreen> {
                 sub: 'Tap Create Club to start one!',
               )
             else
-              ..._myClubs.map((club) => ClubCard(
-                    title: club['title'] as String? ?? 'Unnamed Club',
-                    memberCount: (club['memberCount'] as num?)?.toInt() ?? 0,
-                    commentCount: (club['postCount'] as num?)?.toInt() ?? 0,
-                    role: club['role'] as String? ?? 'member',
-                    isFounder: (club['role'] as String? ?? '') == 'founder',
-                    imageUrl: (club['imageUrl'] as String?) ?? '',
-                    onEdit: () async {
-                      final updated = await showModalBottomSheet<bool>(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => CreateClubModal(initialClub: club),
+              ..._myClubs.map((club) => GestureDetector(
+                    onTap: () async {
+                      final updated = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ClubDetailScreen(club: club),
+                        ),
                       );
                       if (updated == true) {
                         _loadMyClubs();
                         _loadDiscover();
                       }
                     },
+                    child: ClubCard(
+                      title: club['title'] as String? ?? 'Unnamed Club',
+                      memberCount: (club['memberCount'] as num?)?.toInt() ?? 0,
+                      commentCount: (club['postCount'] as num?)?.toInt() ?? 0,
+                      role: club['role'] as String? ?? 'member',
+                      isFounder: (club['role'] as String? ?? '') == 'founder',
+                      imageUrl: (club['imageUrl'] as String?) ?? '',
+                      onEdit: () async {
+                        final updated = await showModalBottomSheet<bool>(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => CreateClubModal(initialClub: club),
+                        );
+                        if (updated == true) {
+                          _loadMyClubs();
+                          _loadDiscover();
+                        }
+                      },
+                    ),
                   )),
 
             const SizedBox(height: 24),
@@ -319,13 +334,23 @@ class _ClubsScreenState extends State<ClubsScreen> {
                   border: Border.all(color: Colors.grey.shade300),
                 ),
                 child: Column(
-                  children: _discoverClubs.map((club) => DiscoverClubItem(
-                        title: club['title'] as String? ?? 'Unnamed Club',
-                        badgeText: club['category'] as String? ?? 'Community',
-                        memberCount: (club['memberCount'] as num?)?.toInt() ?? 0,
-                        location: club['region'] as String? ?? '',
-                        isJoined: false,
-                        imageUrl: (club['imageUrl'] as String?) ?? '',
+                  children: _discoverClubs.map((club) => GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClubDetailScreen(club: club),
+                            ),
+                          );
+                        },
+                        child: DiscoverClubItem(
+                          title: club['title'] as String? ?? 'Unnamed Club',
+                          badgeText: club['category'] as String? ?? 'Community',
+                          memberCount: (club['memberCount'] as num?)?.toInt() ?? 0,
+                          location: club['region'] as String? ?? '',
+                          isJoined: false,
+                          imageUrl: (club['imageUrl'] as String?) ?? '',
+                        ),
                       )).toList(),
                 ),
               ),
