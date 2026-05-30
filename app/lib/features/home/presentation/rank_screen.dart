@@ -1,10 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../data/rank_api.dart';
+import 'home_screen.dart'; // To access _ViewerProfileStore
 
-class RankScreen extends StatelessWidget {
+class RankScreen extends StatefulWidget {
   const RankScreen({super.key});
 
   @override
+  State<RankScreen> createState() => _RankScreenState();
+}
+
+class _RankScreenState extends State<RankScreen> {
+  final RankApi _rankApi = RankApi();
+  
+  bool _isLoading = true;
+  String _error = '';
+  
+  Map<String, dynamic>? _rankData;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRank();
+  }
+
+  Future<void> _fetchRank() async {
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final mobile = prefs.getString('auth_mobile_number');
+      if (mobile != null) {
+        final data = await _rankApi.fetchRank(mobile);
+        if (mounted) {
+          setState(() {
+            _rankData = data;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _error = 'Not logged in';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_error', style: const TextStyle(color: Colors.red)),
+            ElevatedButton(onPressed: _fetchRank, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -43,8 +115,19 @@ class RankScreen extends StatelessWidget {
   }
 
   Widget _buildYourRankCard() {
-    // Use ClipRRect + gold top bar as first child to avoid the
-    // Flutter restriction of non-uniform border + borderRadius.
+    final rankName = _rankData?['current_rank'] ?? 'Bronze';
+    final nextRank = _rankData?['next_rank'];
+    final progress = _rankData?['progress_percentage'] ?? 0;
+    final activity = _rankData?['activity_level'] ?? 'Quiet';
+    final memberSince = _rankData?['member_since'] ?? 'May 2026';
+    final region = _rankData?['region'] ?? 'the Philippines';
+
+    // Get color based on rank
+    Color rankColor = const Color(0xFFC99843); // Bronze
+    if (rankName == 'Iron') rankColor = const Color(0xFF9CA3AF);
+    if (rankName == 'Silver') rankColor = const Color(0xFFD1D5DB);
+    if (rankName == 'Gold') rankColor = const Color(0xFFFBBF24);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Container(
@@ -52,7 +135,7 @@ class RankScreen extends StatelessWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withOpacity(0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -62,8 +145,8 @@ class RankScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gold top accent bar (replaces the illegal non-uniform border)
-            Container(height: 4, color: const Color(0xFFC99843)),
+            // Accent bar
+            Container(height: 4, color: rankColor),
 
             // Card content
             Padding(
@@ -109,26 +192,24 @@ class RankScreen extends StatelessWidget {
                                 color: const Color(0xFFFAF8F4),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: const Color(
-                                    0xFFC99843,
-                                  ).withValues(alpha: 0.3),
+                                  color: rankColor.withOpacity(0.3),
                                 ),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     Icons.auto_awesome,
                                     size: 10,
-                                    color: Color(0xFFC99843),
+                                    color: rankColor,
                                   ),
-                                  SizedBox(width: 4),
+                                  const SizedBox(width: 4),
                                   Text(
                                     'YOUR RANK',
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w900,
-                                      color: Color(0xFFC99843),
+                                      color: rankColor,
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -136,17 +217,17 @@ class RankScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Bronze Rank',
-                              style: TextStyle(
+                            Text(
+                              '$rankName Rank',
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.black87,
                               ),
                             ),
-                            const Text(
-                              'Welcome to the community.',
-                              style: TextStyle(
+                            Text(
+                              nextRank != null ? '${_rankData?['xp']} XP' : 'Max Rank Reached',
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey,
                               ),
@@ -160,9 +241,9 @@ class RankScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Progress label
-                  const Text(
-                    '0% to Iron Rank',
-                    style: TextStyle(
+                  Text(
+                    nextRank != null ? '$progress% to $nextRank Rank' : '100%',
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: Colors.grey,
@@ -170,13 +251,25 @@ class RankScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   // Progress bar track
-                  Container(
-                    height: 8,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                  Stack(
+                    children: [
+                      Container(
+                        height: 8,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      Container(
+                        height: 8,
+                        width: MediaQuery.of(context).size.width * (progress / 100.0) * 0.8, // Approximation
+                        decoration: BoxDecoration(
+                          color: rankColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 20),
@@ -189,19 +282,19 @@ class RankScreen extends StatelessWidget {
                         _buildMiniStatCard(
                           icon: Icons.trending_up,
                           label: 'ACTIVITY THIS MONTH',
-                          value: 'Quiet',
+                          value: activity,
                         ),
                         const SizedBox(width: 8),
                         _buildMiniStatCard(
                           icon: Icons.workspace_premium,
                           label: 'MEMBER SINCE',
-                          value: 'May 2026',
+                          value: memberSince,
                         ),
                         const SizedBox(width: 8),
                         _buildMiniStatCard(
                           icon: Icons.emoji_events,
                           label: 'REGION',
-                          value: 'the Philippines',
+                          value: region,
                         ),
                       ],
                     ),

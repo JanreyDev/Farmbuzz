@@ -43,6 +43,7 @@ Route::get('/profile/by-name', [ProfileController::class, 'showByName']);
 Route::post('/profile/media', [ProfileController::class, 'updateMedia']);
 Route::post('/profile/update', [ProfileController::class, 'update']);
 Route::delete('/profile', [ProfileController::class, 'destroy']);
+Route::get('/rank', [\App\Http\Controllers\Api\RankController::class, 'show']);
 
 Route::get('/farm', [FarmController::class, 'show']);
 Route::post('/farm', [FarmController::class, 'store']);

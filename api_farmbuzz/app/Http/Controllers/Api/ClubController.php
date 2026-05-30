@@ -199,6 +199,8 @@ class ClubController extends Controller
 
         $club->increment('member_count');
 
+        app(\App\Services\ReputationService::class)->awardXp($user, \App\Services\ReputationService::ACTION_CLUB_JOIN, (string)$club->id);
+
         return response()->json(['message' => 'Successfully joined club.']);
     }
 

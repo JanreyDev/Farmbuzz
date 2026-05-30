@@ -142,6 +142,11 @@ class PostController extends Controller
             'published_at' => now(),
         ]);
 
+        $user = \App\Models\User::query()->whereRaw('LOWER(name) = ?', [strtolower($post->author_name)])->first();
+        if ($user) {
+            app(\App\Services\ReputationService::class)->awardXp($user, \App\Services\ReputationService::ACTION_POST, (string)$post->id);
+        }
+
         return response()->json([
             'message' => 'Post created successfully.',
             'data' => [
