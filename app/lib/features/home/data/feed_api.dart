@@ -35,6 +35,7 @@ class FeedPost {
     required this.topReactions,
     required this.userReaction,
     required this.imageUrls,
+    this.sharedPost,
   });
 
   final int id;
@@ -50,6 +51,7 @@ class FeedPost {
   final List<String> topReactions;
   final String userReaction;
   final List<String> imageUrls;
+  final Map<String, dynamic>? sharedPost;
 
   factory FeedPost.fromJson(Map<String, dynamic> json) {
     return FeedPost(
@@ -70,6 +72,7 @@ class FeedPost {
       imageUrls: ((json['imageUrls'] as List?) ?? const [])
           .whereType<String>()
           .toList(),
+      sharedPost: json['sharedPost'] as Map<String, dynamic>?,
     );
   }
 }
@@ -243,6 +246,67 @@ class FeedApi {
     );
   }
 
+  Future<void> deletePost({
+    required int postId,
+    required String authorName,
+  }) async {
+    final response = await _client.delete(
+      _buildUri('/posts/$postId'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'author_name': authorName}),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to delete post.');
+    }
+  }
+
+  Future<void> updatePost({
+    required int postId,
+    required String authorName,
+    required String content,
+  }) async {
+    final response = await _client.put(
+      _buildUri('/posts/$postId'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'author_name': authorName,
+        'content': content,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to update post.');
+    }
+  }
+
+  Future<void> reportPost({
+    required int postId,
+    required String reporterName,
+    required String reason,
+    String? details,
+  }) async {
+    final response = await _client.post(
+      _buildUri('/posts/$postId/report'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'reporter_name': reporterName,
+        'reason': reason,
+        'details': details,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to report post.');
+    }
+  }
+
   Future<List<FeedComment>> fetchComments({required int postId}) async {
     final response = await _client.get(
       _buildUri('/posts/$postId/comments'),
@@ -304,6 +368,7 @@ class FeedApi {
     String? metaLocation,
     String? authorAvatar,
     int? clubId,
+    String? sharedPostData,
   }) async {
     final request = http.MultipartRequest('POST', _buildUri('/posts'));
     request.headers['Accept'] = 'application/json';
@@ -320,6 +385,9 @@ class FeedApi {
     }
     if (authorAvatar != null && authorAvatar.trim().isNotEmpty) {
       request.fields['author_avatar'] = authorAvatar.trim();
+    }
+    if (sharedPostData != null && sharedPostData.trim().isNotEmpty) {
+      request.fields['shared_post_data'] = sharedPostData;
     }
 
     for (final image in images) {
@@ -387,6 +455,7 @@ class FeedApi {
           metaLocation: metaLocation,
           authorAvatar: authorAvatar,
           clubId: clubId,
+          sharedPostData: sharedPostData,
         );
       }
       if (message != null) {
@@ -417,6 +486,7 @@ class FeedApi {
     String? metaLocation,
     String? authorAvatar,
     int? clubId,
+    String? sharedPostData,
   }) async {
     final payloads = <String>[];
     for (final image in images) {
@@ -446,6 +516,8 @@ class FeedApi {
             (metaLocation != null && metaLocation.trim().isNotEmpty)
             ? metaLocation.trim()
             : null,
+        if (sharedPostData != null && sharedPostData.trim().isNotEmpty)
+          'shared_post_data': sharedPostData,
         'image_payloads': payloads,
       }),
     );

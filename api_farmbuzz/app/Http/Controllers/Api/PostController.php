@@ -7,6 +7,8 @@ use App\Http\Requests\Post\StoreCommentRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\PostReaction;
+use App\Models\PostReport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -164,6 +166,62 @@ class PostController extends Controller
                 'sharedPost' => $post->shared_post_data ?? null,
             ],
         ], 201);
+    }
+
+    public function update(Request $request, Post $post): JsonResponse
+    {
+        $request->validate([
+            'content' => 'required|string',
+            'author_name' => 'required|string',
+        ]);
+
+        if ($post->author_name !== $request->input('author_name')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $post->update([
+            'content' => $request->input('content'),
+        ]);
+
+        return response()->json([
+            'message' => 'Post updated successfully.',
+            'data' => [
+                'id' => $post->id,
+                'content' => $post->content,
+            ]
+        ]);
+    }
+
+    public function destroy(Request $request, Post $post): JsonResponse
+    {
+        $request->validate([
+            'author_name' => 'required|string',
+        ]);
+
+        if ($post->author_name !== $request->input('author_name')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $post->delete();
+
+        return response()->json(['message' => 'Post deleted successfully.']);
+    }
+
+    public function report(Request $request, Post $post): JsonResponse
+    {
+        $request->validate([
+            'reporter_name' => 'required|string',
+            'reason' => 'required|string',
+        ]);
+
+        PostReport::create([
+            'post_id' => $post->id,
+            'reporter_name' => $request->input('reporter_name'),
+            'reason' => $request->input('reason'),
+            'details' => $request->input('details'),
+        ]);
+
+        return response()->json(['message' => 'Post reported successfully.']);
     }
 
     private function storePublicPostImage(UploadedFile $file, Request $request): string

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:share_plus/share_plus.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
@@ -22,6 +23,7 @@ class PostCard extends StatefulWidget {
     required this.commentsCount,
     required this.topReactions,
     required this.imageUrls,
+    this.sharedPost,
   });
 
   final int postId;
@@ -37,6 +39,7 @@ class PostCard extends StatefulWidget {
   final int commentsCount;
   final List<String> topReactions;
   final List<String> imageUrls;
+  final Map<String, dynamic>? sharedPost;
 
   @override
   State<PostCard> createState() => PostCardState();
@@ -53,6 +56,8 @@ class PostCardState extends State<PostCard> {
   late List<String> _topReactions;
   late List<Map<String, String>> _comments;
   bool _commentsLoaded = false;
+  String _myName = '';
+  bool _isHidden = false;
   final List<String> _reactions = const [
     '\u{1F44D}',
     '\u{2764}\u{FE0F}',
@@ -70,6 +75,82 @@ class PostCardState extends State<PostCard> {
     _topReactions = List<String>.from(widget.topReactions);
     _selectedReaction = widget.userReaction;
     _comments = <Map<String, String>>[];
+    _loadMyName();
+  }
+
+  Future<void> _loadMyName() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _myName = (prefs.getString('auth_user_name') ?? '').trim();
+      });
+    }
+  }
+
+  void _showEditSheet() async {
+    final updatedText = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _EditPostSheet(
+        post: FeedPost(
+          id: widget.postId,
+          userName: widget.userName,
+          userAvatar: widget.userAvatar,
+          timeAgo: widget.timeAgo,
+          postText: widget.postText,
+          metaEmoji: widget.metaEmoji,
+          metaFeeling: widget.metaFeeling,
+          metaLocation: widget.metaLocation,
+          likesCount: widget.likesCount,
+          commentsCount: widget.commentsCount,
+          topReactions: widget.topReactions,
+          userReaction: widget.userReaction,
+          imageUrls: widget.imageUrls,
+        ),
+        api: _api,
+        myName: _myName,
+      ),
+    );
+    if (updatedText != null && mounted) {
+      // In a real app we'd trigger a reload or update parent state.
+      // For now we just show a success message since the text might be passed down from parent widget.
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post updated. Please refresh feed to see changes.')));
+    }
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Post'),
+        content: const Text('Are you sure you want to delete this post?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await _api.deletePost(postId: widget.postId, authorName: _myName);
+                if (mounted) {
+                  setState(() => _isHidden = true);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted.')));
+                }
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReportSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => _ReportPostSheet(postId: widget.postId, api: _api, myName: _myName),
+    );
   }
 
   String _initial() {
@@ -218,6 +299,9 @@ class PostCardState extends State<PostCard> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isHidden) {
+      return const SizedBox.shrink();
+    }
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -352,9 +436,46 @@ class PostCardState extends State<PostCard> {
                         ),
                       ),
                     ),
-                    IconButton(
+                    PopupMenuButton<String>(
                       icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                      onPressed: () {},
+                      onSelected: (value) async {
+                        if (value == 'edit') {
+                          _showEditSheet();
+                        } else if (value == 'delete') {
+                          _confirmDelete();
+                        } else if (value == 'hide') {
+                          setState(() => _isHidden = true);
+                        } else if (value == 'report') {
+                          _showReportSheet();
+                        }
+                      },
+                      itemBuilder: (context) {
+                        final isOwner = _myName.isNotEmpty &&
+                            _myName.toLowerCase() == widget.userName.toLowerCase();
+                        if (isOwner) {
+                          return [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Edit Post'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete Post', style: TextStyle(color: Colors.red)),
+                            ),
+                          ];
+                        } else {
+                          return [
+                            const PopupMenuItem(
+                              value: 'hide',
+                              child: Text('Hide Post'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'report',
+                              child: Text('Report Post', style: TextStyle(color: Colors.orange)),
+                            ),
+                          ];
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -375,6 +496,7 @@ class PostCardState extends State<PostCard> {
                 ),
               ),
               _buildMediaSection(),
+              if (widget.sharedPost != null) _buildSharedPostSection(),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -441,17 +563,32 @@ class PostCardState extends State<PostCard> {
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: () async {
-                          final shareText = widget.postText.trim().isNotEmpty
-                              ? '${widget.userName} on FarmBuzz:\n"${widget.postText}"'
-                              : '${widget.userName} shared a post on FarmBuzz.';
-                          try {
-                            await Share.share(shareText);
-                            debugPrint('Share invoked with text: $shareText');
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Share failed: $e')),
-                            );
-                          }
+                          final prefs = await SharedPreferences.getInstance();
+                          final myName = (prefs.getString('auth_user_name') ?? '').trim();
+                          final myAvatar = prefs.getString('auth_user_avatar') ?? '';
+                          if (!context.mounted) return;
+                          
+                          await _RepostSheet.show(
+                            context,
+                            originalPost: FeedPost(
+                              id: widget.postId,
+                              userName: widget.userName,
+                              userAvatar: widget.userAvatar,
+                              timeAgo: widget.timeAgo,
+                              postText: widget.postText,
+                              metaEmoji: widget.metaEmoji,
+                              metaFeeling: widget.metaFeeling,
+                              metaLocation: widget.metaLocation,
+                              likesCount: widget.likesCount,
+                              commentsCount: widget.commentsCount,
+                              topReactions: widget.topReactions,
+                              userReaction: widget.userReaction,
+                              imageUrls: widget.imageUrls,
+                            ),
+                            api: _api,
+                            myName: myName,
+                            myAvatar: myAvatar,
+                          );
                         },
                         child: _PostAction(
                           icon: Icons.share_outlined,
@@ -496,6 +633,66 @@ class PostCardState extends State<PostCard> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: _buildMediaGrid(),
+      ),
+    );
+  }
+
+  Widget _buildSharedPostSection() {
+    final shared = widget.sharedPost!;
+    final authorName = shared['userName']?.toString() ?? 'Unknown User';
+    final authorAvatar = shared['userAvatar']?.toString() ?? '';
+    final postText = shared['postText']?.toString() ?? '';
+    final imageUrls = (shared['imageUrls'] as List?)?.map((e) => e.toString()).toList() ?? [];
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: authorAvatar.isNotEmpty
+                    ? NetworkImage(authorAvatar)
+                    : null,
+                child: authorAvatar.isEmpty
+                    ? const Icon(Icons.person, size: 16)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                authorName,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ],
+          ),
+          if (postText.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              postText,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+          if (imageUrls.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrls.first,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -1168,6 +1365,385 @@ class _ReactionGlyph extends StatelessWidget {
       reaction,
       style: TextStyle(fontSize: size),
       strutStyle: const StrutStyle(forceStrutHeight: true, height: 1),
+    );
+  }
+}
+
+class _RepostSheet extends StatefulWidget {
+  const _RepostSheet({
+    required this.originalPost,
+    required this.api,
+    required this.myName,
+    required this.myAvatar,
+  });
+
+  final FeedPost originalPost;
+  final FeedApi api;
+  final String myName;
+  final String myAvatar;
+
+  static Future<void> show(
+    BuildContext context, {
+    required FeedPost originalPost,
+    required FeedApi api,
+    required String myName,
+    required String myAvatar,
+  }) async {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _RepostSheet(
+        originalPost: originalPost,
+        api: api,
+        myName: myName,
+        myAvatar: myAvatar,
+      ),
+    );
+  }
+
+  @override
+  State<_RepostSheet> createState() => _RepostSheetState();
+}
+
+class _RepostSheetState extends State<_RepostSheet> {
+  final _textController = TextEditingController();
+  bool _isPosting = false;
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _repost() async {
+    final text = _textController.text.trim();
+    setState(() => _isPosting = true);
+
+    try {
+      final sharedData = {
+        'id': widget.originalPost.id,
+        'userName': widget.originalPost.userName,
+        'userAvatar': widget.originalPost.userAvatar,
+        'postText': widget.originalPost.postText,
+        'imageUrls': widget.originalPost.imageUrls,
+      };
+
+      await widget.api.createPost(
+        authorName: widget.myName,
+        authorAvatar: widget.myAvatar,
+        content: text,
+        images: [],
+        sharedPostData: jsonEncode(sharedData),
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Successfully reposted!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to repost: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isPosting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Repost',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: const Color(0xFFE8F5E9),
+                  backgroundImage: widget.myAvatar.isNotEmpty
+                      ? NetworkImage(widget.myAvatar)
+                      : null,
+                  child: widget.myAvatar.isEmpty
+                      ? Text(
+                          widget.myName.isNotEmpty
+                              ? widget.myName.substring(0, 1).toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            color: Color(0xFF1B5E20),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    maxLines: 4,
+                    minLines: 1,
+                    decoration: const InputDecoration(
+                      hintText: 'Add a comment (optional)...',
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.grey[200],
+                        backgroundImage: widget.originalPost.userAvatar.isNotEmpty
+                            ? NetworkImage(widget.originalPost.userAvatar)
+                            : null,
+                        child: widget.originalPost.userAvatar.isEmpty
+                            ? const Icon(Icons.person, size: 16)
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.originalPost.userName,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (widget.originalPost.postText.isNotEmpty)
+                    Text(
+                      widget.originalPost.postText,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  if (widget.originalPost.imageUrls.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        widget.originalPost.imageUrls.first,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _isPosting ? null : _repost,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              child: _isPosting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Text(
+                      'Repost',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditPostSheet extends StatefulWidget {
+  final FeedPost post;
+  final FeedApi api;
+  final String myName;
+
+  const _EditPostSheet({required this.post, required this.api, required this.myName});
+
+  @override
+  State<_EditPostSheet> createState() => _EditPostSheetState();
+}
+
+class _EditPostSheetState extends State<_EditPostSheet> {
+  late TextEditingController _controller;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.post.postText);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _isSaving = true);
+    try {
+      await widget.api.updatePost(
+        postId: widget.post.id,
+        authorName: widget.myName,
+        content: _controller.text.trim(),
+      );
+      if (mounted) {
+        Navigator.of(context).pop(_controller.text.trim());
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update: \')));
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Edit Post', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              maxLines: 5,
+              minLines: 3,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Update your post...'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _isSaving ? null : _save,
+              child: _isSaving ? const CircularProgressIndicator() : const Text('Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportPostSheet extends StatefulWidget {
+  final int postId;
+  final FeedApi api;
+  final String myName;
+
+  const _ReportPostSheet({required this.postId, required this.api, required this.myName});
+
+  @override
+  State<_ReportPostSheet> createState() => _ReportPostSheetState();
+}
+
+class _ReportPostSheetState extends State<_ReportPostSheet> {
+  String? _selectedReason;
+  bool _isReporting = false;
+
+  final List<String> _reasons = [
+    'Spam or misleading',
+    'Inappropriate content',
+    'Harassment or bullying',
+    'Other'
+  ];
+
+  Future<void> _report() async {
+    if (_selectedReason == null) return;
+    setState(() => _isReporting = true);
+    try {
+      await widget.api.reportPost(
+        postId: widget.postId,
+        reporterName: widget.myName,
+        reason: _selectedReason!,
+      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted.')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to report: \')));
+        setState(() => _isReporting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('Report Post', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          ..._reasons.map((reason) => RadioListTile<String>(
+            title: Text(reason),
+            value: reason,
+            groupValue: _selectedReason,
+            onChanged: (val) => setState(() => _selectedReason = val),
+          )),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: (_isReporting || _selectedReason == null) ? null : _report,
+            child: _isReporting ? const CircularProgressIndicator() : const Text('Submit Report'),
+          ),
+        ],
+      ),
     );
   }
 }

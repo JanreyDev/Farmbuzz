@@ -84,6 +84,9 @@ Route::post('/posts/{post}/like', [PostController::class, 'like']);
 Route::post('/posts/{post}/unlike', [PostController::class, 'unlike']);
 Route::get('/posts/{post}/comments', [PostController::class, 'comments']);
 Route::post('/posts/{post}/comments', [PostController::class, 'addComment']);
+Route::put('/posts/{post}', [PostController::class, 'update']);
+Route::delete('/posts/{post}', [PostController::class, 'destroy']);
+Route::post('/posts/{post}/report', [PostController::class, 'report']);
 
 Route::get('/clubs', [ClubController::class, 'index']);
 Route::post('/clubs', [ClubController::class, 'store']);

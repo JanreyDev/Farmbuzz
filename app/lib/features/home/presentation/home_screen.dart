@@ -311,12 +311,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: BottomAppBar(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           height: 70,
           color: Colors.white,
-          shape: null,
+          shape: _selectedIndex == 2 ? null : const CircularNotchedRectangle(),
           notchMargin: 8,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -367,10 +367,11 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const _StatusComposer(),
                 const _StoriesSection(),
-                _FilterTabs(
-                  activeIndex: _activeTab,
-                  onChanged: (index) => setState(() => _activeTab = index),
-                ),
+                if (false)
+                  _FilterTabs(
+                    activeIndex: _activeTab,
+                    onChanged: (index) => setState(() => _activeTab = index),
+                  ),
                 const _PostsSection(),
               ],
             ),
