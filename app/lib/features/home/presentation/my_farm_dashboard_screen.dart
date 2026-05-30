@@ -36,6 +36,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   List<HeritageLine> _heritageLines = const <HeritageLine>[];
   List<FeaturedBird> _featuredBirds = const <FeaturedBird>[];
   List<FarmGalleryPhoto> _farmGalleryPhotos = const <FarmGalleryPhoto>[];
+  List<dynamic> _achievements = [];
 
   bool _isLoading = true;
   bool _isHeritageLoading = true;
@@ -76,6 +77,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             _avatarUrl = profile.avatarUrl ?? '';
             _story = profile.story;
             _ownerName = profile.ownerName;
+            _achievements = profile.achievements;
             _isLoading = false;
           });
           await Future.wait<void>([
@@ -366,20 +368,99 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
 
               const SizedBox(height: 10),
 
-              // â”€â”€ Achievements â”€â”€
-              _buildInfoCard(
-                title: 'ACHIEVEMENTS',
-                body: 'Add your show awards and recognitions from Settings.',
-              ),
-
-              const SizedBox(height: 10),
-
-              // â”€â”€ Recent Activity â”€â”€
-              _buildInfoCard(
-                title: 'RECENT ACTIVITY',
-                body:
-                    'Add birds, log updates â€” activity appears here once your farm is published.',
-              ),
+              // ── Achievements ──
+              _achievements.isEmpty 
+                ? _buildInfoCard(
+                    title: 'ACHIEVEMENTS',
+                    body: 'Add your show awards and recognitions from Settings.',
+                  )
+                : _buildInfoCard(
+                    title: 'ACHIEVEMENTS',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: _achievements.map((item) {
+                        final title = item['title'] ?? '';
+                        final detail = item['detail'] ?? '';
+                        final dateStr = item['date'] ?? '';
+                        String dateLabel = '';
+                        if (dateStr.isNotEmpty) {
+                          final date = DateTime.tryParse(dateStr);
+                          if (date != null) {
+                            const months = [
+                              'January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'
+                            ];
+                            dateLabel = '${months[date.month - 1]} ${date.year}';
+                          }
+                        }
+                        
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF7E6),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  LucideIcons.trophy,
+                                  color: Color(0xFFD97706),
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      title,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    if (detail.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        detail,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                    if (dateLabel.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        dateLabel,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
 
               const SizedBox(height: 24),
 
@@ -407,23 +488,6 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        image: coverImage != null
-            ? DecorationImage(
-                image: coverImage,
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.black.withValues(alpha: 0.4),
-                  BlendMode.darken,
-                ),
-              )
-            : null,
-        gradient: coverImage == null
-            ? const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0C4D22), Color(0xFF147A3B)],
-              )
-            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.15),
@@ -434,6 +498,63 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       ),
       child: Stack(
         children: [
+          // Background (Image or Gradient)
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: coverImage != null
+                  ? Image(
+                      image: coverImage,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          return Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              child,
+                              Container(
+                                color: Colors.black.withValues(alpha: 0.4),
+                              ),
+                            ],
+                          );
+                        }
+                        return Container(
+                          color: const Color(0xFFE5E7EB),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.accentGreen,
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF0C4D22), Color(0xFF147A3B)],
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF0C4D22), Color(0xFF147A3B)],
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+
           // Content Layout
           Padding(
             padding: const EdgeInsets.all(20),
@@ -445,18 +566,6 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildHeaderButton(
-                      icon: LucideIcons.share2,
-                      label: 'Share',
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Share functionality coming soon!'),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
                     _buildHeaderButton(
                       icon: LucideIcons.edit2,
                       label: 'Edit',
@@ -646,7 +755,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               Expanded(
                 child: _buildStatCard(
                   icon: LucideIcons.egg,
-                  value: '0',
+                  value: '${_featuredBirds.length}',
                   label: 'Total Birds',
                   subtitle: 'Across all categories',
                 ),
@@ -664,7 +773,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        // Row 2: Recognitions | Chicks Hatched
+        // Row 2: Recognitions | Years Operating
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -672,7 +781,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               Expanded(
                 child: _buildStatCard(
                   icon: LucideIcons.trophy,
-                  value: '0',
+                  value: '${_achievements.length}',
                   label: 'Recognitions',
                   subtitle: 'Awards & shows',
                 ),
@@ -680,23 +789,14 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildStatCard(
-                  icon: LucideIcons.checkCircle2,
-                  value: '0',
-                  label: 'Chicks Hatched',
-                  subtitle: 'This year',
+                  icon: LucideIcons.calendar,
+                  value: '$_yearsOperating',
+                  label: 'Years Operating',
+                  subtitle: _startYear > 0 ? 'Since $_startYear' : 'Set start year',
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 10),
-        // Row 3: Years Operating â€” full width
-        _buildStatCard(
-          icon: LucideIcons.calendar,
-          value: '$_yearsOperating',
-          label: 'Years Operating',
-          subtitle: _startYear > 0 ? 'Since $_startYear' : 'Set start year',
-          fullWidth: true,
         ),
       ],
     );
@@ -1352,7 +1452,8 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   // Info Card (Our Story / Achievements / Recent Activity)
   Widget _buildInfoCard({
     required String title,
-    required String body,
+    String? body,
+    Widget? child,
     Widget? footer,
   }) {
     return Container(
@@ -1382,14 +1483,16 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            body,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-              height: 1.5,
+          if (body != null)
+            Text(
+              body,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
             ),
-          ),
+          if (child != null) child,
           if (footer != null) ...[const SizedBox(height: 12), footer],
         ],
       ),
@@ -1580,7 +1683,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
-                    'PREMIUM FEATURE',
+                    'FARM TIP',
                     style: TextStyle(
                       color: AppColors.golden,
                       fontSize: 8,
@@ -1591,7 +1694,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Get Your Farm Verified',
+                  'Share Your Farm\'s Story',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -1600,7 +1703,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Stand out in the community and unlock advanced analytics.',
+                  'A well-documented profile with photos and heritage lines attracts more followers.',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 11,
@@ -1612,12 +1715,12 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Verification application coming soon!'),
+                        content: Text('Profile tips coming soon!'),
                       ),
                     );
                   },
                   child: const Text(
-                    'Apply now ->',
+                    'Learn more ->',
                     style: TextStyle(
                       color: AppColors.golden,
                       fontSize: 12,
@@ -1630,7 +1733,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
           ),
           const SizedBox(width: 16),
           const Icon(
-            LucideIcons.shieldCheck,
+            LucideIcons.lightbulb,
             size: 48,
             color: AppColors.golden,
           ),

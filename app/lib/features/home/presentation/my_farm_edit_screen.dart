@@ -1194,7 +1194,7 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
             child: TextField(
               controller: controller,
               maxLines: maxLines,
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),

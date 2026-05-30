@@ -26,6 +26,7 @@ class _ClubsScreenState extends State<ClubsScreen> {
   String _errorMyClubs = '';
   String _errorDiscover = '';
   String _activeFilter = 'All';
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -103,6 +104,20 @@ class _ClubsScreenState extends State<ClubsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredMyClubs = _myClubs.where((club) {
+      if (_searchQuery.isEmpty) return true;
+      final title = (club['title'] as String? ?? '').toLowerCase();
+      final category = (club['category'] as String? ?? '').toLowerCase();
+      return title.contains(_searchQuery) || category.contains(_searchQuery);
+    }).toList();
+
+    final filteredDiscoverClubs = _discoverClubs.where((club) {
+      if (_searchQuery.isEmpty) return true;
+      final title = (club['title'] as String? ?? '').toLowerCase();
+      final category = (club['category'] as String? ?? '').toLowerCase();
+      return title.contains(_searchQuery) || category.contains(_searchQuery);
+    }).toList();
+
     return RefreshIndicator(
       color: AppColors.accentGreen,
       onRefresh: _loadAll,
@@ -154,13 +169,14 @@ class _ClubsScreenState extends State<ClubsScreen> {
                 border: Border.all(color: Colors.grey.shade300),
               ),
               child: TextField(
+                onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
                 style: const TextStyle(color: Colors.black87),
                 decoration: InputDecoration(
                   hintText: 'Search clubs...',
                   hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
                   prefixIcon: Icon(LucideIcons.search, color: Colors.grey.shade500, size: 20),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 ),
               ),
             ),
@@ -186,7 +202,7 @@ class _ClubsScreenState extends State<ClubsScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    _loadingMyClubs ? '…' : '${_myClubs.length}',
+                    _loadingMyClubs ? '…' : '${filteredMyClubs.length}',
                     style: TextStyle(
                       color: Colors.grey.shade700,
                       fontSize: 12,
@@ -202,81 +218,58 @@ class _ClubsScreenState extends State<ClubsScreen> {
               _buildLoadingList()
             else if (_errorMyClubs.isNotEmpty)
               _buildError(_errorMyClubs, onRetry: _loadMyClubs)
-            else if (_myClubs.isEmpty)
+            else if (filteredMyClubs.isEmpty)
               _buildEmpty(
                 icon: LucideIcons.users,
-                message: "You haven't joined any clubs yet.",
-                sub: 'Tap Create Club to start one!',
+                message: _searchQuery.isNotEmpty ? "No matching clubs found." : "You haven't joined any clubs yet.",
+                sub: _searchQuery.isNotEmpty ? "Try a different search term" : 'Tap Create Club to start one!',
               )
             else
-              ..._myClubs.map((club) => GestureDetector(
-                    onTap: () async {
-                      final updated = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ClubDetailScreen(club: club),
-                        ),
-                      );
-                      if (updated == true) {
-                        _loadMyClubs();
-                        _loadDiscover();
-                      }
-                    },
-                    child: ClubCard(
-                      title: club['title'] as String? ?? 'Unnamed Club',
-                      memberCount: (club['memberCount'] as num?)?.toInt() ?? 0,
-                      commentCount: (club['postCount'] as num?)?.toInt() ?? 0,
-                      role: club['role'] as String? ?? 'member',
-                      isFounder: (club['role'] as String? ?? '') == 'founder',
-                      imageUrl: (club['imageUrl'] as String?) ?? '',
-                      onEdit: () async {
-                        final updated = await showModalBottomSheet<bool>(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => CreateClubModal(initialClub: club),
-                        );
-                        if (updated == true) {
-                          _loadMyClubs();
-                          _loadDiscover();
-                        }
-                      },
-                    ),
-                  )),
-
-            const SizedBox(height: 24),
-
-            // ── SUGGESTED FOR YOU (My Clubs shown horizontally) ───────
-            if (!_loadingMyClubs && _myClubs.isNotEmpty) ...[
-              Row(
-                children: [
-                  Icon(LucideIcons.sparkles, color: Colors.orange.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Your Clubs',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
               SizedBox(
-                height: 180,
+                height: 156, // 140 height + 16 bottom margin
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children: _myClubs.map((club) => SuggestedClubCard(
-                        title: club['title'] as String? ?? 'Unnamed Club',
-                        memberCount: (club['memberCount'] as num?)?.toInt() ?? 0,
-                        isJoined: true,
-                        imageUrl: (club['imageUrl'] as String?) ?? '',
+                  children: filteredMyClubs.map((club) => GestureDetector(
+                        onTap: () async {
+                          final updated = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClubDetailScreen(club: club),
+                            ),
+                          );
+                          if (updated == true) {
+                            _loadMyClubs();
+                            _loadDiscover();
+                          }
+                        },
+                        child: Container(
+                          width: 280,
+                          margin: const EdgeInsets.only(right: 16),
+                          child: ClubCard(
+                            title: club['title'] as String? ?? 'Unnamed Club',
+                            memberCount: (club['memberCount'] as num?)?.toInt() ?? 0,
+                            commentCount: (club['postCount'] as num?)?.toInt() ?? 0,
+                            role: club['role'] as String? ?? 'member',
+                            isFounder: (club['role'] as String? ?? '') == 'founder',
+                            imageUrl: (club['imageUrl'] as String?) ?? '',
+                            onEdit: () async {
+                              final updated = await showModalBottomSheet<bool>(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (context) => CreateClubModal(initialClub: club),
+                              );
+                              if (updated == true) {
+                                _loadMyClubs();
+                                _loadDiscover();
+                              }
+                            },
+                          ),
+                        ),
                       )).toList(),
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
+            const SizedBox(height: 32),
 
             // ── DISCOVER CLUBS ────────────────────────────────────────
             Row(
@@ -291,7 +284,7 @@ class _ClubsScreenState extends State<ClubsScreen> {
                   ),
                 ),
                 Text(
-                  '${_discoverClubs.length} clubs',
+                  '${filteredDiscoverClubs.length} clubs',
                   style: TextStyle(
                     color: AppColors.accentGreen,
                     fontSize: 13,
@@ -320,21 +313,19 @@ class _ClubsScreenState extends State<ClubsScreen> {
               _buildLoadingList(count: 3)
             else if (_errorDiscover.isNotEmpty)
               _buildError(_errorDiscover, onRetry: () => _loadDiscover())
-            else if (_discoverClubs.isEmpty)
+            else if (filteredDiscoverClubs.isEmpty)
               _buildEmpty(
                 icon: LucideIcons.searchX,
                 message: 'No clubs found.',
-                sub: 'Try a different filter or create one!',
+                sub: _searchQuery.isNotEmpty ? 'Try a different search term.' : 'Try a different filter or create one!',
               )
             else
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Column(
-                  children: _discoverClubs.map((club) => GestureDetector(
+              Wrap(
+                spacing: 12,
+                runSpacing: 0,
+                children: filteredDiscoverClubs.map((club) => SizedBox(
+                      width: (MediaQuery.of(context).size.width - 32 - 12) / 2,
+                      child: GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
@@ -351,8 +342,8 @@ class _ClubsScreenState extends State<ClubsScreen> {
                           isJoined: false,
                           imageUrl: (club['imageUrl'] as String?) ?? '',
                         ),
-                      )).toList(),
-                ),
+                      ),
+                    )).toList(),
               ),
 
             const SizedBox(height: 32),

@@ -65,26 +65,7 @@ class ClubCard extends StatelessWidget {
             right: 12,
             child: Row(
               children: [
-                if (isFounder && onEdit != null)
-                  GestureDetector(
-                    onTap: onEdit,
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(LucideIcons.edit2, size: 14, color: Colors.grey.shade700),
-                    ),
-                  ),
+
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -161,20 +142,7 @@ class ClubCard extends StatelessWidget {
                         fontSize: 13,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    const Icon(
-                      LucideIcons.messageCircle,
-                      size: 14,
-                      color: Colors.white70,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      commentCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
-                    ),
+
                   ],
                 ),
               ],
