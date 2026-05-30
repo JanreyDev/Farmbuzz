@@ -14,6 +14,8 @@ class MessagesScreen extends StatefulWidget {
 class _MessagesScreenState extends State<MessagesScreen> {
   final MessageApi _api = MessageApi();
   List<ConversationModel>? _conversations;
+  List<ConversationModel>? _filteredConversations;
+  String _searchQuery = '';
   bool _isLoading = true;
   String? _mobile;
 
@@ -34,6 +36,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
         if (mounted) {
           setState(() {
             _conversations = data;
+            _filterConversations(_searchQuery);
             _isLoading = false;
           });
         }
@@ -46,6 +49,20 @@ class _MessagesScreenState extends State<MessagesScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  void _filterConversations(String query) {
+    _searchQuery = query;
+    if (_conversations == null) return;
+    if (query.trim().isEmpty) {
+      _filteredConversations = List.from(_conversations!);
+    } else {
+      final q = query.trim().toLowerCase();
+      _filteredConversations = _conversations!.where((c) {
+        return c.otherUserName.toLowerCase().contains(q) ||
+            c.lastMessage.toLowerCase().contains(q);
+      }).toList();
     }
   }
 
@@ -103,6 +120,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
             child: Column(
               children: [
                 TextField(
+                  onChanged: (val) {
+                    setState(() {
+                      _filterConversations(val);
+                    });
+                  },
                   style: const TextStyle(color: Colors.black87),
                   cursorColor: Colors.black87,
                   decoration: InputDecoration(
@@ -129,19 +151,22 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(color: Color(0xFF16A34A)),
                   )
-                : (_conversations == null || _conversations!.isEmpty)
-                ? const Center(
+                : (_filteredConversations == null ||
+                      _filteredConversations!.isEmpty)
+                ? Center(
                     child: Text(
-                      'No messages yet',
-                      style: TextStyle(color: Colors.grey),
+                      _searchQuery.isEmpty
+                          ? 'No messages yet'
+                          : 'No chats found',
+                      style: const TextStyle(color: Colors.grey),
                     ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _conversations!.length,
+                    itemCount: _filteredConversations!.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 2),
                     itemBuilder: (context, index) {
-                      final c = _conversations![index];
+                      final c = _filteredConversations![index];
                       final initial = c.otherUserName.isNotEmpty
                           ? c.otherUserName[0].toUpperCase()
                           : 'U';
