@@ -28,6 +28,13 @@ Route::prefix('auth/register')->group(function (): void {
     Route::post('/set-pin', [RegistrationController::class, 'setPin']);
 });
 
+Route::prefix('auth/register')->group(function (): void {
+    Route::post('/start', [RegistrationController::class, 'start']);
+    Route::post('/send-otp', [RegistrationController::class, 'sendOtp']);
+    Route::post('/verify-otp', [RegistrationController::class, 'verifyOtp']);
+    Route::post('/set-pin', [RegistrationController::class, 'setPin']);
+});
+
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/logout', [AuthController::class, 'logout']);
 
@@ -94,3 +101,6 @@ Route::get('/counts', [NotificationController::class, 'counts']);
 Route::get('/notifications', [NotificationController::class, 'index']);
 Route::post('/notifications/read', [NotificationController::class, 'markAsRead']);
 Route::get('/media', [MediaController::class, 'show']);
+
+Route::get('/debug/users', function() { return response()->json(['users' => \App\Models\User::get(['id', 'name', 'mobile_number']), 'notifications' => \App\Models\Notification::all()]); });
+
