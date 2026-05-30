@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -437,10 +438,26 @@ class PostCardState extends State<PostCard> {
                       ),
                     ),
                     Expanded(
-                      child: _PostAction(
-                        icon: Icons.share_outlined,
-                        label: 'Share',
-                        color: Colors.grey[700],
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () async {
+                          final shareText = widget.postText.trim().isNotEmpty
+                              ? '${widget.userName} on FarmBuzz:\n"${widget.postText}"'
+                              : '${widget.userName} shared a post on FarmBuzz.';
+                          try {
+                            await Share.share(shareText);
+                            debugPrint('Share invoked with text: $shareText');
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Share failed: $e')),
+                            );
+                          }
+                        },
+                        child: _PostAction(
+                          icon: Icons.share_outlined,
+                          label: 'Share',
+                          color: Colors.grey[700],
+                        ),
                       ),
                     ),
                   ],

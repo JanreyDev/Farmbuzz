@@ -101,6 +101,7 @@ class PostController extends Controller
                     'commentsCount' => (string) ($post->comments_count ?? 0),
                     'userReaction' => $userReaction,
                     'topReactions' => $this->topReactionsFor($post),
+                    'sharedPost' => $post->shared_post_data ?? null,
                 ];
             })
             ->values();
@@ -135,6 +136,7 @@ class PostController extends Controller
             'meta_feeling' => $request->input('meta_feeling'),
             'meta_location' => $request->input('meta_location'),
             'image_paths' => $storedPaths,
+            'shared_post_data' => $request->input('shared_post_data') ? json_decode((string) $request->input('shared_post_data'), true) : null,
             'published_at' => now(),
         ]);
 
@@ -159,6 +161,7 @@ class PostController extends Controller
                 'likesCount' => '0',
                 'commentsCount' => '0',
                 'topReactions' => [],
+                'sharedPost' => $post->shared_post_data ?? null,
             ],
         ], 201);
     }

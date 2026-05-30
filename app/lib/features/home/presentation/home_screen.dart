@@ -311,12 +311,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         bottomNavigationBar: BottomAppBar(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           height: 70,
           color: Colors.white,
-          shape: _selectedIndex == 2 ? null : const CircularNotchedRectangle(),
+          shape: null,
           notchMargin: 8,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -638,65 +638,88 @@ class _HomeDrawer extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF374151),
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'BF',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
+              child: ValueListenableBuilder<_ViewerProfile>(
+                valueListenable: _ViewerProfileStore.instance.profile,
+                builder: (context, viewer, _) {
+                  final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
+                  return Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF374151),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: hasAvatar
+                            ? ClipOval(
+                                child: Image.network(
+                                  viewer.avatarUrl,
+                                  width: 44,
+                                  height: 44,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Text(
+                                    viewer.initial,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                viewer.initial,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                ),
+                              ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                ProfileScreen(onNavigateTab: onNavigateTab),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    ProfileScreen(onNavigateTab: onNavigateTab),
+                              ),
+                            );
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                viewer.name.isNotEmpty ? viewer.name : 'FarmBuzz User',
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'View Profile',
+                                style: TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Bueno's Farm",
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'View Profile',
-                            style: TextStyle(
-                              color: Color(0xFF6B7280),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: Colors.grey),
-                  ),
-                ],
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             const Divider(height: 1),
@@ -1479,100 +1502,117 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF07A45F),
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'BF',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                RichText(
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontSize: 15,
-                                    ),
-                                    children: [
-                                      const TextSpan(
-                                        text: "Bueno's Farm",
-                                        style: TextStyle(
+                      ValueListenableBuilder<_ViewerProfile>(
+                        valueListenable: _ViewerProfileStore.instance.profile,
+                        builder: (context, viewer, _) {
+                          final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
+                          return Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF07A45F),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                                child: hasAvatar
+                                    ? ClipOval(
+                                        child: Image.network(
+                                          viewer.avatarUrl,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Text(
+                                            viewer.initial,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        viewer.initial,
+                                        style: const TextStyle(
+                                          color: Colors.white,
                                           fontWeight: FontWeight.w700,
+                                          fontSize: 18,
                                         ),
                                       ),
-                                      if (_selectedFeeling != null)
-                                        const WidgetSpan(
-                                          alignment:
-                                              PlaceholderAlignment.middle,
-                                          child: Padding(
-                                            padding: EdgeInsets.only(
-                                              left: 4,
-                                              right: 3,
-                                            ),
-                                            child: Icon(
-                                              Icons.emoji_emotions_outlined,
-                                              size: 15,
-                                              color: Color(0xFFF6A623),
-                                            ),
-                                          ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: TextSpan(
+                                        style: const TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 15,
                                         ),
-                                      if (_selectedFeeling != null)
-                                        TextSpan(
-                                          text: 'is feeling $_selectedFeeling',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w400,
-                                            color: Color(0xFF4B5563),
-                                          ),
-                                        ),
-                                      if (_selectedLocation != null)
-                                        const WidgetSpan(
-                                          alignment:
-                                              PlaceholderAlignment.middle,
-                                          child: Padding(
-                                            padding: EdgeInsets.only(
-                                              left: 6,
-                                              right: 3,
-                                            ),
-                                            child: Icon(
-                                              Icons.location_on_outlined,
-                                              size: 15,
-                                              color: Color(0xFFF6A623),
+                                        children: [
+                                          TextSpan(
+                                            text: viewer.name.isNotEmpty
+                                                ? viewer.name
+                                                : 'FarmBuzz User',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
                                             ),
                                           ),
-                                        ),
-                                      if (_selectedLocation != null)
-                                        TextSpan(
-                                          text: '$_selectedLocation',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w400,
-                                            color: Color(0xFF4B5563),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                          if (_selectedFeeling != null)
+                                            const WidgetSpan(
+                                              alignment: PlaceholderAlignment.middle,
+                                              child: Padding(
+                                                padding: EdgeInsets.only(left: 4, right: 3),
+                                                child: Icon(
+                                                  Icons.emoji_emotions_outlined,
+                                                  size: 15,
+                                                  color: Color(0xFFF6A623),
+                                                ),
+                                              ),
+                                            ),
+                                          if (_selectedFeeling != null)
+                                            TextSpan(
+                                              text: 'is feeling $_selectedFeeling',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w400,
+                                                color: Color(0xFF4B5563),
+                                              ),
+                                            ),
+                                          if (_selectedLocation != null)
+                                            const WidgetSpan(
+                                              alignment: PlaceholderAlignment.middle,
+                                              child: Padding(
+                                                padding: EdgeInsets.only(left: 6, right: 3),
+                                                child: Icon(
+                                                  Icons.location_on_outlined,
+                                                  size: 15,
+                                                  color: Color(0xFFF6A623),
+                                                ),
+                                              ),
+                                            ),
+                                          if (_selectedLocation != null)
+                                            TextSpan(
+                                              text: '$_selectedLocation',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w400,
+                                                color: Color(0xFF4B5563),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 30),
                       SizedBox(

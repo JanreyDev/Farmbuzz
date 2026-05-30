@@ -18,6 +18,7 @@ class Post extends Model
         'meta_feeling',
         'meta_location',
         'image_paths',
+        'shared_post_data',
         'likes_count',
         'comments_count',
         'published_at',
@@ -27,6 +28,7 @@ class Post extends Model
     {
         return [
             'image_paths' => 'array',
+            'shared_post_data' => 'array',
             'published_at' => 'datetime',
         ];
     }
