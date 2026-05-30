@@ -9,24 +9,24 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function search(Request ): JsonResponse
+    public function search(Request $request): JsonResponse
     {
-         = ->validate([
+        $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:255'],
         ]);
 
-         = ['q'] ?? '';
+        $query = $validated['q'] ?? '';
 
-        if (empty()) {
+        if (empty($query)) {
             return response()->json(['data' => []]);
         }
 
-         = User::query()
-            ->where('name', 'LIKE', '%' .  . '%')
+        $users = User::query()
+            ->where('name', 'LIKE', '%' . $query . '%')
             ->orderBy('name', 'asc')
             ->limit(20)
             ->get(['id', 'name', 'avatar_url', 'mobile_number']);
 
-        return response()->json(['data' => ]);
+        return response()->json(['data' => $users]);
     }
 }
