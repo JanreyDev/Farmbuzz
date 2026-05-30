@@ -39,6 +39,7 @@ class ProfileController extends Controller
                 'social_tiktok' => $user->social_tiktok,
                 'social_yt' => $user->social_yt,
                 'social_web' => $user->social_web,
+                'created_at' => $user->created_at,
             ],
         ]);
     }
@@ -105,6 +106,7 @@ class ProfileController extends Controller
                 'social_tiktok' => $user->social_tiktok,
                 'social_yt' => $user->social_yt,
                 'social_web' => $user->social_web,
+                'created_at' => $user->created_at,
             ],
         ]);
     }
