@@ -139,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildHeader(context),
               const SizedBox(height: 6),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: Text(
                   name,
                   style: const TextStyle(
@@ -152,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 6),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: Wrap(
                   spacing: 6,
                   runSpacing: 4,
@@ -177,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const Text(
-                        'â€¢',
+                        'Ã¢â‚¬Â¢',
                         style: TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                     ],
@@ -201,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     if (hasYearsBreeding) ...[
                       const Text(
-                        'â€¢',
+                        'Ã¢â‚¬Â¢',
                         style: TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                       Row(
@@ -228,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
               const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: Text(
                   'Bio',
                   style: TextStyle(
@@ -240,7 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 4),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: Text(
                   bio,
                   style: const TextStyle(
@@ -253,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               if (tags.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -268,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _profile?.socialWeb?.isNotEmpty == true) ...[
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -319,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
               const SizedBox(height: 10),
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -354,7 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const Padding(
-                padding: EdgeInsets.fromLTRB(10, 2, 10, 8),
+                padding: EdgeInsets.fromLTRB(16, 2, 16, 8),
                 child: Text(
                   'Posts',
                   style: TextStyle(
@@ -385,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               else
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 14),
+                  padding: const EdgeInsets.only(bottom: 14),
                   child: Column(
                     children: _userPosts!.map((post) {
                       return Padding(
