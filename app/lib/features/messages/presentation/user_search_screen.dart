@@ -118,6 +118,8 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
           controller: _controller,
           onChanged: _onSearchChanged,
           autofocus: true,
+          style: const TextStyle(color: Colors.black87),
+          cursorColor: Colors.black87,
           decoration: const InputDecoration(
             hintText: 'Search for someone...',
             border: InputBorder.none,
