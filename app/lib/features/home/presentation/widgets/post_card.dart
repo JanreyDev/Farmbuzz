@@ -948,7 +948,21 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       final prefs = await SharedPreferences.getInstance();
       if (mounted) {
         setState(() {
-          _viewerAvatar = prefs.getString('auth_avatar');
+          final keys = [
+            'auth_user_avatar',
+            'auth_user_avatar_url',
+            'auth_avatar',
+            'user_avatar',
+            'profile_avatar',
+            'profile_photo_url',
+          ];
+          for (final key in keys) {
+            final val = prefs.getString(key);
+            if (val != null && val.trim().isNotEmpty) {
+              _viewerAvatar = val.trim();
+              break;
+            }
+          }
         });
       }
     } catch (_) {}
