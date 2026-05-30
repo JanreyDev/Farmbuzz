@@ -3547,6 +3547,7 @@ class _PostsSectionState extends State<_PostsSection> {
               commentsCount: post.commentsCount,
               topReactions: post.topReactions,
               imageUrls: post.imageUrls,
+              sharedPost: post.sharedPost,
             ),
           const SizedBox(height: 20),
         ],

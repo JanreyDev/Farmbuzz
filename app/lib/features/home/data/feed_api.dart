@@ -54,6 +54,19 @@ class FeedPost {
   final Map<String, dynamic>? sharedPost;
 
   factory FeedPost.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? parsedSharedPost;
+    final rawShared = json['sharedPost'] ?? json['sharedPostData'] ?? json['shared_post'] ?? json['shared_post_data'];
+    if (rawShared is Map<String, dynamic>) {
+      parsedSharedPost = rawShared;
+    } else if (rawShared is String && rawShared.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawShared);
+        if (decoded is Map<String, dynamic>) {
+          parsedSharedPost = decoded;
+        }
+      } catch (_) {}
+    }
+
     return FeedPost(
       id: (json['id'] as num?)?.toInt() ?? 0,
       userName: (json['userName'] as String?) ?? 'FarmBuzz User',
@@ -72,7 +85,7 @@ class FeedPost {
       imageUrls: ((json['imageUrls'] as List?) ?? const [])
           .whereType<String>()
           .toList(),
-      sharedPost: json['sharedPost'] as Map<String, dynamic>?,
+      sharedPost: parsedSharedPost,
     );
   }
 }
