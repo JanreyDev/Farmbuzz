@@ -60,7 +60,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadPosts(String authorName) async {
     try {
-      final posts = await _feedApi.fetchPosts(authorName: authorName);
+      final prefs = await SharedPreferences.getInstance();
+      final reactorName =
+          prefs.getString('auth_user_name') ??
+          prefs.getString('auth_mobile_number') ??
+          '';
+      final posts = await _feedApi.fetchPosts(
+        reactorName: reactorName,
+        authorName: authorName,
+      );
       if (mounted) {
         setState(() {
           _userPosts = posts;
