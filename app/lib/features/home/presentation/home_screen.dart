@@ -555,25 +555,35 @@ class _HomeHeader extends StatelessWidget {
               valueListenable: _ViewerProfileStore.instance.profile,
               builder: (context, viewer, _) {
                 final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
-                return CircleAvatar(
-                  radius: 16,
-                  backgroundColor: const Color(0xFFE8F5E9),
-                  backgroundImage: hasAvatar
-                      ? NetworkImage(viewer.avatarUrl)
-                      : null,
-                  onBackgroundImageError: hasAvatar
-                      ? (exception, stackTrace) {}
-                      : null,
-                  child: hasAvatar
-                      ? null
-                      : Text(
-                          viewer.initial,
-                          style: const TextStyle(
-                            color: Color(0xFF2E7D32),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: const Color(0xFFE8F5E9),
+                    backgroundImage: hasAvatar
+                        ? NetworkImage(viewer.avatarUrl)
+                        : null,
+                    onBackgroundImageError: hasAvatar
+                        ? (exception, stackTrace) {}
+                        : null,
+                    child: hasAvatar
+                        ? null
+                        : Text(
+                            viewer.initial,
+                            style: const TextStyle(
+                              color: Color(0xFF2E7D32),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
+                  ),
                 );
               },
             ),
