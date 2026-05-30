@@ -58,6 +58,7 @@ class FarmController extends Controller
             'province'      => ['nullable', 'string', 'max:255'],
             'started_year'  => ['nullable', 'integer', 'between:1900,2200'],
             'story'         => ['nullable', 'string'],
+            'achievements'  => ['nullable', 'array'],
         ]);
 
         $user = User::query()
@@ -74,6 +75,7 @@ class FarmController extends Controller
                 'province'     => $validated['province'] ?? null,
                 'started_year' => $validated['started_year'] ?? null,
                 'story'        => $validated['story'] ?? null,
+                'achievements' => $validated['achievements'] ?? null,
             ],
         );
 
@@ -159,6 +161,7 @@ class FarmController extends Controller
             'active_cycles'   => $farm->active_cycles,
             'eggs_incubating' => $farm->eggs_incubating,
             'owner_name'      => $user->name,
+            'achievements'    => $farm->achievements ?? [],
         ];
     }
 

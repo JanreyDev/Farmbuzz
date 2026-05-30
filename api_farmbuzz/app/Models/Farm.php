@@ -24,6 +24,11 @@ class Farm extends Model
         'birds_count',
         'active_cycles',
         'eggs_incubating',
+        'achievements',
+    ];
+
+    protected $casts = [
+        'achievements' => 'array',
     ];
 
     public function user(): BelongsTo
