@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\SocialConnection;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -105,11 +106,23 @@ class SocialController extends Controller
             return response()->json(['message' => 'Cannot follow your own profile.'], 422);
         }
 
-        SocialConnection::query()->firstOrCreate([
+        $created = SocialConnection::query()->firstOrCreate([
             'owner_user_id' => $owner->id,
             'target_user_id' => $target->id,
             'relation' => 'following',
         ]);
+
+        if ($created->wasRecentlyCreated) {
+            Notification::create([
+                'user_id' => $target->id,
+                'type' => 'follow',
+                'data' => [
+                    'actor_name' => $owner->name,
+                    'actor_avatar' => $owner->avatar_url,
+                    'message' => "started following you",
+                ]
+            ]);
+        }
 
         return response()->json(['message' => 'Followed successfully.']);
     }

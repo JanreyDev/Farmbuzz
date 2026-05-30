@@ -90,4 +90,6 @@ Route::get('/messages/history', [MessageController::class, 'messages']);
 Route::post('/messages/send', [MessageController::class, 'send']);
 
 Route::get('/counts', [NotificationController::class, 'counts']);
+Route::get('/notifications', [NotificationController::class, 'index']);
+Route::post('/notifications/read', [NotificationController::class, 'markAsRead']);
 Route::get('/media', [MediaController::class, 'show']);

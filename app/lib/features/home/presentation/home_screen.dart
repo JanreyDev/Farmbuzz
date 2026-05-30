@@ -854,55 +854,55 @@ class _MenuItemTile extends StatelessWidget {
   }
 }
 
-class _NotificationsScreen extends StatelessWidget {
+class _NotificationsScreen extends StatefulWidget {
   const _NotificationsScreen();
 
   @override
+  State<_NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<_NotificationsScreen> {
+  final NotificationApi _api = NotificationApi();
+  List<Map<String, dynamic>> _notifications = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAndMarkRead();
+  }
+
+  Future<void> _fetchAndMarkRead() async {
+    final prefs = await SharedPreferences.getInstance();
+    final mobile = prefs.getString('auth_mobile_number') ?? prefs.getString('mobile_number');
+    if (mobile != null && mobile.isNotEmpty) {
+      final notifs = await _api.fetchNotifications(mobileNumber: mobile);
+      if (mounted) {
+        setState(() {
+          _notifications = notifs;
+          _isLoading = false;
+        });
+      }
+      await _api.markAsRead(mobileNumber: mobile);
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatTime(String? isoString) {
+    if (isoString == null) return 'just now';
+    final dt = DateTime.tryParse(isoString);
+    if (dt == null) return 'just now';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inDays > 0) return diff.inDays.toString() + 'd ago';
+    if (diff.inHours > 0) return diff.inHours.toString() + 'h ago';
+    if (diff.inMinutes > 0) return diff.inMinutes.toString() + 'm ago';
+    return 'just now';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final items = <_NotifItem>[
-      _NotifItem(
-        title: 'Aldrin Poultry reacted to your post',
-        subtitle:
-            'ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“Nice lineup bro!ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â',
-        time: '2m ago',
-        unread: true,
-        typeIcon: Icons.thumb_up_alt_rounded,
-        iconColor: const Color(0xFF16A34A),
-      ),
-      _NotifItem(
-        title: 'Cebu Breeders Club mentioned you',
-        subtitle: 'Check announcements for tomorrow.',
-        time: '14m ago',
-        unread: true,
-        typeIcon: Icons.alternate_email_rounded,
-        iconColor: const Color(0xFF2563EB),
-      ),
-      _NotifItem(
-        title: 'Your story got 12 views',
-        subtitle: 'Keep sharing updates to grow your reach.',
-        time: '1h ago',
-        unread: false,
-        typeIcon: Icons.visibility_rounded,
-        iconColor: const Color(0xFFF59E0B),
-      ),
-      _NotifItem(
-        title: 'Bantay AI replied to your question',
-        subtitle: 'Tap to read the full response.',
-        time: '3h ago',
-        unread: false,
-        typeIcon: Icons.smart_toy_rounded,
-        iconColor: const Color(0xFF7C3AED),
-      ),
-      _NotifItem(
-        title: 'Jayson sent you a new message',
-        subtitle:
-            'ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“Pwede pickup bukas morning.ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â',
-        time: '5h ago',
-        unread: false,
-        typeIcon: Icons.chat_bubble_rounded,
-        iconColor: const Color(0xFF0891B2),
-      ),
-    ];
+    
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
@@ -947,12 +947,45 @@ class _NotificationsScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.only(top: 8, bottom: 10),
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 2),
-              itemBuilder: (context, index) {
-                final n = items[index];
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF16A34A)))
+                : _notifications.isEmpty
+                    ? const Center(child: Text('No notifications yet', style: TextStyle(color: Colors.black54)))
+                    : ListView.separated(
+                        padding: const EdgeInsets.only(top: 8, bottom: 10),
+                        itemCount: _notifications.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 2),
+                        itemBuilder: (context, index) {
+                          final raw = _notifications[index];
+                          final data = raw['data'] as Map<String, dynamic>? ?? {};
+                          final type = raw['type'] as String? ?? '';
+                          
+                          IconData typeIcon = Icons.notifications_rounded;
+                          Color iconColor = const Color(0xFF6B7280);
+                          
+                          if (type == 'like') {
+                            typeIcon = Icons.thumb_up_alt_rounded;
+                            iconColor = const Color(0xFF16A34A);
+                          } else if (type == 'follow') {
+                            typeIcon = Icons.person_add_rounded;
+                            iconColor = const Color(0xFF2563EB);
+                          } else if (type == 'message') {
+                            typeIcon = Icons.chat_bubble_rounded;
+                            iconColor = const Color(0xFF0891B2);
+                          }
+
+                          final actor = data['actor_name']?.toString() ?? 'Someone';
+                          final msg = data['message']?.toString() ?? 'interacted with you';
+                          final title = '$actor $msg';
+                          
+                          final n = _NotifItem(
+                            title: title,
+                            subtitle: '',
+                            time: _formatTime(raw['created_at'] as String?),
+                            unread: raw['read_at'] == null,
+                            typeIcon: typeIcon,
+                            iconColor: iconColor,
+                          );
                 return Container(
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(

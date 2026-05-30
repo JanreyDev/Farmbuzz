@@ -29,4 +29,25 @@ class NotificationApi {
     }
     return {'messages': 0, 'notifications': 0};
   }
+  Future<List<Map<String, dynamic>>> fetchNotifications({required String mobileNumber}) async {
+    final uri = _buildUri('/notifications').replace(queryParameters: {
+      'mobile_number': mobileNumber,
+    });
+    final response = await _client.get(uri);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final list = data['data'] as List?;
+      return list?.cast<Map<String, dynamic>>() ?? [];
+    }
+    return [];
+  }
+
+  Future<void> markAsRead({required String mobileNumber}) async {
+    final uri = _buildUri('/notifications/read');
+    await _client.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'mobile_number': mobileNumber}),
+    );
+  }
 }

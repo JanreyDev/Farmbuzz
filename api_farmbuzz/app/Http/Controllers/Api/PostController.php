@@ -263,10 +263,27 @@ class PostController extends Controller
             'reaction' => ['required', 'string', 'max:10'],
         ]);
 
-        $post->reactions()->updateOrCreate(
+        $reactionModel = $post->reactions()->updateOrCreate(
             ['reactor_name' => $validated['reactor_name']],
             ['reaction' => $validated['reaction']],
         );
+
+        if ($reactionModel->wasRecentlyCreated) {
+            $targetUser = \App\Models\User::query()->where('name', $post->author_name)->first();
+            $reactorUser = \App\Models\User::query()->where('name', $validated['reactor_name'])->first();
+
+            if ($targetUser && $reactorUser && $targetUser->id !== $reactorUser->id) {
+                \App\Models\Notification::create([
+                    'user_id' => $targetUser->id,
+                    'type' => 'like',
+                    'data' => [
+                        'actor_name' => $reactorUser->name,
+                        'actor_avatar' => $reactorUser->avatar_url,
+                        'message' => 'reacted to your post',
+                    ]
+                ]);
+            }
+        }
 
         $likesCount = $post->reactions()->count();
         $post->forceFill(['likes_count' => $likesCount])->save();
