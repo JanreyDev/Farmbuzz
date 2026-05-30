@@ -18,6 +18,7 @@ import '../data/feed_api.dart';
 import '../data/farm_api.dart';
 import '../data/story_api.dart';
 import '../../clubs/presentation/clubs_screen.dart';
+import '../../messages/presentation/messages_screen.dart';
 import 'my_farm_setup_screen.dart';
 import 'my_farm_dashboard_screen.dart';
 import 'profile_screen.dart';
@@ -508,7 +509,7 @@ class _HomeHeader extends StatelessWidget {
             ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (context) => const _MessagesScreen(),
+                builder: (context) => const MessagesScreen(),
               ),
             ),
           ),
@@ -688,7 +689,7 @@ class _HomeDrawer extends StatelessWidget {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => const _MessagesScreen(),
+                          builder: (_) => const MessagesScreen(),
                         ),
                       );
                     },
@@ -830,435 +831,6 @@ class _MenuItemTile extends StatelessWidget {
   }
 }
 
-class _MessagesScreen extends StatelessWidget {
-  const _MessagesScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    final chats = <_ChatItem>[
-      _ChatItem(
-        name: 'Aldrin Poultry',
-        message: 'Bro, available pa yung stag?',
-        time: '2m',
-        unread: 2,
-        avatar: 'AP',
-        online: true,
-      ),
-      _ChatItem(
-        name: 'Cebu Breeders Club',
-        message: 'Meeting later at 7PM.',
-        time: '12m',
-        unread: 0,
-        avatar: 'CB',
-        online: false,
-      ),
-      _ChatItem(
-        name: 'Mika Farm',
-        message: 'Salamat sa tips kahapon!',
-        time: '39m',
-        unread: 1,
-        avatar: 'MF',
-        online: true,
-      ),
-      _ChatItem(
-        name: 'Bataan Roosters',
-        message: 'Sent 3 photos',
-        time: '1h',
-        unread: 0,
-        avatar: 'BR',
-        online: false,
-      ),
-      _ChatItem(
-        name: 'Jayson',
-        message: 'Pwede pickup bukas morning.',
-        time: '3h',
-        unread: 0,
-        avatar: 'JY',
-        online: true,
-      ),
-    ];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F9),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Messages',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.edit_note, color: Color(0xFF16A34A)),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-            child: Column(
-              children: [
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search chats and messages...',
-                    hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF9CA3AF),
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFFF3F4F6),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(999),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Row(
-                  children: [
-                    _MsgTab(label: 'All', active: true),
-                    SizedBox(width: 8),
-                    _MsgTab(label: 'Unread'),
-                    SizedBox(width: 8),
-                    _MsgTab(label: 'Groups'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: chats.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 2),
-              itemBuilder: (context, index) {
-                final c = chats[index];
-                return InkWell(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (context) => _ConversationScreen(chat: c),
-                    ),
-                  ),
-                  child: Container(
-                    color: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: const Color(0xFFE5E7EB),
-                              child: Text(
-                                c.avatar,
-                                style: const TextStyle(
-                                  color: Color(0xFF374151),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            if (c.online)
-                              const Positioned(
-                                right: 1,
-                                bottom: 1,
-                                child: CircleAvatar(
-                                  radius: 6,
-                                  backgroundColor: Color(0xFF22C55E),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                c.name,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                c.message,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF6B7280),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              c.time,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF9CA3AF),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            if (c.unread > 0)
-                              CircleAvatar(
-                                radius: 10,
-                                backgroundColor: const Color(0xFF16A34A),
-                                child: Text(
-                                  '${c.unread}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MsgTab extends StatelessWidget {
-  const _MsgTab({required this.label, this.active = false});
-
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: active ? const Color(0xFFE8F7EE) : const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: active ? const Color(0xFF16A34A) : const Color(0xFF6B7280),
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
-class _ChatItem {
-  _ChatItem({
-    required this.name,
-    required this.message,
-    required this.time,
-    required this.unread,
-    required this.avatar,
-    required this.online,
-  });
-
-  final String name;
-  final String message;
-  final String time;
-  final int unread;
-  final String avatar;
-  final bool online;
-}
-
-class _ConversationScreen extends StatelessWidget {
-  const _ConversationScreen({required this.chat});
-
-  final _ChatItem chat;
-
-  @override
-  Widget build(BuildContext context) {
-    const mockMessages = <({String text, bool mine, String time})>[
-      (text: 'Hi! Available pa ba yung pair?', mine: true, time: '9:41 AM'),
-      (
-        text: 'Yes bro available pa. Gusto mo makita latest photos?',
-        mine: false,
-        time: '9:42 AM',
-      ),
-      (text: 'Sige patingin please.', mine: true, time: '9:42 AM'),
-      (text: 'Sent. Also vaccinated na sila.', mine: false, time: '9:43 AM'),
-      (text: 'Nice, magkano last price?', mine: true, time: '9:44 AM'),
-    ];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F9),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: const Color(0xFFE5E7EB),
-              child: Text(
-                chat.avatar,
-                style: const TextStyle(
-                  color: Color(0xFF374151),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  chat.name,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  chat.online ? 'Active now' : 'Last seen recently',
-                  style: const TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(12, 14, 12, 10),
-              itemCount: mockMessages.length,
-              itemBuilder: (context, index) {
-                final m = mockMessages[index];
-                return Align(
-                  alignment: m.mine
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 9,
-                    ),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.72,
-                    ),
-                    decoration: BoxDecoration(
-                      color: m.mine ? const Color(0xFF16A34A) : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: m.mine
-                          ? null
-                          : Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          m.text,
-                          style: TextStyle(
-                            color: m.mine ? Colors.white : Colors.black87,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          m.time,
-                          style: TextStyle(
-                            color: m.mine
-                                ? Colors.white70
-                                : const Color(0xFF9CA3AF),
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.grey,
-                  ),
-                ),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Type a message...',
-                      hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-                      filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(999),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.send_rounded,
-                    color: Color(0xFF16A34A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _NotificationsScreen extends StatelessWidget {
   const _NotificationsScreen();
 
@@ -1267,7 +839,8 @@ class _NotificationsScreen extends StatelessWidget {
     final items = <_NotifItem>[
       _NotifItem(
         title: 'Aldrin Poultry reacted to your post',
-        subtitle: 'â€œNice lineup bro!â€',
+        subtitle:
+            'ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“Nice lineup bro!ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â',
         time: '2m ago',
         unread: true,
         typeIcon: Icons.thumb_up_alt_rounded,
@@ -1299,7 +872,8 @@ class _NotificationsScreen extends StatelessWidget {
       ),
       _NotifItem(
         title: 'Jayson sent you a new message',
-        subtitle: 'â€œPwede pickup bukas morning.â€',
+        subtitle:
+            'ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“Pwede pickup bukas morning.ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â',
         time: '5h ago',
         unread: false,
         typeIcon: Icons.chat_bubble_rounded,
@@ -2356,22 +1930,22 @@ class _FeelingPickerSheetState extends State<_FeelingPickerSheet> {
   ];
 
   final Map<String, String> _emojiByFeeling = const {
-    'Loved': 'ðŸ’—',
-    'In Love': 'ðŸ¥°',
-    'Blessed': 'âœ¨',
-    'Grateful': 'ðŸ™',
-    'Thankful': 'ðŸ¤—',
-    'Happy': 'ðŸ˜Š',
-    'Cheerful': 'ðŸ˜',
-    'Excited': 'ðŸ¤©',
-    'Celebrating': 'ðŸ¥³',
-    'Joyful': 'ðŸ˜„',
-    'Content': 'ðŸ˜Œ',
-    'Proud': 'ðŸ˜',
-    'Accomplished': 'ðŸ†',
-    'Motivated': 'ðŸ’ª',
-    'Determined': 'ðŸ§',
-    'Confident': 'ðŸ˜Ž',
+    'Loved': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â',
+    'In Love': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¥Ãƒâ€šÃ‚Â°',
+    'Blessed': 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“Ãƒâ€šÃ‚Â¨',
+    'Grateful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢Ãƒâ€šÃ‚Â',
+    'Thankful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â',
+    'Happy': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€¦Ã‚Â ',
+    'Cheerful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€šÃ‚Â',
+    'Excited': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â©',
+    'Celebrating': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¥Ãƒâ€šÃ‚Â³',
+    'Joyful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾',
+    'Content': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€¦Ã¢â‚¬â„¢',
+    'Proud': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€šÃ‚Â',
+    'Accomplished': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ',
+    'Motivated': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Âª',
+    'Determined': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â§Ãƒâ€šÃ‚Â',
+    'Confident': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€¦Ã‚Â½',
   };
 
   @override
@@ -2498,7 +2072,9 @@ class _FeelingPickerSheetState extends State<_FeelingPickerSheet> {
                       children: [
                         Expanded(
                           child: _FeelingItem(
-                            emoji: _emojiByFeeling[left] ?? 'ðŸ™‚',
+                            emoji:
+                                _emojiByFeeling[left] ??
+                                'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡',
                             label: left,
                             isSelected: widget.selectedFeeling == left,
                             onTap: () => Navigator.of(context).pop(left),
@@ -2509,7 +2085,9 @@ class _FeelingPickerSheetState extends State<_FeelingPickerSheet> {
                           child: right == null
                               ? const SizedBox.shrink()
                               : _FeelingItem(
-                                  emoji: _emojiByFeeling[right] ?? 'ðŸ™‚',
+                                  emoji:
+                                      _emojiByFeeling[right] ??
+                                      'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡',
                                   label: right,
                                   isSelected: widget.selectedFeeling == right,
                                   onTap: () => Navigator.of(context).pop(right),
@@ -2613,16 +2191,40 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
 
   final List<({String city, String region})> _locations = const [
-    (city: 'Aborlan', region: 'Palawan Â· MIMAROPA Region'),
-    (city: 'Abra De Ilog', region: 'Occidental Mindoro Â· MIMAROPA Region'),
-    (city: 'Abucay', region: 'Bataan Â· Region III (Central Luzon)'),
-    (city: 'Abulug', region: 'Cagayan Â· Region II (Cagayan Valley)'),
-    (city: 'Abuyog', region: 'Leyte Â· Region VIII (Eastern Visayas)'),
-    (city: 'Bacoor', region: 'Cavite Â· Region IV-A (CALABARZON)'),
-    (city: 'Cebu City', region: 'Cebu Â· Region VII (Central Visayas)'),
-    (city: 'Davao City', region: 'Davao del Sur Â· Region XI (Davao Region)'),
-    (city: 'Iloilo City', region: 'Iloilo Â· Region VI (Western Visayas)'),
-    (city: 'Quezon City', region: 'Metro Manila Â· NCR'),
+    (city: 'Aborlan', region: 'Palawan ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· MIMAROPA Region'),
+    (
+      city: 'Abra De Ilog',
+      region: 'Occidental Mindoro ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· MIMAROPA Region',
+    ),
+    (
+      city: 'Abucay',
+      region: 'Bataan ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region III (Central Luzon)',
+    ),
+    (
+      city: 'Abulug',
+      region: 'Cagayan ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region II (Cagayan Valley)',
+    ),
+    (
+      city: 'Abuyog',
+      region: 'Leyte ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region VIII (Eastern Visayas)',
+    ),
+    (
+      city: 'Bacoor',
+      region: 'Cavite ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region IV-A (CALABARZON)',
+    ),
+    (
+      city: 'Cebu City',
+      region: 'Cebu ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region VII (Central Visayas)',
+    ),
+    (
+      city: 'Davao City',
+      region: 'Davao del Sur ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region XI (Davao Region)',
+    ),
+    (
+      city: 'Iloilo City',
+      region: 'Iloilo ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region VI (Western Visayas)',
+    ),
+    (city: 'Quezon City', region: 'Metro Manila ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· NCR'),
   ];
 
   @override
@@ -2730,7 +2332,8 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
                   separatorBuilder: (_, _) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final item = filtered[index];
-                    final locationLabel = '${item.city} Â· ${item.region}';
+                    final locationLabel =
+                        '${item.city} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${item.region}';
                     final isSelected = widget.selectedLocation == locationLabel;
                     return Material(
                       color: isSelected
