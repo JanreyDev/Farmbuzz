@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'bantay_chat_screen.dart';
 
 class BantayScreen extends StatefulWidget {
   const BantayScreen({super.key});
@@ -33,6 +34,16 @@ class _BantayScreenState extends State<BantayScreen> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _openChat(String message) {
+    if (message.isEmpty) return;
+    _controller.clear();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BantayChatScreen(initialMessage: message),
+      ),
+    );
   }
 
   @override
@@ -178,35 +189,41 @@ class _BantayScreenState extends State<BantayScreen> {
                     builder: (context, constraints) {
                       final isWide = constraints.maxWidth > 600;
                       final cards = [
-                        const _PromptCard(
-                          icon: LucideIcons.stethoscope, // Placeholder for stethoscope
+                        _PromptCard(
+                          icon: LucideIcons.stethoscope,
                           title: 'Is Test thunder healthy?',
                           subtitle: 'Red flags to watch + what to do next',
+                          onTap: () => _openChat('Is Test thunder healthy?'),
                         ),
-                        const _PromptCard(
+                        _PromptCard(
                           icon: Icons.vaccines_outlined,
                           title: 'Build a vaccine schedule',
                           subtitle: 'Newcastle, pox, coryza — timed for my region',
+                          onTap: () => _openChat('Build a vaccine schedule'),
                         ),
-                        const _PromptCard(
-                          icon: Icons.grass_outlined, // Placeholder for wheat
+                        _PromptCard(
+                          icon: Icons.grass_outlined,
                           title: 'Conditioning feed for Test thunder',
                           subtitle: '21-day program, ingredients + ratios',
+                          onTap: () => _openChat('Conditioning feed for Test thunder'),
                         ),
-                        const _PromptCard(
+                        _PromptCard(
                           icon: Icons.egg_outlined,
                           title: 'Improve hatch rate',
                           subtitle: 'Fertility + incubation troubleshooting',
+                          onTap: () => _openChat('Improve hatch rate'),
                         ),
-                        const _PromptCard(
+                        _PromptCard(
                           icon: Icons.thermostat_outlined,
                           title: 'Prep for this week\'s weather',
                           subtitle: 'Electrolytes, shade, pen changes',
+                          onTap: () => _openChat('Prep for this week\'s weather'),
                         ),
-                        const _PromptCard(
+                        _PromptCard(
                           icon: Icons.monitor_weight_outlined,
                           title: 'Weight targets by age',
                           subtitle: 'Weekly milestones, per bloodline',
+                          onTap: () => _openChat('Weight targets by age'),
                         ),
                       ];
 
@@ -263,6 +280,8 @@ class _BantayScreenState extends State<BantayScreen> {
                     ),
                     child: TextField(
                       controller: _controller,
+                      textCapitalization: TextCapitalization.sentences,
+                      onSubmitted: (text) => _openChat(text),
                       decoration: const InputDecoration(
                         hintText: 'Ask Bantay anything about your farm...',
                         hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
@@ -278,8 +297,8 @@ class _BantayScreenState extends State<BantayScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.black26),
-                    onPressed: () {},
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    onPressed: () => _openChat(_controller.text.trim()),
                   ),
                 ),
               ],
@@ -295,16 +314,21 @@ class _PromptCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback onTap;
 
   const _PromptCard({
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -348,6 +372,6 @@ class _PromptCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
