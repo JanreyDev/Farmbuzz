@@ -22,6 +22,7 @@ class FarmProfile {
     this.activeCycles = 0,
     this.eggsIncubating = 0,
     this.ownerName = '',
+    this.achievements = const [],
   });
 
   final int? id;
@@ -38,6 +39,7 @@ class FarmProfile {
   final int activeCycles;
   final int eggsIncubating;
   final String ownerName;
+  final List<dynamic> achievements;
 
   factory FarmProfile.fromJson(Map<String, dynamic> json) {
     return FarmProfile(
@@ -55,6 +57,7 @@ class FarmProfile {
       activeCycles: (json['active_cycles'] as int?) ?? 0,
       eggsIncubating: (json['eggs_incubating'] as int?) ?? 0,
       ownerName: (json['owner_name'] as String?) ?? '',
+      achievements: json['achievements'] as List<dynamic>? ?? [],
     );
   }
 }
@@ -193,6 +196,7 @@ class FarmApi {
     String? province,
     int? startedYear,
     String? story,
+    List<Map<String, dynamic>>? achievements,
   }) async {
     final bodyData = <String, dynamic>{
       'mobile_number': mobileNumber,
@@ -215,6 +219,9 @@ class FarmApi {
     }
     if (story != null) {
       bodyData['story'] = story;
+    }
+    if (achievements != null) {
+      bodyData['achievements'] = achievements;
     }
 
     final response = await _client.post(

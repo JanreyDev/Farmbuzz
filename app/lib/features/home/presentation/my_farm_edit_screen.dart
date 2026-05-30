@@ -77,6 +77,15 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
             _coverPhotoUrl = profile.coverPhotoUrl;
             _selectedCoverPhoto = null; // Prefer remote URL if available
           }
+          if (profile.achievements.isNotEmpty) {
+            _achievements = profile.achievements.map((e) {
+              return _AchievementItem(
+                title: e['title'] ?? '',
+                detail: e['detail'] ?? '',
+                date: DateTime.tryParse(e['date'] ?? '') ?? DateTime.now(),
+              );
+            }).toList();
+          }
         }
       }
     } catch (e) {
@@ -135,6 +144,11 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
         province: _provinceController.text.trim(),
         startedYear: int.tryParse(_yearController.text.trim()),
         story: _storyController.text.trim(),
+        achievements: _achievements.map((a) => {
+          'title': a.title,
+          'detail': a.detail,
+          'date': a.date.toIso8601String(),
+        }).toList(),
       );
 
       if (_selectedAvatar != null || _selectedCoverPhoto != null) {
