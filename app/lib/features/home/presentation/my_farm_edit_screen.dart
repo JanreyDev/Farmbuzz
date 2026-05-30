@@ -28,7 +28,7 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
   String? _mobileNumber;
   String? _avatarUrl;
   String? _coverPhotoUrl;
-  final List<_AchievementItem> _achievements = [];
+  List<_AchievementItem> _achievements = [];
 
   File? _selectedAvatar;
   File? _selectedCoverPhoto;
