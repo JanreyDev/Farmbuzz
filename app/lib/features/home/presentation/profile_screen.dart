@@ -456,7 +456,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _ProfileBottomItem(
               icon: Icons.home_filled,
               label: 'Home',
-              selected: true,
               onTap: () {
                 widget.onNavigateTab?.call(0);
                 Navigator.of(context).pop();
