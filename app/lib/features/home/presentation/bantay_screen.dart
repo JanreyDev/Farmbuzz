@@ -61,27 +61,31 @@ class _BantayScreenState extends State<BantayScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Bantay AI',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Bantay AI',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                  'Your personal farm assistant',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green[600],
+                  Text(
+                    'Your personal farm assistant',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green[600],
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -170,45 +174,60 @@ class _BantayScreenState extends State<BantayScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  GridView.count(
-                    crossAxisCount: MediaQuery.of(context).size.width > 600 ? 2 : 1,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: MediaQuery.of(context).size.width > 600 ? 3 : 4,
-                    children: [
-                      _PromptCard(
-                        icon: LucideIcons.stethoscope, // Placeholder for stethoscope
-                        title: 'Is Test thunder healthy?',
-                        subtitle: 'Red flags to watch + what to do next',
-                      ),
-                      _PromptCard(
-                        icon: Icons.vaccines_outlined,
-                        title: 'Build a vaccine schedule',
-                        subtitle: 'Newcastle, pox, coryza — timed for my region',
-                      ),
-                      _PromptCard(
-                        icon: Icons.grass_outlined, // Placeholder for wheat
-                        title: 'Conditioning feed for Test thunder',
-                        subtitle: '21-day program, ingredients + ratios',
-                      ),
-                      _PromptCard(
-                        icon: Icons.egg_outlined,
-                        title: 'Improve hatch rate',
-                        subtitle: 'Fertility + incubation troubleshooting',
-                      ),
-                      _PromptCard(
-                        icon: Icons.thermostat_outlined,
-                        title: 'Prep for this week\'s weather',
-                        subtitle: 'Electrolytes, shade, pen changes',
-                      ),
-                      _PromptCard(
-                        icon: Icons.monitor_weight_outlined,
-                        title: 'Weight targets by age',
-                        subtitle: 'Weekly milestones, per bloodline',
-                      ),
-                    ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth > 600;
+                      final cards = [
+                        const _PromptCard(
+                          icon: LucideIcons.stethoscope, // Placeholder for stethoscope
+                          title: 'Is Test thunder healthy?',
+                          subtitle: 'Red flags to watch + what to do next',
+                        ),
+                        const _PromptCard(
+                          icon: Icons.vaccines_outlined,
+                          title: 'Build a vaccine schedule',
+                          subtitle: 'Newcastle, pox, coryza — timed for my region',
+                        ),
+                        const _PromptCard(
+                          icon: Icons.grass_outlined, // Placeholder for wheat
+                          title: 'Conditioning feed for Test thunder',
+                          subtitle: '21-day program, ingredients + ratios',
+                        ),
+                        const _PromptCard(
+                          icon: Icons.egg_outlined,
+                          title: 'Improve hatch rate',
+                          subtitle: 'Fertility + incubation troubleshooting',
+                        ),
+                        const _PromptCard(
+                          icon: Icons.thermostat_outlined,
+                          title: 'Prep for this week\'s weather',
+                          subtitle: 'Electrolytes, shade, pen changes',
+                        ),
+                        const _PromptCard(
+                          icon: Icons.monitor_weight_outlined,
+                          title: 'Weight targets by age',
+                          subtitle: 'Weekly milestones, per bloodline',
+                        ),
+                      ];
+
+                      if (isWide) {
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: cards.map((c) => SizedBox(
+                            width: (constraints.maxWidth - 12) / 2,
+                            child: c,
+                          )).toList(),
+                        );
+                      } else {
+                        return Column(
+                          children: cards.map((c) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: c,
+                          )).toList(),
+                        );
+                      }
+                    }
                   ),
                 ],
               ),
