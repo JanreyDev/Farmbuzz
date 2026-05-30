@@ -644,6 +644,58 @@ class _HomeDrawer extends StatelessWidget {
   final ValueChanged<int> onNavigateTab;
   static final AuthApi _authApi = AuthApi();
 
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(LucideIcons.logOut, color: const Color(0xFFE59700)),
+            const SizedBox(width: 8),
+            const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to log out from FarmBuzz?',
+          style: TextStyle(color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey.shade700)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE59700),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      Navigator.of(context).pop(); // close drawer
+      final prefs = await SharedPreferences.getInstance();
+      final mobile = prefs.getString('auth_mobile_number');
+      try {
+        await _authApi.logout(mobileNumber: mobile);
+      } catch (_) {}
+      await prefs.clear();
+      if (!context.mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => const LoginScreen(),
+        ),
+        (route) => false,
+      );
+    }
+  }
+
   Future<void> _showDeleteAccountDialog(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -893,22 +945,7 @@ class _HomeDrawer extends StatelessWidget {
                     icon: LucideIcons.logOut,
                     title: 'Logout',
                     subtitle: 'Sign out from this account',
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      final prefs = await SharedPreferences.getInstance();
-                      final mobile = prefs.getString('auth_mobile_number');
-                      try {
-                        await _authApi.logout(mobileNumber: mobile);
-                      } catch (_) {}
-                      await prefs.clear();
-                      if (!context.mounted) return;
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    },
+                    onTap: () => _showLogoutDialog(context),
                   ),
                   const SizedBox(height: 8),
                   _MenuItemTile(
