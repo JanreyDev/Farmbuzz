@@ -7,7 +7,6 @@ import 'package:flutter/rendering.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/feed_api.dart';
 import '../profile_screen.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 void _showPostToast(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
