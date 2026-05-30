@@ -17,6 +17,7 @@ import '../../auth/presentation/login_screen.dart';
 import '../data/feed_api.dart';
 import '../data/farm_api.dart';
 import '../data/story_api.dart';
+import '../data/notification_api.dart';
 import '../../clubs/presentation/clubs_screen.dart';
 import '../../messages/presentation/messages_screen.dart';
 import 'my_farm_setup_screen.dart';
@@ -195,12 +196,30 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isFarmLoading = true;
   bool _isChecking = false;
   final FarmApi _farmApi = FarmApi();
+  final NotificationApi _notifApi = NotificationApi();
+  int _unreadMessages = 0;
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
     super.initState();
     _ViewerProfileStore.instance.load();
     _checkFarmStatus();
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final mobile = prefs.getString('auth_mobile_number') ?? prefs.getString('mobile_number');
+    if (mobile != null && mobile.isNotEmpty) {
+      final counts = await _notifApi.fetchCounts(mobileNumber: mobile);
+      if (mounted) {
+        setState(() {
+          _unreadMessages = counts['messages'] ?? 0;
+          _unreadNotifications = counts['notifications'] ?? 0;
+        });
+      }
+    }
   }
 
   Future<void> _checkFarmStatus() async {
@@ -341,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildHomeFeed() {
     return Column(
       children: [
-        const _HomeHeader(),
+        _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -363,9 +382,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTabPlaceholder() {
     if (_selectedIndex == 3) {
-      return const Column(
+      return Column(
         children: [
-          _HomeHeader(),
+          _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
           Expanded(child: ClubsScreen()),
         ],
       );
@@ -373,9 +392,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_selectedIndex == 1) {
       if (_isFarmLoading) {
-        return const Column(
+        return Column(
           children: [
-            _HomeHeader(),
+            _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
             Expanded(
               child: Center(
                 child: CircularProgressIndicator(color: AppColors.accentGreen),
@@ -386,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       return Column(
         children: [
-          const _HomeHeader(),
+          _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
           Expanded(
             child: _hasFarm
                 ? MyFarmDashboardScreen(
@@ -409,9 +428,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_selectedIndex == 4) {
-      return const Column(
+      return Column(
         children: [
-          _HomeHeader(),
+          _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
           Expanded(child: RankScreen()),
         ],
       );
@@ -420,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final labels = <int, String>{1: 'My Farm', 2: 'Bantay AI', 4: 'Rank'};
     return Column(
       children: [
-        const _HomeHeader(),
+        _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
         Expanded(
           child: Center(
             child: Text(
@@ -469,10 +488,14 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _HomeHeader extends StatelessWidget {
-  const _HomeHeader();
+  const _HomeHeader({
+    super.key,
+    required this.unreadMessages,
+    required this.unreadNotifications,
+  });
 
-  static const int _unreadMessages = 3;
-  static const int _unreadNotifications = 7;
+  final int unreadMessages;
+  final int unreadNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -505,7 +528,7 @@ class _HomeHeader extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             icon: _HeaderIconWithBadge(
               icon: LucideIcons.messageCircle,
-              count: _unreadMessages,
+              count: unreadMessages,
             ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -517,7 +540,7 @@ class _HomeHeader extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             icon: _HeaderIconWithBadge(
               icon: LucideIcons.bell,
-              count: _unreadNotifications,
+              count: unreadNotifications,
             ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
