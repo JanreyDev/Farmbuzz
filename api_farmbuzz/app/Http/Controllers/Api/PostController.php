@@ -351,6 +351,21 @@ class PostController extends Controller
             'published_at' => now(),
         ]);
 
+        $targetUser = \App\Models\User::query()->where('name', $post->author_name)->first();
+        $commenterUser = \App\Models\User::query()->where('name', $request->string('author_name')->toString())->first();
+
+        if ($targetUser && $commenterUser && $targetUser->id !== $commenterUser->id) {
+            \App\Models\Notification::create([
+                'user_id' => $targetUser->id,
+                'type' => 'comment',
+                'data' => [
+                    'actor_name' => $commenterUser->name,
+                    'actor_avatar' => $commenterUser->avatar_url,
+                    'message' => 'commented on your post',
+                ]
+            ]);
+        }
+
         $commentsCount = $post->comments()->count();
         $post->forceFill(['comments_count' => $commentsCount])->save();
 
