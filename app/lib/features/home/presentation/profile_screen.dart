@@ -7,6 +7,7 @@ import 'profile_settings_screen.dart';
 
 import '../data/profile_api.dart';
 import '../data/feed_api.dart';
+import 'widgets/post_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.onNavigateTab});
@@ -176,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const Text(
-                        '•',
+                        'â€¢',
                         style: TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                     ],
@@ -200,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     if (hasYearsBreeding) ...[
                       const Text(
-                        '•',
+                        'â€¢',
                         style: TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                       Row(
@@ -389,7 +390,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: _userPosts!.map((post) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),
-                        child: _ProfilePostCard(post: post),
+                        child: PostCard(
+                          postId: post.id,
+                          userName: post.userName,
+                          userAvatar: post.userAvatar,
+                          timeAgo: post.timeAgo,
+                          postText: post.postText,
+                          metaEmoji: post.metaEmoji,
+                          metaFeeling: post.metaFeeling,
+                          metaLocation: post.metaLocation,
+                          userReaction: post.userReaction,
+                          likesCount: post.likesCount,
+                          commentsCount: post.commentsCount,
+                          topReactions: post.topReactions,
+                          imageUrls: post.imageUrls,
+                        ),
                       );
                     }).toList(),
                   ),
@@ -797,170 +812,6 @@ class _ProfileBottomItem extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ProfilePostCard extends StatelessWidget {
-  const _ProfilePostCard({required this.post});
-
-  final FeedPost post;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: const Color(0xFFE7F5EA),
-                backgroundImage: post.userAvatar.isNotEmpty
-                    ? NetworkImage(post.userAvatar)
-                    : null,
-                child: post.userAvatar.isEmpty
-                    ? Text(
-                        post.userName.isNotEmpty
-                            ? post.userName[0].toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          color: Color(0xFF2F6F44),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      post.userName,
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      post.timeAgo,
-                      style: const TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.more_horiz, color: Color(0xFF9CA3AF)),
-            ],
-          ),
-          if (post.postText.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              post.postText,
-              style: const TextStyle(
-                color: Color(0xFF374151),
-                fontSize: 14,
-                height: 1.35,
-              ),
-            ),
-          ],
-          if (post.imageUrls.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 170,
-              child: Row(
-                children: post.imageUrls.take(2).map((url) {
-                  return Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        right:
-                            url == post.imageUrls.take(2).last &&
-                                post.imageUrls.length > 1
-                            ? 0
-                            : 6,
-                      ),
-                      child: _PostImage(url: url),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _PostAction(
-                icon: Icons.favorite_border,
-                label: post.likesCount > 0 ? '${post.likesCount}' : 'Like',
-              ),
-              _PostAction(
-                icon: Icons.chat_bubble_outline,
-                label: post.commentsCount > 0
-                    ? '${post.commentsCount}'
-                    : 'Comment',
-              ),
-              const _PostAction(icon: Icons.share_outlined, label: 'Share'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PostImage extends StatelessWidget {
-  const _PostImage({required this.url});
-
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Image.network(
-        url,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      ),
-    );
-  }
-}
-
-class _PostAction extends StatelessWidget {
-  const _PostAction({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: const Color(0xFF6B7280)),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 }
