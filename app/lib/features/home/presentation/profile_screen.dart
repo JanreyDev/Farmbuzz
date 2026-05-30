@@ -7,6 +7,9 @@ import 'profile_settings_screen.dart';
 
 import '../data/profile_api.dart';
 import '../data/feed_api.dart';
+import '../data/social_api.dart';
+import '../../messages/data/message_api.dart';
+import '../../messages/presentation/conversation_screen.dart';
 import 'widgets/post_card.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -23,14 +26,104 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileApi _profileApi = ProfileApi();
   final FeedApi _feedApi = FeedApi();
+  final SocialApi _socialApi = SocialApi();
+  final MessageApi _messageApi = MessageApi();
   ProfileModel? _profile;
   bool _isLoading = true;
   List<FeedPost>? _userPosts;
+
+  // Social state (for viewing other users)
+  bool _isFollowing = false;
+  bool _isSocialLoading = false;
+  String? _myMobile;
+  String? _myName;
+
+  bool get _isOwner => widget.viewUserName == null;
 
   @override
   void initState() {
     super.initState();
     _loadProfileData();
+    _initSession();
+  }
+
+  Future<void> _initSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    _myMobile = prefs.getString('auth_mobile_number') ?? prefs.getString('mobile_number');
+    _myName = (prefs.getString('auth_user_name') ?? '').trim();
+    if (!_isOwner && _myMobile != null && widget.viewUserName != null) {
+      await _loadSocialStatus();
+    }
+  }
+
+  Future<void> _loadSocialStatus() async {
+    if (_myMobile == null || widget.viewUserName == null) return;
+    try {
+      final following = await _socialApi.isFollowing(
+        myMobile: _myMobile!,
+        targetName: widget.viewUserName!,
+      );
+      if (mounted) setState(() => _isFollowing = following);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFollow() async {
+    if (_myMobile == null || _isSocialLoading) return;
+    setState(() => _isSocialLoading = true);
+    try {
+      if (_isFollowing) {
+        await _socialApi.unfollow(
+          myMobile: _myMobile!,
+          targetName: widget.viewUserName!,
+        );
+      } else {
+        await _socialApi.follow(
+          myMobile: _myMobile!,
+          targetName: widget.viewUserName!,
+        );
+      }
+      if (mounted) {
+        setState(() => _isFollowing = !_isFollowing);
+        // Refresh follower count
+        await _loadProfileData();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Action failed. Try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSocialLoading = false);
+    }
+  }
+
+  Future<void> _openMessage() async {
+    if (_myMobile == null) return;
+    try {
+      final conversationId = await _messageApi.startConversation(
+        mobileNumber: _myMobile!,
+        targetName: widget.viewUserName!,
+      );
+      if (!mounted) return;
+      final conversation = ConversationModel(
+        id: conversationId,
+        otherUserName: widget.viewUserName!,
+        otherUserAvatar: _profile?.avatarUrl ?? '',
+        lastMessage: '',
+        lastMessageTime: '',
+        isUnread: false,
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ConversationScreen(conversation: conversation)),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open chat. Try again.')),
+        );
+      }
+    }
   }
 
   Future<void> _loadProfileData() async {
@@ -520,7 +613,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               if (_profile?.coverPhotoUrl != null &&
                   _profile!.coverPhotoUrl!.isNotEmpty)
-                Image.network(_profile!.coverPhotoUrl!, fit: BoxFit.cover)
+                Image.network(_profile!.coverPhotoUrl!, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(color: Colors.grey[200]))
               else
                 Container(
                   color: Colors.white,
@@ -565,89 +659,190 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                     ),
-                    Positioned(
-                      right: -2,
-                      bottom: 6,
-                      child: Container(
-                        width: 26,
-                        height: 26,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                        ),
-                        child: const Icon(
-                          Icons.photo_camera_outlined,
-                          size: 14,
-                          color: Color(0xFF6B7280),
+                    // Camera icon only shown for owner
+                    if (_isOwner)
+                      Positioned(
+                        right: -2,
+                        bottom: 6,
+                        child: Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                          ),
+                          child: const Icon(
+                            Icons.photo_camera_outlined,
+                            size: 14,
+                            color: Color(0xFF6B7280),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
                 const Spacer(),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 26),
-                      child: GestureDetector(
-                        onTap: () {
-                          widget.onNavigateTab?.call(1);
-                          Navigator.of(context).pop();
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3F4F6),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.grass_outlined,
-                                size: 16,
-                                color: AppColors.accentGreen,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'My Farm',
-                                style: TextStyle(
-                                  color: AppColors.accentGreen,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 26),
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ProfileSettingsScreen(),
+                // ── OWNER BUTTONS ──
+                if (_isOwner)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 26),
+                        child: GestureDetector(
+                          onTap: () {
+                            widget.onNavigateTab?.call(1);
+                            Navigator.of(context).pop();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
                             ),
-                          );
-                        },
-                        child: const _ActionBtn(
-                          icon: Icons.settings_outlined,
-                          filled: true,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F4F6),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE5E7EB)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.grass_outlined,
+                                  size: 16,
+                                  color: AppColors.accentGreen,
+                                ),
+                                SizedBox(width: 6),
+                                Text(
+                                  'My Farm',
+                                  style: TextStyle(
+                                    color: AppColors.accentGreen,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 26),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ProfileSettingsScreen(),
+                              ),
+                            );
+                          },
+                          child: const _ActionBtn(
+                            icon: Icons.settings_outlined,
+                            filled: true,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                // ── VISITOR BUTTONS ──
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(top: 26),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Follow / Unfollow button
+                        GestureDetector(
+                          onTap: _isSocialLoading ? null : _toggleFollow,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _isFollowing
+                                  ? const Color(0xFFF3F4F6)
+                                  : AppColors.accentGreen,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _isFollowing
+                                    ? const Color(0xFFE5E7EB)
+                                    : AppColors.accentGreen,
+                              ),
+                            ),
+                            child: _isSocialLoading
+                                ? SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: _isFollowing
+                                          ? AppColors.accentGreen
+                                          : Colors.white,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _isFollowing
+                                            ? Icons.person_remove_outlined
+                                            : Icons.person_add_outlined,
+                                        size: 14,
+                                        color: _isFollowing
+                                            ? Colors.black87
+                                            : Colors.white,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        _isFollowing ? 'Following' : 'Follow',
+                                        style: TextStyle(
+                                          color: _isFollowing
+                                              ? Colors.black87
+                                              : Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Message button
+                        GestureDetector(
+                          onTap: _openMessage,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F4F6),
+                              borderRadius: BorderRadius.circular(12),
+                              border:
+                                  Border.all(color: const Color(0xFFE5E7EB)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.chat_bubble_outline,
+                                    size: 14, color: Colors.black87),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Message',
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
               ],
             ),
           ),
