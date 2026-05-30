@@ -23,6 +23,7 @@ class MessageController extends Controller
             ->where('user_one_id', $user->id)
             ->orWhere('user_two_id', $user->id)
             ->with(['userOne', 'userTwo', 'lastMessage'])
+            ->orderBy('updated_at', 'desc')
             ->get()
             ->map(function (Conversation $conversation) use ($user) {
                 $otherUser = $conversation->user_one_id === $user->id ? $conversation->userTwo : $conversation->userOne;
