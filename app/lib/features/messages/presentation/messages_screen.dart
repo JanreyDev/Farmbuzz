@@ -103,6 +103,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
             child: Column(
               children: [
                 TextField(
+                  style: const TextStyle(color: Colors.black87),
+                  cursorColor: Colors.black87,
                   decoration: InputDecoration(
                     hintText: 'Search chats and messages...',
                     hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),

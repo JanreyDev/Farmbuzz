@@ -238,6 +238,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     controller: _controller,
                     textCapitalization: TextCapitalization.sentences,
                     onSubmitted: (_) => _send(),
+                    style: const TextStyle(color: Colors.black87),
+                    cursorColor: Colors.black87,
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
                       hintStyle: const TextStyle(
