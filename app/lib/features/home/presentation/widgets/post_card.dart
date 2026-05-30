@@ -924,6 +924,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   late List<Map<String, String>> _comments;
   bool _isSendingComment = false;
   String _sortLabel = 'Most relevant';
+  String? _viewerAvatar;
 
   String _formatCount(int value) {
     if (value >= 1000000) {
@@ -939,6 +940,18 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   void initState() {
     super.initState();
     _comments = List<Map<String, String>>.from(widget.comments);
+    _loadViewerAvatar();
+  }
+
+  Future<void> _loadViewerAvatar() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _viewerAvatar = prefs.getString('auth_avatar');
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -1119,11 +1132,22 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             ),
             child: Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 18,
-                  backgroundImage: NetworkImage(
-                    'https://i.pravatar.cc/150?img=12',
-                  ),
+                  backgroundColor: const Color(0xFF158D42),
+                  backgroundImage: _viewerAvatar != null && _viewerAvatar!.isNotEmpty
+                      ? NetworkImage(_viewerAvatar!)
+                      : null,
+                  child: _viewerAvatar == null || _viewerAvatar!.isEmpty
+                      ? const Text(
+                          'U',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
