@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/feed_api.dart';
+import '../profile_screen.dart';
 
 class PostCard extends StatefulWidget {
   const PostCard({
@@ -184,6 +185,22 @@ class PostCardState extends State<PostCard> {
     );
   }
 
+  Future<void> _openProfile() async {
+    if (!mounted) return;
+    final prefs = await SharedPreferences.getInstance();
+    final myName =
+        (prefs.getString('auth_user_name') ?? '').trim().toLowerCase();
+    final postAuthor = widget.userName.trim().toLowerCase();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          viewUserName: myName == postAuthor ? null : widget.userName,
+        ),
+      ),
+    );
+  }
+
+
   List<String> get _displayReactions {
     final ordered = <String>[];
     if (_selectedReaction.isNotEmpty) {
@@ -217,108 +234,120 @@ class PostCardState extends State<PostCard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: const Color(0xFFE8F5E9),
-                      backgroundImage: _hasUserAvatar
-                          ? NetworkImage(widget.userAvatar)
-                          : null,
-                      onBackgroundImageError: _hasUserAvatar ? (_, _) {} : null,
-                      child: _hasUserAvatar
-                          ? null
-                          : Text(
-                              _initial(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF1B5E20),
-                              ),
-                            ),
-                    ),
-                    const SizedBox(width: 12),
+                    // Avatar + Name wrapped in one tappable area
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.userName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          if (_hasMetaLine) ...[
-                            const SizedBox(height: 1),
-                            Text.rich(
-                              TextSpan(
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF374151),
-                                  height: 1.15,
-                                ),
-                                children: [
-                                  if (widget.metaFeeling.trim().isNotEmpty) ...[
-                                    const TextSpan(text: 'is feeling '),
-                                    TextSpan(text: '${widget.metaEmoji} '),
-                                    TextSpan(text: widget.metaFeeling.trim()),
-                                  ],
-                                  if (widget.metaFeeling.trim().isNotEmpty &&
-                                      widget.metaLocation.trim().isNotEmpty)
-                                    const TextSpan(text: ' at '),
-                                  if (widget.metaLocation
-                                      .trim()
-                                      .isNotEmpty) ...[
-                                    WidgetSpan(
-                                      alignment: PlaceholderAlignment.middle,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 3,
-                                        ),
-                                        child: Icon(
-                                          Icons.location_on,
-                                          size: 13,
-                                          color: AppColors.accentGreen,
-                                        ),
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: widget.metaLocation.trim(),
+                      child: GestureDetector(
+                        onTap: _openProfile,
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: const Color(0xFFE8F5E9),
+                              backgroundImage: _hasUserAvatar
+                                  ? NetworkImage(widget.userAvatar)
+                                  : null,
+                              onBackgroundImageError: _hasUserAvatar ? (_, _) {} : null,
+                              child: _hasUserAvatar
+                                  ? null
+                                  : Text(
+                                      _initial(),
                                       style: const TextStyle(
-                                        color: AppColors.accentGreen,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF1B5E20),
                                       ),
                                     ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.userName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                      color: Color(0xFF111827),
+                                    ),
+                                  ),
+                                  if (_hasMetaLine) ...[
+                                    const SizedBox(height: 1),
+                                    Text.rich(
+                                      TextSpan(
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF374151),
+                                          height: 1.15,
+                                        ),
+                                        children: [
+                                          if (widget.metaFeeling.trim().isNotEmpty) ...[
+                                            const TextSpan(text: 'is feeling '),
+                                            TextSpan(text: '${widget.metaEmoji} '),
+                                            TextSpan(text: widget.metaFeeling.trim()),
+                                          ],
+                                          if (widget.metaFeeling.trim().isNotEmpty &&
+                                              widget.metaLocation.trim().isNotEmpty)
+                                            const TextSpan(text: ' at '),
+                                          if (widget.metaLocation
+                                              .trim()
+                                              .isNotEmpty) ...[
+                                            WidgetSpan(
+                                              alignment: PlaceholderAlignment.middle,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  right: 3,
+                                                ),
+                                                child: Icon(
+                                                  Icons.location_on,
+                                                  size: 13,
+                                                  color: AppColors.accentGreen,
+                                                ),
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: widget.metaLocation.trim(),
+                                              style: const TextStyle(
+                                                color: AppColors.accentGreen,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
                                   ],
+                                  Row(
+                                    children: [
+                                      Text(
+                                        widget.timeAgo,
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                      const Text(
+                                        ' \u2022 ',
+                                        style: TextStyle(
+                                          color: Color(0xFF6B7280),
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.public,
+                                        size: 10,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 2),
                           ],
-                          Row(
-                            children: [
-                              Text(
-                                widget.timeAgo,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 11,
-                                ),
-                              ),
-                              const Text(
-                                ' \u2022 ',
-                                style: TextStyle(
-                                  color: Color(0xFF6B7280),
-                                  fontSize: 11,
-                                ),
-                              ),
-                              Icon(
-                                Icons.public,
-                                size: 10,
-                                color: Colors.grey[600],
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                     IconButton(

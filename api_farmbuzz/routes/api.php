@@ -32,6 +32,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/logout', [AuthController::class, 'logout']);
 
 Route::get('/profile', [ProfileController::class, 'show']);
+Route::get('/profile/by-name', [ProfileController::class, 'showByName']);
 Route::post('/profile/media', [ProfileController::class, 'updateMedia']);
 Route::post('/profile/update', [ProfileController::class, 'update']);
 Route::delete('/profile', [ProfileController::class, 'destroy']);

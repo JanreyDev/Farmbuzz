@@ -23,39 +23,47 @@ class ProfileController extends Controller
             ->where('mobile_number', $validated['mobile_number'])
             ->firstOrFail();
 
-        return response()->json([
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'mobile_number' => $user->mobile_number,
-                'avatar_url' => $this->normalizePublicMediaUrl($user->avatar_url, $request),
-                'cover_photo_url' => $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
-                'years_breeding' => $user->years_breeding,
-                'bio' => $user->bio,
-                'address' => $user->address,
-                'bloodlines' => $user->bloodlines,
-                'social_fb' => $user->social_fb,
-                'social_ig' => $user->social_ig,
-                'social_tiktok' => $user->social_tiktok,
-                'social_yt' => $user->social_yt,
-                'social_web' => $user->social_web,
-                'created_at' => $user->created_at,
-                'followers_count' => \App\Models\SocialConnection::query()
-                    ->where('target_user_id', $user->id)
-                    ->where('relation', 'following')
-                    ->count(),
-                'following_count' => \App\Models\SocialConnection::query()
-                    ->where('owner_user_id', $user->id)
-                    ->where('relation', 'following')
-                    ->count(),
-                'posts_count' => Post::query()
-                    ->where('author_name', $user->name)
-                    ->count(),
-                'clubs_count' => \App\Models\Club::query()
-                    ->where('user_id', $user->id)
-                    ->count(),
-            ],
+        return response()->json(['data' => $this->_userData($user, $request)]);
+    }
+
+    public function showByName(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string'],
         ]);
+
+        $user = User::query()
+            ->where('name', $validated['name'])
+            ->firstOrFail();
+
+        return response()->json(['data' => $this->_userData($user, $request)]);
+    }
+
+    private function _userData(User $user, Request $request): array
+    {
+        return [
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'mobile_number'  => $user->mobile_number,
+            'avatar_url'     => $this->normalizePublicMediaUrl($user->avatar_url, $request),
+            'cover_photo_url'=> $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
+            'years_breeding' => $user->years_breeding,
+            'bio'            => $user->bio,
+            'address'        => $user->address,
+            'bloodlines'     => $user->bloodlines,
+            'social_fb'      => $user->social_fb,
+            'social_ig'      => $user->social_ig,
+            'social_tiktok'  => $user->social_tiktok,
+            'social_yt'      => $user->social_yt,
+            'social_web'     => $user->social_web,
+            'created_at'     => $user->created_at,
+            'followers_count'=> \App\Models\SocialConnection::query()->where('target_user_id', $user->id)->where('relation', 'following')->count(),
+            'following_count'=> \App\Models\SocialConnection::query()->where('owner_user_id', $user->id)->where('relation', 'following')->count(),
+            'posts_count'    => Post::query()->where('author_name', $user->name)->count(),
+            'clubs_count'    => \App\Models\Club::query()->where('user_id', $user->id)->count(),
+        ];
+    }
+
     }
 
     public function update(Request $request): JsonResponse

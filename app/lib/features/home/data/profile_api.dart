@@ -111,6 +111,26 @@ class ProfileApi {
     return null;
   }
 
+  Future<ProfileModel?> fetchProfileByName({required String userName}) async {
+    try {
+      final response = await _client.get(
+        _buildUri('/profile/by-name', {'name': userName}),
+        headers: _jsonHeaders,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final body = jsonDecode(response.body);
+        if (body['data'] != null) {
+          return ProfileModel.fromJson(body['data']);
+        }
+      }
+    } catch (_) {
+      // ignore
+    }
+    return null;
+  }
+
+
   Future<void> updateProfile({
     required String mobileNumber,
     required String name,

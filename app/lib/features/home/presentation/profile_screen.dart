@@ -10,9 +10,11 @@ import '../data/feed_api.dart';
 import 'widgets/post_card.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, this.onNavigateTab});
+  const ProfileScreen({super.key, this.onNavigateTab, this.viewUserName});
 
   final ValueChanged<int>? onNavigateTab;
+  /// When set, shows this user's profile instead of the logged-in user's.
+  final String? viewUserName;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -34,18 +36,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadProfileData() async {
     setState(() => _isLoading = true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final mobile =
-          prefs.getString('auth_mobile_number') ??
-          prefs.getString('mobile_number');
-      if (mobile != null) {
-        final profile = await _profileApi.fetchProfile(mobileNumber: mobile);
+      // If viewUserName is set, look up by name; otherwise use logged-in user
+      if (widget.viewUserName != null && widget.viewUserName!.trim().isNotEmpty) {
+        final profile = await _profileApi.fetchProfileByName(
+          userName: widget.viewUserName!.trim(),
+        );
         if (mounted) {
           setState(() {
             _profile = profile;
           });
           if (profile != null) {
             _loadPosts(profile.name);
+          }
+        }
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        final mobile =
+            prefs.getString('auth_mobile_number') ??
+            prefs.getString('mobile_number');
+        if (mobile != null) {
+          final profile = await _profileApi.fetchProfile(mobileNumber: mobile);
+          if (mounted) {
+            setState(() {
+              _profile = profile;
+            });
+            if (profile != null) {
+              _loadPosts(profile.name);
+            }
           }
         }
       }
