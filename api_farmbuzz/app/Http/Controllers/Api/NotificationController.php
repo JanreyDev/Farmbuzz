@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Notification;
 use App\Models\User;
@@ -19,13 +20,15 @@ class NotificationController extends Controller
 
         $user = User::query()->where('mobile_number', $validated['mobile_number'])->firstOrFail();
 
-        $unreadMessages = Message::query()
-            ->whereHas('conversation', function($query) use ($user) {
+        $unreadMessages = Conversation::query()
+            ->where(function($query) use ($user) {
                 $query->where('user_one_id', $user->id)
                       ->orWhere('user_two_id', $user->id);
             })
-            ->where('sender_id', '!=', $user->id)
-            ->where('is_read', false)
+            ->whereHas('lastMessage', function($query) use ($user) {
+                $query->where('sender_id', '!=', $user->id)
+                      ->where('is_read', false);
+            })
             ->count();
 
         $unreadNotifications = Notification::query()

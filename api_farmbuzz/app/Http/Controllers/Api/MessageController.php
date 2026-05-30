@@ -68,10 +68,12 @@ class MessageController extends Controller
                 ];
             });
 
-        // Mark last message as read if it's from the other user
-        if ($conversation->lastMessage && $conversation->lastMessage->sender_id !== $user->id) {
-            $conversation->lastMessage->update(['is_read' => true]);
-        }
+        // Mark all unread messages from the other user as read
+        Message::query()
+            ->where('conversation_id', $conversation->id)
+            ->where('sender_id', '!=', $user->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
 
         return response()->json(['data' => $messages]);
     }
