@@ -8,6 +8,7 @@ import 'widgets/story_viewer_screen.dart';
 import 'widgets/post_card.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'bantay_screen.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -437,7 +438,11 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    final labels = <int, String>{1: 'My Farm', 2: 'Bantay AI', 4: 'Rank'};
+    if (_selectedIndex == 2) {
+      return const BantayScreen();
+    }
+
+    final labels = <int, String>{1: 'My Farm', 4: 'Rank'};
     return Column(
       children: [
         _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
@@ -1510,23 +1515,6 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Unable to open image picker: $e')),
-      );
-    }
-  }
-
-  Future<void> _pickVideo() async {
-    try {
-      FocusScope.of(context).unfocus();
-      await Future<void>.delayed(const Duration(milliseconds: 80));
-      final result = await FilePicker.platform.pickFiles(type: FileType.video);
-      if (!mounted || result == null) return;
-      final pickedPath = result.files.single.path;
-      if (pickedPath == null) return;
-      setState(() => _videoPaths.add(pickedPath));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Unable to open video picker: $e')),
       );
     }
   }
