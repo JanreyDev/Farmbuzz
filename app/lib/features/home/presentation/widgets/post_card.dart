@@ -7,6 +7,19 @@ import 'package:flutter/rendering.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/feed_api.dart';
 import '../profile_screen.dart';
+import 'package:timeago/timeago.dart' as timeago;
+
+void _showPostToast(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
 
 class PostCard extends StatefulWidget {
   const PostCard({
@@ -114,7 +127,7 @@ class PostCardState extends State<PostCard> {
     if (updatedText != null && mounted) {
       // In a real app we'd trigger a reload or update parent state.
       // For now we just show a success message since the text might be passed down from parent widget.
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post updated. Please refresh feed to see changes.')));
+      _showPostToast(context, 'Post updated. Please refresh feed to see changes.');
     }
   }
 
@@ -133,10 +146,10 @@ class PostCardState extends State<PostCard> {
                 await _api.deletePost(postId: widget.postId, authorName: _myName);
                 if (mounted) {
                   setState(() => _isHidden = true);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Post deleted.')));
+                  _showPostToast(context, 'Post deleted.');
                 }
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+                if (mounted) _showPostToast(context, 'Failed to delete: $e');
               }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -219,11 +232,9 @@ class PostCardState extends State<PostCard> {
         _currentLikes = result.likesCount;
         _topReactions = result.topReactions;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to update reaction. Try again.')),
-      );
+      _showPostToast(context, 'Unable to update reaction. Try again.');
     } finally {
       if (mounted) {
         setState(() => _isLikeBusy = false);
@@ -959,11 +970,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       });
       widget.onCommentCountChanged(result.commentsCount, _comments);
       FocusScope.of(context).unfocus();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to add comment. Try again.')),
-      );
+      _showPostToast(context, 'Unable to add comment. Try again.');
     } finally {
       if (mounted) {
         setState(() => _isSendingComment = false);
@@ -1442,14 +1451,10 @@ class _RepostSheetState extends State<_RepostSheet> {
 
       if (!mounted) return;
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Successfully reposted!')),
-      );
+      _showPostToast(context, 'Successfully reposted!');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to repost: $e')),
-      );
+      _showPostToast(context, 'Failed to repost: $e');
     } finally {
       if (mounted) setState(() => _isPosting = false);
     }
@@ -1642,7 +1647,7 @@ class _EditPostSheetState extends State<_EditPostSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
+        _showPostToast(context, 'Failed to update: $e');
         setState(() => _isSaving = false);
       }
     }
@@ -1711,11 +1716,11 @@ class _ReportPostSheetState extends State<_ReportPostSheet> {
       );
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Report submitted.')));
+        _showPostToast(context, 'Report submitted.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to report: $e')));
+        _showPostToast(context, 'Failed to report: $e');
         setState(() => _isReporting = false);
       }
     }
