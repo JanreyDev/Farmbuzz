@@ -639,16 +639,100 @@ class _HomeDrawer extends StatelessWidget {
   final ValueChanged<int> onNavigateTab;
   static final AuthApi _authApi = AuthApi();
 
+  Future<void> _showDeleteAccountDialog(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(LucideIcons.alertTriangle, color: Colors.red.shade600),
+            const SizedBox(width: 8),
+            const Text('Delete Account', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to delete your account? This action cannot be undone and you will lose all your data, posts, and clubs.',
+          style: TextStyle(color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey.shade700)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      // Show loading overlay
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final mobile = prefs.getString('auth_mobile_number');
+        if (mobile != null) {
+          await _authApi.deleteAccount(mobileNumber: mobile);
+        }
+        await prefs.clear();
+        
+        if (context.mounted) {
+          // Pop loading indicator and drawer
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
+          
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute<void>(
+              builder: (_) => const LoginScreen(),
+            ),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context).pop(); // pop loading
+          _showBottomToast(context, 'Failed to delete account. Try again.');
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.84,
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+            // Header Section
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade200),
+                ),
+              ),
               child: ValueListenableBuilder<_ViewerProfile>(
                 valueListenable: _ViewerProfileStore.instance.profile,
                 builder: (context, viewer, _) {
@@ -656,40 +740,41 @@ class _HomeDrawer extends StatelessWidget {
                   return Row(
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF374151),
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: AppColors.accentGreen.withOpacity(0.1),
                           shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.accentGreen.withOpacity(0.2), width: 2),
                         ),
                         alignment: Alignment.center,
                         child: hasAvatar
                             ? ClipOval(
                                 child: Image.network(
                                   viewer.avatarUrl,
-                                  width: 44,
-                                  height: 44,
+                                  width: 52,
+                                  height: 52,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Text(
                                     viewer.initial,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 18,
+                                    style: TextStyle(
+                                      color: AppColors.accentGreen,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
                                     ),
                                   ),
                                 ),
                               )
                             : Text(
                                 viewer.initial,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 18,
+                                style: TextStyle(
+                                  color: AppColors.accentGreen,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
                                 ),
                               ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
@@ -708,16 +793,18 @@ class _HomeDrawer extends StatelessWidget {
                                 viewer.name.isNotEmpty ? viewer.name : 'FarmBuzz User',
                                 style: const TextStyle(
                                   color: Colors.black87,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
                               const SizedBox(height: 2),
-                              const Text(
+                              Text(
                                 'View Profile',
                                 style: TextStyle(
-                                  color: Color(0xFF6B7280),
-                                  fontSize: 12,
+                                  color: AppColors.accentGreen,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -726,17 +813,21 @@ class _HomeDrawer extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close, color: Colors.grey),
+                        icon: Icon(LucideIcons.x, color: Colors.grey.shade400),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.grey.shade100,
+                          padding: const EdgeInsets.all(8),
+                        ),
                       ),
                     ],
                   );
                 },
               ),
             ),
-            const Divider(height: 1),
+            const SizedBox(height: 16),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   _MenuItemTile(
                     icon: LucideIcons.messageCircle,
@@ -765,15 +856,6 @@ class _HomeDrawer extends StatelessWidget {
                     },
                   ),
                   _MenuItemTile(
-                    icon: LucideIcons.settings,
-                    title: 'Settings',
-                    subtitle: 'App and account preferences',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      _showBottomToast(context, 'Settings screen coming next.');
-                    },
-                  ),
-                  _MenuItemTile(
                     icon: LucideIcons.user,
                     title: 'Profile',
                     subtitle: 'View and manage your profile',
@@ -787,15 +869,34 @@ class _HomeDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(14, 10, 14, 8),
-                    child: Divider(height: 1),
+                  _MenuItemTile(
+                    icon: LucideIcons.settings,
+                    title: 'Settings',
+                    subtitle: 'App and account preferences',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      _showBottomToast(context, 'Settings screen coming next.');
+                    },
                   ),
+                ],
+              ),
+            ),
+            
+            // Bottom Actions (Logout / Delete)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade100),
+                ),
+              ),
+              child: Column(
+                children: [
                   _MenuItemTile(
                     icon: LucideIcons.logOut,
                     title: 'Logout',
                     subtitle: 'Sign out from this account',
-                    danger: true,
                     onTap: () async {
                       Navigator.of(context).pop();
                       final prefs = await SharedPreferences.getInstance();
@@ -812,6 +913,14 @@ class _HomeDrawer extends StatelessWidget {
                         (route) => false,
                       );
                     },
+                  ),
+                  const SizedBox(height: 8),
+                  _MenuItemTile(
+                    icon: LucideIcons.trash2,
+                    title: 'Delete Account',
+                    subtitle: 'Permanently remove your data',
+                    danger: true,
+                    onTap: () => _showDeleteAccountDialog(context),
                   ),
                 ],
               ),
@@ -840,48 +949,68 @@ class _MenuItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = danger ? const Color(0xFFDC2626) : const Color(0xFF374151);
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: accent, size: 18),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: danger ? const Color(0xFFDC2626) : Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+    final iconColor = danger ? Colors.red.shade500 : AppColors.accentGreen;
+    final iconBgColor = danger ? Colors.red.shade50 : AppColors.accentGreen.withOpacity(0.1);
+    final titleColor = danger ? Colors.red.shade700 : Colors.black87;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          highlightColor: danger ? Colors.red.shade50 : Colors.grey.shade50,
+          splashColor: danger ? Colors.red.shade100 : Colors.grey.shade100,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 12,
-                    ),
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: titleColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Icon(
+                  LucideIcons.chevronRight,
+                  color: Colors.grey.shade300,
+                  size: 20,
+                ),
+              ],
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
-          ],
+          ),
         ),
       ),
     );

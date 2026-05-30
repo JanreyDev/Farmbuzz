@@ -150,6 +150,21 @@ class AuthApi {
     }
   }
 
+  Future<void> deleteAccount({required String mobileNumber}) async {
+    final response = await _client.delete(
+      _buildUri('/profile'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'mobile_number': mobileNumber,
+      }),
+    );
+
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw AuthApiException(_extractMessage(body, fallback: 'Failed to delete account.'));
+    }
+  }
+
   Map<String, dynamic> _decodeJson(String raw) {
     if (raw.trim().isEmpty) {
       return <String, dynamic>{};
