@@ -1504,25 +1504,40 @@ class _RepostSheetState extends State<_RepostSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Center(
+              child: Container(
+                width: 42,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFBFC5CA),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Repost',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  'Share Post',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: Colors.black54),
                   onPressed: () => Navigator.of(context).pop(),
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF3F4F6),
+                    padding: const EdgeInsets.all(6),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1550,9 +1565,13 @@ class _RepostSheetState extends State<_RepostSheet> {
                     controller: _textController,
                     maxLines: 4,
                     minLines: 1,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: const TextStyle(color: Colors.black87, fontSize: 15),
                     decoration: const InputDecoration(
-                      hintText: 'Add a comment (optional)...',
+                      hintText: 'Add your thoughts (optional)...',
+                      hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
                       border: InputBorder.none,
+                      isDense: true,
                     ),
                   ),
                 ),
@@ -1560,10 +1579,11 @@ class _RepostSheetState extends State<_RepostSheet> {
             ),
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFFF9FAFB),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1572,35 +1592,37 @@ class _RepostSheetState extends State<_RepostSheet> {
                     children: [
                       CircleAvatar(
                         radius: 12,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: Colors.grey[300],
                         backgroundImage: widget.originalPost.userAvatar.isNotEmpty
                             ? NetworkImage(widget.originalPost.userAvatar)
                             : null,
                         child: widget.originalPost.userAvatar.isEmpty
-                            ? const Icon(Icons.person, size: 16)
+                            ? const Icon(Icons.person, size: 16, color: Colors.white)
                             : null,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         widget.originalPost.userName,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 14),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  if (widget.originalPost.postText.isNotEmpty)
+                  if (widget.originalPost.postText.isNotEmpty) ...[
+                    const SizedBox(height: 8),
                     Text(
                       widget.originalPost.postText,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.4),
                     ),
+                  ],
                   if (widget.originalPost.imageUrls.isNotEmpty) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                       child: Image.network(
                         widget.originalPost.imageUrls.first,
-                        height: 120,
+                        height: 140,
                         width: double.infinity,
                         fit: BoxFit.cover,
                       ),
@@ -1609,15 +1631,16 @@ class _RepostSheetState extends State<_RepostSheet> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isPosting ? null : _repost,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16A34A),
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                backgroundColor: const Color(0xFF158D42),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
+                elevation: 0,
               ),
               child: _isPosting
                   ? const SizedBox(
@@ -1629,7 +1652,7 @@ class _RepostSheetState extends State<_RepostSheet> {
                       ),
                     )
                   : const Text(
-                      'Repost',
+                      'Share Now',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
