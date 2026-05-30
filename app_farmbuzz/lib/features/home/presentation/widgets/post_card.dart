@@ -318,6 +318,7 @@ class _PostCardState extends State<PostCard> {
         children: [
           GestureDetector(
             onTap: _openProfileFromPost,
+            behavior: HitTestBehavior.opaque,
             child: CircleAvatar(
               radius: 20,
               backgroundColor: const Color(0xFFE8F5E9),
@@ -337,6 +338,7 @@ class _PostCardState extends State<PostCard> {
           const SizedBox(width: 12),
           GestureDetector(
             onTap: _openProfileFromPost,
+            behavior: HitTestBehavior.opaque,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -346,6 +348,7 @@ class _PostCardState extends State<PostCard> {
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
                     color: Colors.black,
+                    decoration: TextDecoration.none,
                   ),
                 ),
                 Row(
