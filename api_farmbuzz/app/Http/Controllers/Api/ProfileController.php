@@ -102,11 +102,11 @@ class ProfileController extends Controller
 
         if ($oldName !== $newName) {
             Post::query()
-                ->where('author_name', $oldName)
+                ->whereRaw('LOWER(author_name) = ?', [strtolower($oldName)])
                 ->update(['author_name' => $newName]);
 
             Comment::query()
-                ->where('author_name', $oldName)
+                ->whereRaw('LOWER(author_name) = ?', [strtolower($oldName)])
                 ->update(['author_name' => $newName]);
         }
 
@@ -177,11 +177,11 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             Post::query()
-                ->where('author_name', $user->name)
+                ->whereRaw('LOWER(author_name) = ?', [strtolower($user->name)])
                 ->update(['author_avatar' => $user->avatar_url]);
 
             Comment::query()
-                ->where('author_name', $user->name)
+                ->whereRaw('LOWER(author_name) = ?', [strtolower($user->name)])
                 ->update(['author_avatar' => $user->avatar_url]);
         }
 
