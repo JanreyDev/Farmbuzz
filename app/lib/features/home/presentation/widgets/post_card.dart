@@ -673,13 +673,17 @@ class PostCardState extends State<PostCard> {
                     ? NetworkImage(authorAvatar)
                     : null,
                 child: authorAvatar.isEmpty
-                    ? const Icon(Icons.person, size: 16)
+                    ? Icon(Icons.person, size: 16, color: Colors.grey[600])
                     : null,
               ),
               const SizedBox(width: 8),
               Text(
                 authorName,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
@@ -687,7 +691,10 @@ class PostCardState extends State<PostCard> {
             const SizedBox(height: 8),
             Text(
               postText,
-              style: const TextStyle(fontSize: 14),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
             ),
           ],
           if (imageUrls.isNotEmpty) ...[
