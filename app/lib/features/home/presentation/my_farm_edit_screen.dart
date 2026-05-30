@@ -28,6 +28,7 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
   String? _mobileNumber;
   String? _avatarUrl;
   String? _coverPhotoUrl;
+  final List<_AchievementItem> _achievements = [];
 
   File? _selectedAvatar;
   File? _selectedCoverPhoto;
@@ -42,27 +43,47 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
     setState(() => _isLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
-      _mobileNumber = prefs.getString('mobile_number');
+      _mobileNumber = prefs.getString('auth_mobile_number') ?? prefs.getString('mobile_number');
+      
+      // Fallback to local storage first
+      _nameController.text = prefs.getString('farm_name') ?? '';
+      _taglineController.text = prefs.getString('farm_tagline') ?? '';
+      _cityController.text = prefs.getString('farm_city') ?? '';
+      _provinceController.text = prefs.getString('farm_province') ?? '';
+      final cachedYear = prefs.getInt('farm_year') ?? 0;
+      _yearController.text = cachedYear > 0 ? cachedYear.toString() : '';
+      
+      final localCover = prefs.getString('farm_cover_photo');
+      if (localCover != null && localCover.isNotEmpty) {
+        _selectedCoverPhoto = File(localCover);
+      }
+      _coverPhotoUrl = prefs.getString('farm_cover_photo_url');
+
       if (_mobileNumber != null) {
         final profile = await _farmApi.fetchFarm(mobileNumber: _mobileNumber!);
         if (profile != null) {
-          _nameController.text = profile.name;
-          _taglineController.text = profile.tagline;
-          _storyController.text = profile.story;
-          _cityController.text = profile.city;
-          _provinceController.text = profile.province;
-          _yearController.text = profile.startedYear != null && profile.startedYear! > 0
-              ? profile.startedYear.toString()
-              : '';
-          _avatarUrl = profile.avatarUrl;
-          _coverPhotoUrl = profile.coverPhotoUrl;
+          if (profile.name.isNotEmpty) _nameController.text = profile.name;
+          if (profile.tagline.isNotEmpty) _taglineController.text = profile.tagline;
+          if (profile.story.isNotEmpty) _storyController.text = profile.story;
+          if (profile.city.isNotEmpty) _cityController.text = profile.city;
+          if (profile.province.isNotEmpty) _provinceController.text = profile.province;
+          if (profile.startedYear != null && profile.startedYear! > 0) {
+            _yearController.text = profile.startedYear.toString();
+          }
+          if (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty) {
+            _avatarUrl = profile.avatarUrl;
+          }
+          if (profile.coverPhotoUrl != null && profile.coverPhotoUrl!.isNotEmpty) {
+            _coverPhotoUrl = profile.coverPhotoUrl;
+            _selectedCoverPhoto = null; // Prefer remote URL if available
+          }
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load farm: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load farm: $e')));
       }
     } finally {
       if (mounted) {
@@ -85,9 +106,9 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
@@ -97,9 +118,9 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
 
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Farm Name is required')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Farm Name is required')));
       return;
     }
 
@@ -127,25 +148,293 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(publish ? '🎉 Farm published successfully!' : '💾 Farm settings saved successfully!'),
+            content: Text(
+              publish
+                  ? '🎉 Farm published successfully!'
+                  : '💾 Farm settings saved successfully!',
+            ),
             backgroundColor: AppColors.accentGreen,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save farm: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save farm: $e')));
       }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _showAddAchievementModal() async {
+    final titleController = TextEditingController();
+    final detailController = TextEditingController();
+    DateTime? selectedDate;
+    bool isSaving = false;
+
+    Future<void> pickDate(StateSetter setModalState) async {
+      final now = DateTime.now();
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate ?? now,
+        firstDate: DateTime(1990),
+        lastDate: DateTime(now.year + 2),
+      );
+      if (picked != null) {
+        setModalState(() => selectedDate = picked);
+      }
+    }
+
+    String formatDate(DateTime date) {
+      final month = date.month.toString().padLeft(2, '0');
+      final day = date.day.toString().padLeft(2, '0');
+      final year = date.year.toString();
+      return '$month/$day/$year';
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final canAdd =
+                titleController.text.trim().isNotEmpty &&
+                selectedDate != null &&
+                !isSaving;
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 24,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAFCFA),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0xFFD4E3D6)),
+                  boxShadow: const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x29000000),
+                      blurRadius: 24,
+                      offset: Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: <Color>[Color(0xFF0E6B3A), Color(0xFF1A8A4E)],
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(22),
+                          topRight: Radius.circular(22),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.emoji_events_outlined,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Add Achievement',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: isSaving
+                                ? null
+                                : () => Navigator.pop(dialogContext),
+                            borderRadius: BorderRadius.circular(100),
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                      child: Text(
+                        'Capture key awards and recognitions to showcase your farm credibility.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+                      child: _buildModalInputField(
+                        controller: titleController,
+                        label: 'Title',
+                        hint: 'Title (e.g. 1st Place - Regional Show)',
+                        onChanged: (_) => setModalState(() {}),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                      child: _buildModalInputField(
+                        controller: detailController,
+                        label: 'Location / detail',
+                        hint: 'Location or detail (optional)',
+                        onChanged: (_) => setModalState(() {}),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Date',
+                            style: TextStyle(
+                              color: Colors.grey.shade800,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () => pickDate(setModalState),
+                            child: AbsorbPointer(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: selectedDate == null
+                                      ? 'mm/dd/yyyy'
+                                      : formatDate(selectedDate!),
+                                  suffixIcon: const Icon(
+                                    LucideIcons.calendar,
+                                    size: 16,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFD4DDD4),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.accentGreen,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () => Navigator.pop(dialogContext),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: canAdd
+                                  ? () async {
+                                      setModalState(() => isSaving = true);
+                                      setState(() {
+                                        _achievements.add(
+                                          _AchievementItem(
+                                            title: titleController.text.trim(),
+                                            detail: detailController.text
+                                                .trim(),
+                                            date: selectedDate!,
+                                          ),
+                                        );
+                                      });
+                                      if (mounted) {
+                                        Navigator.pop(dialogContext);
+                                      }
+                                    }
+                                  : null,
+                              icon: const Icon(LucideIcons.plus, size: 14),
+                              label: const Text('Save'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.accentGreen,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // Wait for the dialog exit animation to finish before disposing controllers
+    await Future.delayed(const Duration(milliseconds: 300));
+    titleController.dispose();
+    detailController.dispose();
   }
 
   @override
@@ -180,7 +469,11 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                         color: Colors.grey.shade100,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(LucideIcons.arrowLeft, size: 18, color: Colors.grey.shade700),
+                      child: Icon(
+                        LucideIcons.arrowLeft,
+                        size: 18,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -224,20 +517,30 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                         borderRadius: BorderRadius.circular(16),
                                         image: _selectedCoverPhoto != null
                                             ? DecorationImage(
-                                                image: FileImage(_selectedCoverPhoto!),
+                                                image: FileImage(
+                                                  _selectedCoverPhoto!,
+                                                ),
                                                 fit: BoxFit.cover,
                                               )
-                                            : (_coverPhotoUrl != null && _coverPhotoUrl!.isNotEmpty
-                                                ? DecorationImage(
-                                                    image: NetworkImage(_coverPhotoUrl!),
-                                                    fit: BoxFit.cover,
-                                                  )
-                                                : null),
+                                            : (_coverPhotoUrl != null &&
+                                                      _coverPhotoUrl!.isNotEmpty
+                                                  ? DecorationImage(
+                                                      image: NetworkImage(
+                                                        _coverPhotoUrl!,
+                                                      ),
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : null),
                                       ),
-                                      child: _selectedCoverPhoto == null && (_coverPhotoUrl == null || _coverPhotoUrl!.isEmpty)
+                                      child:
+                                          _selectedCoverPhoto == null &&
+                                              (_coverPhotoUrl == null ||
+                                                  _coverPhotoUrl!.isEmpty)
                                           ? CustomPaint(
                                               painter: _DashRectPainter(
-                                                color: const Color(0xFFC99843), // Golden border
+                                                color: const Color(
+                                                  0xFFC99843,
+                                                ), // Golden border
                                                 borderRadius: 16,
                                                 strokeWidth: 2,
                                               ),
@@ -245,21 +548,35 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                                 children: [
                                                   const Center(
                                                     child: Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
                                                       children: [
-                                                        Icon(LucideIcons.image, size: 32, color: Color(0xFFC99843)),
+                                                        Icon(
+                                                          LucideIcons.image,
+                                                          size: 32,
+                                                          color: Color(
+                                                            0xFFC99843,
+                                                          ),
+                                                        ),
                                                         SizedBox(height: 6),
                                                         Text(
                                                           'Cover Photo',
                                                           style: TextStyle(
                                                             fontSize: 13,
-                                                            fontWeight: FontWeight.bold,
-                                                            color: Color(0xFFC99843),
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Color(
+                                                              0xFFC99843,
+                                                            ),
                                                           ),
                                                         ),
                                                         Text(
                                                           'Tap camera to upload',
-                                                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                                                          style: TextStyle(
+                                                            fontSize: 10,
+                                                            color: Colors.grey,
+                                                          ),
                                                         ),
                                                       ],
                                                     ),
@@ -269,8 +586,16 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                                     right: 12,
                                                     child: CircleAvatar(
                                                       radius: 18,
-                                                      backgroundColor: Colors.white.withValues(alpha: 0.9),
-                                                      child: const Icon(LucideIcons.camera, size: 16, color: Colors.black87),
+                                                      backgroundColor: Colors
+                                                          .white
+                                                          .withValues(
+                                                            alpha: 0.9,
+                                                          ),
+                                                      child: const Icon(
+                                                        LucideIcons.camera,
+                                                        size: 16,
+                                                        color: Colors.black87,
+                                                      ),
                                                     ),
                                                   ),
                                                 ],
@@ -283,8 +608,14 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                                   right: 12,
                                                   child: CircleAvatar(
                                                     radius: 18,
-                                                    backgroundColor: Colors.white.withValues(alpha: 0.9),
-                                                    child: const Icon(LucideIcons.camera, size: 16, color: Colors.black87),
+                                                    backgroundColor: Colors
+                                                        .white
+                                                        .withValues(alpha: 0.9),
+                                                    child: const Icon(
+                                                      LucideIcons.camera,
+                                                      size: 16,
+                                                      color: Colors.black87,
+                                                    ),
                                                   ),
                                                 ),
                                               ],
@@ -309,45 +640,68 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                             decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                               color: const Color(0xFFFAF8F4),
-                                              border: Border.all(color: Colors.white, width: 4),
+                                              border: Border.all(
+                                                color: Colors.white,
+                                                width: 4,
+                                              ),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: Colors.black.withValues(alpha: 0.1),
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.1),
                                                   blurRadius: 8,
                                                   offset: const Offset(0, 4),
                                                 ),
                                               ],
                                               image: _selectedAvatar != null
                                                   ? DecorationImage(
-                                                      image: FileImage(_selectedAvatar!),
+                                                      image: FileImage(
+                                                        _selectedAvatar!,
+                                                      ),
                                                       fit: BoxFit.cover,
                                                     )
-                                                  : (_avatarUrl != null && _avatarUrl!.isNotEmpty
-                                                      ? DecorationImage(
-                                                          image: NetworkImage(_avatarUrl!),
-                                                          fit: BoxFit.cover,
-                                                        )
-                                                      : null),
+                                                  : (_avatarUrl != null &&
+                                                            _avatarUrl!
+                                                                .isNotEmpty
+                                                        ? DecorationImage(
+                                                            image: NetworkImage(
+                                                              _avatarUrl!,
+                                                            ),
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                        : null),
                                             ),
-                                            child: _selectedAvatar == null && (_avatarUrl == null || _avatarUrl!.isEmpty)
+                                            child:
+                                                _selectedAvatar == null &&
+                                                    (_avatarUrl == null ||
+                                                        _avatarUrl!.isEmpty)
                                                 ? CustomPaint(
                                                     painter: _DashRectPainter(
-                                                      color: Colors.grey.shade400,
+                                                      color:
+                                                          Colors.grey.shade400,
                                                       isCircular: true,
                                                       strokeWidth: 1.5,
                                                     ),
                                                     child: const Center(
                                                       child: Column(
-                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
                                                         children: [
-                                                          Icon(LucideIcons.user, size: 28, color: Colors.grey),
+                                                          Icon(
+                                                            LucideIcons.user,
+                                                            size: 28,
+                                                            color: Colors.grey,
+                                                          ),
                                                           SizedBox(height: 2),
                                                           Text(
                                                             'Portrait',
                                                             style: TextStyle(
                                                               fontSize: 10,
-                                                              fontWeight: FontWeight.bold,
-                                                              color: Colors.grey,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.grey,
                                                             ),
                                                           ),
                                                         ],
@@ -361,8 +715,13 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                                             right: 0,
                                             child: CircleAvatar(
                                               radius: 16,
-                                              backgroundColor: AppColors.accentGreen,
-                                              child: const Icon(LucideIcons.camera, size: 14, color: Colors.white),
+                                              backgroundColor:
+                                                  AppColors.accentGreen,
+                                              child: const Icon(
+                                                LucideIcons.camera,
+                                                size: 14,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -389,14 +748,16 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                               const SizedBox(height: 16),
                               _buildTextField(
                                 label: 'Tagline',
-                                subtitle: 'One short line shown under your name. Up to 160 characters.',
+                                subtitle:
+                                    'One short line shown under your name. Up to 160 characters.',
                                 hint: 'What makes your farm unique?',
                                 controller: _taglineController,
                               ),
                               const SizedBox(height: 16),
                               _buildTextField(
                                 label: 'Established Year',
-                                subtitle: 'When your farm started operating in the real world.',
+                                subtitle:
+                                    'When your farm started operating in the real world.',
                                 controller: _yearController,
                                 width: 140,
                                 hint: 'e.g. 2016',
@@ -433,7 +794,8 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                               const SizedBox(height: 16),
                               _buildTextField(
                                 label: 'Our Story',
-                                subtitle: 'Your journey, philosophy, what you\'re known for. At least 10 words to publish.',
+                                subtitle:
+                                    'Your journey, philosophy, what you\'re known for. At least 10 words to publish.',
                                 hint: 'Tell visitors about your farm...',
                                 controller: _storyController,
                                 maxLines: 5,
@@ -449,43 +811,22 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                             icon: LucideIcons.imagePlus,
                             children: [
                               _buildSectionHeader(
-                                title: 'Farm Gallery',
-                                subtitle: 'Facilities, animals, daily life. 0 photos uploaded.',
-                              ),
-                              const SizedBox(height: 8),
-                              _buildUploadContainer(
-                                height: 100,
-                                icon: LucideIcons.imagePlus,
-                                label: 'Add photos to gallery',
-                                color: const Color(0xFFFAF8F4),
-                              ),
-                              const SizedBox(height: 24),
-                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                              const SizedBox(height: 16),
-                              _buildSectionHeader(
-                                title: 'Heritage Lines',
-                                subtitle: 'Your signature breeding lines — the heritage your farm is known for. 0 listed.',
-                              ),
-                              const SizedBox(height: 12),
-                              _buildAddButton(icon: LucideIcons.plus, label: 'Add heritage line'),
-                              const SizedBox(height: 24),
-                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                              const SizedBox(height: 16),
-                              _buildSectionHeader(
-                                title: 'Featured Spotlight',
-                                subtitle: 'Hand-picked stock you want visitors to see. 0 on showcase.',
-                              ),
-                              const SizedBox(height: 12),
-                              _buildAddButton(icon: LucideIcons.plus, label: 'Feature a spotlight'),
-                              const SizedBox(height: 24),
-                              const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                              const SizedBox(height: 16),
-                              _buildSectionHeader(
                                 title: 'Achievements',
-                                subtitle: 'Show awards, recognitions, certifications. 0 listed.',
+                                subtitle:
+                                    'Show awards, recognitions, certifications. ${_achievements.length} listed.',
                               ),
                               const SizedBox(height: 12),
-                              _buildAddButton(icon: LucideIcons.plus, label: 'Add achievement'),
+                              _buildAddButton(
+                                icon: LucideIcons.plus,
+                                label: 'Add achievement',
+                                onPressed: _showAddAchievementModal,
+                              ),
+                              if (_achievements.isNotEmpty) ...[
+                                const SizedBox(height: 14),
+                                ..._achievements.map(
+                                  (item) => _buildAchievementTile(item),
+                                ),
+                              ],
                             ],
                           ),
 
@@ -516,12 +857,17 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: _isLoading ? null : () => _saveFarmData(publish: false),
+                  onPressed: _isLoading
+                      ? null
+                      : () => _saveFarmData(publish: false),
                   icon: const Icon(LucideIcons.save, size: 16),
                   label: const Text('Save draft'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.accentGreen,
-                    side: const BorderSide(color: AppColors.accentGreen, width: 1.5),
+                    side: const BorderSide(
+                      color: AppColors.accentGreen,
+                      width: 1.5,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -532,7 +878,9 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : () => _saveFarmData(publish: true),
+                  onPressed: _isLoading
+                      ? null
+                      : () => _saveFarmData(publish: true),
                   icon: const Icon(LucideIcons.send, size: 16),
                   label: const Text('Publish farm'),
                   style: ElevatedButton.styleFrom(
@@ -597,7 +945,10 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
     );
   }
 
-  Widget _buildSectionHeader({required String title, required String subtitle}) {
+  Widget _buildSectionHeader({
+    required String title,
+    required String subtitle,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -612,61 +963,19 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
         const SizedBox(height: 2),
         Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
         ),
       ],
     );
   }
 
-  Widget _buildUploadContainer({
-    required double height,
-    double? width,
-    bool isCircular = false,
+  Widget _buildAddButton({
     required IconData icon,
     required String label,
-    required Color color,
+    required VoidCallback onPressed,
   }) {
-    return Container(
-      width: width ?? double.infinity,
-      height: height,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: CustomPaint(
-        painter: _DashRectPainter(
-          color: Colors.grey.shade300,
-          isCircular: isCircular,
-          borderRadius: 12,
-          strokeWidth: 1.5,
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 24, color: Colors.grey.shade500),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddButton({required IconData icon, required String label}) {
     return OutlinedButton(
-      onPressed: () {},
+      onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.accentGreen,
         side: BorderSide(color: AppColors.accentGreen.withValues(alpha: 0.3)),
@@ -680,9 +989,125 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModalInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    ValueChanged<String>? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey.shade800,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFD4DDD4)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.accentGreen,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAchievementTile(_AchievementItem item) {
+    final month = item.date.month.toString().padLeft(2, '0');
+    final day = item.date.day.toString().padLeft(2, '0');
+    final year = item.date.year.toString();
+    final dateLabel = '$month/$day/$year';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBF9),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFD7E7DB)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 2),
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(
+              color: AppColors.accentGreen,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+                if (item.detail.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    item.detail,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Text(
+            dateLabel,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
             ),
           ),
         ],
@@ -715,10 +1140,7 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
             ),
           ],
           const SizedBox(height: 8),
@@ -735,7 +1157,10 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 border: InputBorder.none,
               ),
             ),
@@ -744,6 +1169,18 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
       ),
     );
   }
+}
+
+class _AchievementItem {
+  final String title;
+  final String detail;
+  final DateTime date;
+
+  const _AchievementItem({
+    required this.title,
+    required this.detail,
+    required this.date,
+  });
 }
 
 class _DashRectPainter extends CustomPainter {
@@ -772,7 +1209,7 @@ class _DashRectPainter extends CustomPainter {
       final circumference = 2 * 3.14159 * radius;
       final dashCount = (circumference / 10).floor();
       final dashAngle = 2 * 3.14159 / dashCount;
-      
+
       for (var i = 0; i < dashCount; i++) {
         if (i % 2 == 0) {
           canvas.drawArc(
@@ -787,23 +1224,58 @@ class _DashRectPainter extends CustomPainter {
     } else {
       const dashWidth = 5.0;
       const dashSpace = 5.0;
-      
+
       // Draw top line
-      _drawDashedLine(canvas, paint, const Offset(0, 0), Offset(size.width, 0), dashWidth, dashSpace);
+      _drawDashedLine(
+        canvas,
+        paint,
+        const Offset(0, 0),
+        Offset(size.width, 0),
+        dashWidth,
+        dashSpace,
+      );
       // Draw right line
-      _drawDashedLine(canvas, paint, Offset(size.width, 0), Offset(size.width, size.height), dashWidth, dashSpace);
+      _drawDashedLine(
+        canvas,
+        paint,
+        Offset(size.width, 0),
+        Offset(size.width, size.height),
+        dashWidth,
+        dashSpace,
+      );
       // Draw bottom line
-      _drawDashedLine(canvas, paint, Offset(size.width, size.height), Offset(0, size.height), dashWidth, dashSpace);
+      _drawDashedLine(
+        canvas,
+        paint,
+        Offset(size.width, size.height),
+        Offset(0, size.height),
+        dashWidth,
+        dashSpace,
+      );
       // Draw left line
-      _drawDashedLine(canvas, paint, Offset(0, size.height), const Offset(0, 0), dashWidth, dashSpace);
+      _drawDashedLine(
+        canvas,
+        paint,
+        Offset(0, size.height),
+        const Offset(0, 0),
+        dashWidth,
+        dashSpace,
+      );
     }
   }
 
-  void _drawDashedLine(Canvas canvas, Paint paint, Offset start, Offset end, double dashWidth, double dashSpace) {
+  void _drawDashedLine(
+    Canvas canvas,
+    Paint paint,
+    Offset start,
+    Offset end,
+    double dashWidth,
+    double dashSpace,
+  ) {
     double distance = (end - start).distance;
     double currentDistance = 0;
     final direction = (end - start) / distance;
-    
+
     while (currentDistance < distance) {
       final endDistance = (currentDistance + dashWidth).clamp(0.0, distance);
       canvas.drawLine(
