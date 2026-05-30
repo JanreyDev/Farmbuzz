@@ -51,9 +51,9 @@ class ProfileController extends Controller
                 'posts_count' => Post::query()
                     ->where('author_name', $user->name)
                     ->count(),
-                'likes_count' => (int) Post::query()
-                    ->where('author_name', $user->name)
-                    ->sum('likes_count'),
+                'clubs_count' => \App\Models\Club::query()
+                    ->where('user_id', $user->id)
+                    ->count(),
             ],
         ]);
     }
@@ -132,9 +132,9 @@ class ProfileController extends Controller
                 'posts_count' => Post::query()
                     ->where('author_name', $user->name)
                     ->count(),
-                'likes_count' => (int) Post::query()
-                    ->where('author_name', $user->name)
-                    ->sum('likes_count'),
+                'clubs_count' => \App\Models\Club::query()
+                    ->where('user_id', $user->id)
+                    ->count(),
             ],
         ]);
     }
