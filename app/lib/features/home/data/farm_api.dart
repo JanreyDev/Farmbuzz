@@ -126,6 +126,26 @@ class FeaturedBird {
   }
 }
 
+class FarmGalleryPhoto {
+  const FarmGalleryPhoto({
+    required this.id,
+    this.imageUrl,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String? imageUrl;
+  final String createdAt;
+
+  factory FarmGalleryPhoto.fromJson(Map<String, dynamic> json) {
+    return FarmGalleryPhoto(
+      id: (json['id'] as int?) ?? 0,
+      imageUrl: json['image_url'] as String?,
+      createdAt: (json['created_at'] as String?) ?? '',
+    );
+  }
+}
+
 // ── API class ────────────────────────────────────────────────────────────────
 
 class FarmApi {
@@ -510,6 +530,82 @@ class FarmApi {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw FarmApiException(
         _extractMessage(body, fallback: 'Failed to delete featured bird.'),
+      );
+    }
+  }
+
+  Future<List<FarmGalleryPhoto>> fetchFarmGalleryPhotos({
+    required String mobileNumber,
+  }) async {
+    final uri = _buildUri(
+      '/farm/gallery/photos',
+    ).replace(queryParameters: {'mobile_number': mobileNumber});
+    final response = await _client.get(uri, headers: _jsonHeaders);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to load farm gallery.'),
+      );
+    }
+    final raw = body['data'];
+    if (raw is! List) return const <FarmGalleryPhoto>[];
+    return raw
+        .whereType<Map>()
+        .map((e) => FarmGalleryPhoto.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<List<FarmGalleryPhoto>> uploadFarmGalleryPhotos({
+    required String mobileNumber,
+    required List<File> photos,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      _buildUri('/farm/gallery/photos'),
+    );
+    request.fields['mobile_number'] = mobileNumber;
+
+    for (final file in photos) {
+      final ext = file.path.split('.').last.toLowerCase();
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'photos[]',
+          file.path,
+          contentType: MediaType('image', ext),
+        ),
+      );
+    }
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to upload gallery photos.'),
+      );
+    }
+
+    final raw = body['data'];
+    if (raw is! List) return const <FarmGalleryPhoto>[];
+    return raw
+        .whereType<Map>()
+        .map((e) => FarmGalleryPhoto.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<void> deleteFarmGalleryPhoto({
+    required int id,
+    required String mobileNumber,
+  }) async {
+    final response = await _client.delete(
+      _buildUri('/farm/gallery/photos/$id'),
+      headers: _jsonHeaders,
+      body: jsonEncode({'mobile_number': mobileNumber}),
+    );
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw FarmApiException(
+        _extractMessage(body, fallback: 'Failed to delete gallery photo.'),
       );
     }
   }

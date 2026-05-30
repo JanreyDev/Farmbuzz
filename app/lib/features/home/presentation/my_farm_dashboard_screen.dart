@@ -35,10 +35,12 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
   String _mobileNumber = '';
   List<HeritageLine> _heritageLines = const <HeritageLine>[];
   List<FeaturedBird> _featuredBirds = const <FeaturedBird>[];
+  List<FarmGalleryPhoto> _farmGalleryPhotos = const <FarmGalleryPhoto>[];
 
   bool _isLoading = true;
   bool _isHeritageLoading = true;
   bool _isFeaturedBirdsLoading = true;
+  bool _isFarmGalleryLoading = true;
 
   @override
   void initState() {
@@ -76,7 +78,11 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             _ownerName = profile.ownerName;
             _isLoading = false;
           });
-          await Future.wait<void>([_loadHeritageLines(), _loadFeaturedBirds()]);
+          await Future.wait<void>([
+            _loadHeritageLines(),
+            _loadFeaturedBirds(),
+            _loadFarmGalleryPhotos(),
+          ]);
           return;
         }
       }
@@ -97,7 +103,11 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             : (prefs.getString('farm_cover_photo') ?? '');
         _isLoading = false;
       });
-      await Future.wait<void>([_loadHeritageLines(), _loadFeaturedBirds()]);
+      await Future.wait<void>([
+        _loadHeritageLines(),
+        _loadFeaturedBirds(),
+        _loadFarmGalleryPhotos(),
+      ]);
     } catch (_) {
       setState(() {
         _farmName = FallbackFarmStore.farmName.isEmpty
@@ -110,6 +120,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
         _isLoading = false;
         _isHeritageLoading = false;
         _isFeaturedBirdsLoading = false;
+        _isFarmGalleryLoading = false;
       });
     }
   }
@@ -168,6 +179,35 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
       setState(() {
         _featuredBirds = const <FeaturedBird>[];
         _isFeaturedBirdsLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadFarmGalleryPhotos() async {
+    if (_mobileNumber.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _farmGalleryPhotos = const <FarmGalleryPhoto>[];
+          _isFarmGalleryLoading = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final photos = await _farmApi.fetchFarmGalleryPhotos(
+        mobileNumber: _mobileNumber,
+      );
+      if (!mounted) return;
+      setState(() {
+        _farmGalleryPhotos = photos;
+        _isFarmGalleryLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _farmGalleryPhotos = const <FarmGalleryPhoto>[];
+        _isFarmGalleryLoading = false;
       });
     }
   }
@@ -1079,6 +1119,28 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
     }
   }
 
+  Future<void> _openFarmGalleryManager() async {
+    if (_mobileNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login again to manage farm gallery.'),
+        ),
+      );
+      return;
+    }
+
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (context) =>
+            _FarmGalleryScreen(mobileNumber: _mobileNumber, api: _farmApi),
+      ),
+    );
+
+    if (changed == true) {
+      await _loadFarmGalleryPhotos();
+    }
+  }
+
   // â”€â”€ Featured Birds â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildFeaturedBirdsCard() {
     if (_isFeaturedBirdsLoading) {
@@ -1336,6 +1398,23 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
 
   // â”€â”€ Farm Gallery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildFarmGalleryCard() {
+    if (_isFarmGalleryLoading) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: const SizedBox(
+          height: 120,
+          child: Center(
+            child: CircularProgressIndicator(color: AppColors.accentGreen),
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1365,11 +1444,7 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
                 ],
               ),
               GestureDetector(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Photo upload coming soon!')),
-                  );
-                },
+                onTap: _openFarmGalleryManager,
                 child: const Text(
                   'Add photos >',
                   style: TextStyle(
@@ -1382,32 +1457,96 @@ class _MyFarmDashboardScreenState extends State<MyFarmDashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          // Empty state for gallery
-          Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(LucideIcons.imagePlus, size: 28, color: Colors.grey),
-                  SizedBox(height: 8),
-                  Text(
-                    'No photos uploaded yet',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
+          if (_farmGalleryPhotos.isEmpty)
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(LucideIcons.imagePlus, size: 28, color: Colors.grey),
+                    SizedBox(height: 8),
+                    Text(
+                      'No photos uploaded yet',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+            )
+          else ...[
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _farmGalleryPhotos.length > 6
+                  ? 6
+                  : _farmGalleryPhotos.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                childAspectRatio: 1,
+              ),
+              itemBuilder: (context, index) {
+                final photo = _farmGalleryPhotos[index];
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    color: const Color(0xFFE9F2EA),
+                    child: (photo.imageUrl ?? '').trim().isNotEmpty
+                        ? Image.network(
+                            photo.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const Icon(
+                              LucideIcons.image,
+                              color: Color(0xFF8FA39A),
+                            ),
+                          )
+                        : const Icon(
+                            LucideIcons.image,
+                            color: Color(0xFF8FA39A),
+                          ),
                   ),
-                ],
+                );
+              },
+            ),
+            if (_farmGalleryPhotos.length > 6)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  '+${_farmGalleryPhotos.length - 6} more photos',
+                  style: const TextStyle(
+                    color: AppColors.accentGreen,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: _openFarmGalleryManager,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.accentGreen,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  minimumSize: const Size(0, 28),
+                ),
+                child: const Text(
+                  'Manage gallery',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -2908,6 +3047,228 @@ class _FeaturedBirdEditorDialogState extends State<_FeaturedBirdEditorDialog> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _FarmGalleryScreen extends StatefulWidget {
+  const _FarmGalleryScreen({required this.mobileNumber, required this.api});
+
+  final String mobileNumber;
+  final FarmApi api;
+
+  @override
+  State<_FarmGalleryScreen> createState() => _FarmGalleryScreenState();
+}
+
+class _FarmGalleryScreenState extends State<_FarmGalleryScreen> {
+  final ImagePicker _picker = ImagePicker();
+
+  bool _isLoading = true;
+  bool _isUploading = false;
+  bool _changed = false;
+  List<FarmGalleryPhoto> _photos = const <FarmGalleryPhoto>[];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _isLoading = true);
+    try {
+      final photos = await widget.api.fetchFarmGalleryPhotos(
+        mobileNumber: widget.mobileNumber,
+      );
+      if (!mounted) return;
+      setState(() {
+        _photos = photos;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  Future<void> _addPhotos() async {
+    final picked = await _picker.pickMultiImage();
+    if (picked.isEmpty) return;
+    final files = picked.map((x) => File(x.path)).toList();
+
+    setState(() => _isUploading = true);
+    try {
+      await widget.api.uploadFarmGalleryPhotos(
+        mobileNumber: widget.mobileNumber,
+        photos: files,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _deletePhoto(FarmGalleryPhoto photo) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Photo'),
+        content: const Text('Remove this photo from farm gallery?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await widget.api.deleteFarmGalleryPhoto(
+        id: photo.id,
+        mobileNumber: widget.mobileNumber,
+      );
+      _changed = true;
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(_changed),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF111827)),
+        title: const Text(
+          'Farm Gallery',
+          style: TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        actions: [
+          TextButton.icon(
+            onPressed: _isUploading ? null : _addPhotos,
+            icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+            label: const Text('Add Photos'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentGreen),
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.accentGreen),
+            )
+          : _photos.isEmpty
+          ? const Center(
+              child: Text(
+                'No photos uploaded yet.',
+                style: TextStyle(color: Color(0xFF6B7280)),
+              ),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(14),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1,
+              ),
+              itemCount: _photos.length,
+              itemBuilder: (context, index) {
+                final photo = _photos[index];
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Container(
+                        color: const Color(0xFFE9F2EA),
+                        child: (photo.imageUrl ?? '').trim().isNotEmpty
+                            ? Image.network(
+                                photo.imageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(
+                                  LucideIcons.image,
+                                  color: Color(0xFF8FA39A),
+                                ),
+                              )
+                            : const Icon(
+                                LucideIcons.image,
+                                color: Color(0xFF8FA39A),
+                              ),
+                      ),
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: InkWell(
+                          onTap: () => _deletePhoto(photo),
+                          borderRadius: BorderRadius.circular(100),
+                          child: Container(
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.white,
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isUploading ? null : _addPhotos,
+        backgroundColor: AppColors.accentGreen,
+        foregroundColor: Colors.white,
+        icon: _isUploading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.add_photo_alternate_outlined),
+        label: Text(_isUploading ? 'Uploading...' : 'Add Photos'),
       ),
     );
   }
