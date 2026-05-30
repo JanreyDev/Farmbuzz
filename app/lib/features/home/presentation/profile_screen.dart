@@ -140,6 +140,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           });
           if (profile != null) {
             _loadPosts(profile.name);
+          } else {
+            if (mounted) setState(() => _userPosts = []);
           }
         }
       } else {
@@ -155,12 +157,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             });
             if (profile != null) {
               _loadPosts(profile.name);
+            } else {
+              if (mounted) setState(() => _userPosts = []);
             }
           }
+        } else {
+          if (mounted) setState(() => _userPosts = []);
         }
       }
     } catch (e) {
-      // ignore
+      if (mounted) setState(() => _userPosts = []);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -184,7 +190,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _userPosts = posts;
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _userPosts = [];
+        });
+      }
+    }
   }
 
   String _formatStat(int? value) {
