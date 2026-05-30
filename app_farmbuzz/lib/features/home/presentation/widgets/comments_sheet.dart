@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/session/app_session.dart';
+import 'package:farmbuzz/core/network/media_proxy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
@@ -233,7 +234,13 @@ class _CommentsSheetState extends State<CommentsSheet> {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundImage: NetworkImage(AppSession.avatarUrl),
+            backgroundImage: safeNetworkImage(AppSession.avatarUrl),
+            child: safeNetworkImage(AppSession.avatarUrl) == null
+                ? Text(
+                    AppSession.userName.isNotEmpty ? AppSession.userName[0].toUpperCase() : 'U',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  )
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -305,7 +312,14 @@ class _CommentItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(radius: 18, backgroundImage: NetworkImage(avatar)),
+        CircleAvatar(
+          radius: 18,
+          backgroundImage: safeNetworkImage(resolveMediaUrl(avatar)),
+          child: safeNetworkImage(resolveMediaUrl(avatar)) == null
+              ? Text(name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))
+              : null,
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/network/media_proxy.dart';
 import 'notification_mock_data.dart';
 
 class NotificationListItem extends StatelessWidget {
@@ -15,7 +16,11 @@ class NotificationListItem extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundImage: NetworkImage(notification.avatarUrl),
+            backgroundImage: safeNetworkImage(notification.avatarUrl),
+            child: safeNetworkImage(notification.avatarUrl) == null
+                ? Text(notification.userName.isNotEmpty ? notification.userName[0].toUpperCase() : '?',
+                    style: const TextStyle(fontWeight: FontWeight.bold))
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(

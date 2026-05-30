@@ -632,7 +632,12 @@ class _StoryCard extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 12,
-                  backgroundImage: NetworkImage(resolvedAvatarUrl),
+                  backgroundColor: Colors.grey[300],
+                  backgroundImage: safeNetworkImage(resolvedAvatarUrl),
+                  child: safeNetworkImage(resolvedAvatarUrl) == null
+                      ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white))
+                      : null,
                 ),
               ),
             ),
