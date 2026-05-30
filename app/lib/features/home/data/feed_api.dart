@@ -143,7 +143,7 @@ class FeedApi {
     return Uri.parse('$base$normalizedPath');
   }
 
-  Future<List<FeedPost>> fetchPosts({String? reactorName, int? clubId}) async {
+  Future<List<FeedPost>> fetchPosts({String? reactorName, int? clubId, String? authorName}) async {
     var uri = _buildUri('/posts');
     final queryParams = <String, String>{};
     
@@ -154,6 +154,10 @@ class FeedApi {
     
     if (clubId != null) {
       queryParams['club_id'] = clubId.toString();
+    }
+    
+    if (authorName != null && authorName.trim().isNotEmpty) {
+      queryParams['author_name'] = authorName.trim();
     }
     
     if (queryParams.isNotEmpty) {

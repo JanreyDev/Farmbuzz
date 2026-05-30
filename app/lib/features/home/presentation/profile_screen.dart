@@ -1,14 +1,121 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/theme/app_colors.dart';
+import 'profile_settings_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+import '../data/profile_api.dart';
+import '../data/feed_api.dart';
+
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.onNavigateTab});
 
   final ValueChanged<int>? onNavigateTab;
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final ProfileApi _profileApi = ProfileApi();
+  final FeedApi _feedApi = FeedApi();
+  ProfileModel? _profile;
+  bool _isLoading = true;
+  List<FeedPost>? _userPosts;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    setState(() => _isLoading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final mobile =
+          prefs.getString('auth_mobile_number') ??
+          prefs.getString('mobile_number');
+      if (mobile != null) {
+        final profile = await _profileApi.fetchProfile(mobileNumber: mobile);
+        if (mounted) {
+          setState(() {
+            _profile = profile;
+          });
+          if (profile != null) {
+            _loadPosts(profile.name);
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _loadPosts(String authorName) async {
+    try {
+      final posts = await _feedApi.fetchPosts(authorName: authorName);
+      if (mounted) {
+        setState(() {
+          _userPosts = posts;
+        });
+      }
+    } catch (_) {}
+  }
+
+  String _formatStat(int? value) {
+    if (value == null) return '0';
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
+    }
+    return value.toString();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final name = _profile?.name ?? 'Unnamed User';
+    final hasLocation = _profile?.address?.isNotEmpty == true;
+    final hasYearsBreeding = _profile?.yearsBreeding?.isNotEmpty == true;
+
+    String joinedText = 'Joined Recently';
+    if (_profile?.createdAt != null) {
+      try {
+        final date = DateTime.parse(_profile!.createdAt!);
+        const months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
+        joinedText = 'Joined ${months[date.month - 1]} ${date.year}';
+      } catch (_) {}
+    }
+
+    final bio = _profile?.bio?.isNotEmpty == true
+        ? _profile!.bio!
+        : 'This user hasn\'t written a bio yet.';
+
+    final tags =
+        _profile?.bloodlines
+            ?.split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList() ??
+        [];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
       appBar: AppBar(
@@ -28,13 +135,13 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
+              _buildHeader(context),
               const SizedBox(height: 6),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                 child: Text(
-                  'Janrey Minamahal',
-                  style: TextStyle(
+                  name,
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -43,127 +150,172 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
                 child: Wrap(
                   spacing: 6,
                   runSpacing: 4,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 13,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                        SizedBox(width: 3),
-                        Text(
-                          'Palauig, Zambales',
-                          style: TextStyle(
-                            color: Color(0xFF6B7280),
-                            fontSize: 12,
+                    if (hasLocation) ...[
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 13,
+                            color: Color(0xFF9CA3AF),
                           ),
-                        ),
-                      ],
-                    ),
-                    Text('•', style: TextStyle(color: Color(0xFF9CA3AF))),
+                          const SizedBox(width: 3),
+                          Text(
+                            _profile!.address!,
+                            style: const TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Text(
+                        '•',
+                        style: TextStyle(color: Color(0xFF9CA3AF)),
+                      ),
+                    ],
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.calendar_today_outlined,
                           size: 12,
                           color: Color(0xFF9CA3AF),
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
-                          'Joined April 2026',
-                          style: TextStyle(
+                          joinedText,
+                          style: const TextStyle(
                             color: Color(0xFF6B7280),
                             fontSize: 12,
                           ),
                         ),
                       ],
                     ),
-                    Text('•', style: TextStyle(color: Color(0xFF9CA3AF))),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.workspace_premium_outlined,
-                          size: 13,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                        SizedBox(width: 3),
-                        Text(
-                          '20 yrs breeding',
-                          style: TextStyle(
-                            color: Color(0xFF6B7280),
-                            fontSize: 12,
+                    if (hasYearsBreeding) ...[
+                      const Text(
+                        '•',
+                        style: TextStyle(color: Color(0xFF9CA3AF)),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.workspace_premium_outlined,
+                            size: 13,
+                            color: Color(0xFF9CA3AF),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 3),
+                          Text(
+                            _profile!.yearsBreeding!,
+                            style: const TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               const Padding(
                 padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
                 child: Text(
-                  'Farming is not just what I do; it is a core part of who I am. '
-                  'My days are shaped by the rhythms of nature and the responsibility '
-                  'of stewardship.',
+                  'Bio',
                   style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                child: Text(
+                  bio,
+                  style: const TextStyle(
                     color: Color(0xFF4B5563),
                     fontSize: 14,
                     height: 1.35,
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                child: Text(
-                  'See more',
-                  style: TextStyle(
-                    color: AppColors.accentGreen,
-                    fontWeight: FontWeight.w700,
+              if (tags.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: tags.map((t) => _TagChip(t)).toList(),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _TagChip('Kelso'),
-                    _TagChip('Sweater'),
-                    _TagChip('Radio'),
-                    _TagChip('Button'),
-                  ],
+              ],
+              if (_profile?.socialFb?.isNotEmpty == true ||
+                  _profile?.socialIg?.isNotEmpty == true ||
+                  _profile?.socialTiktok?.isNotEmpty == true ||
+                  _profile?.socialYt?.isNotEmpty == true ||
+                  _profile?.socialWeb?.isNotEmpty == true) ...[
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (_profile?.socialFb?.isNotEmpty == true)
+                        SizedBox(
+                          width: 60,
+                          child: _SocialTile(
+                            Icons.facebook,
+                            url: _profile!.socialFb,
+                          ),
+                        ),
+                      if (_profile?.socialIg?.isNotEmpty == true)
+                        SizedBox(
+                          width: 60,
+                          child: _SocialTile(
+                            Icons.camera_alt_outlined,
+                            url: _profile!.socialIg,
+                          ),
+                        ),
+                      if (_profile?.socialTiktok?.isNotEmpty == true)
+                        SizedBox(
+                          width: 60,
+                          child: _SocialTile(
+                            Icons.music_note,
+                            url: _profile!.socialTiktok,
+                          ),
+                        ),
+                      if (_profile?.socialYt?.isNotEmpty == true)
+                        SizedBox(
+                          width: 60,
+                          child: _SocialTile(
+                            Icons.play_arrow_rounded,
+                            url: _profile!.socialYt,
+                          ),
+                        ),
+                      if (_profile?.socialWeb?.isNotEmpty == true)
+                        SizedBox(
+                          width: 60,
+                          child: _SocialTile(
+                            Icons.language,
+                            url: _profile!.socialWeb,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                child: Row(
-                  children: [
-                    Expanded(child: _SocialTile(Icons.facebook)),
-                    SizedBox(width: 8),
-                    Expanded(child: _SocialTile(Icons.camera_alt_outlined)),
-                    SizedBox(width: 8),
-                    Expanded(child: _SocialTile(Icons.music_note)),
-                    SizedBox(width: 8),
-                    Expanded(child: _SocialTile(Icons.play_arrow_rounded)),
-                    SizedBox(width: 8),
-                    Expanded(child: _SocialTile(Icons.language)),
-                  ],
-                ),
-              ),
+              ],
               const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
@@ -175,15 +327,27 @@ class ProfileScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      _StatCell(value: '7', label: 'FOLLOWERS'),
-                      _StatDivider(),
-                      _StatCell(value: '4', label: 'FOLLOWING'),
-                      _StatDivider(),
-                      _StatCell(value: '11', label: 'POSTS'),
-                      _StatDivider(),
-                      _StatCell(value: '3', label: 'CLUBS'),
+                      _StatCell(
+                        value: _formatStat(_profile?.followersCount),
+                        label: 'Followers',
+                      ),
+                      const _StatDivider(),
+                      _StatCell(
+                        value: _formatStat(_profile?.followingCount),
+                        label: 'Following',
+                      ),
+                      const _StatDivider(),
+                      _StatCell(
+                        value: _formatStat(_profile?.postsCount),
+                        label: 'Posts',
+                      ),
+                      const _StatDivider(),
+                      _StatCell(
+                        value: _formatStat(_profile?.clubsCount),
+                        label: 'Clubs',
+                      ),
                     ],
                   ),
                 ),
@@ -199,35 +363,44 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 0, 10, 14),
-                child: Column(
-                  children: [
-                    _ProfilePostCard(
-                      time: '31 minutes ago',
-                      caption:
-                          'Morning drop from the farm, all birds are healthy.',
-                      imageA: 'https://picsum.photos/id/1025/800/900',
-                      imageB: 'https://picsum.photos/id/237/800/900',
+              if (_userPosts == null)
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.accentGreen,
                     ),
-                    SizedBox(height: 10),
-                    _ProfilePostCard(
-                      time: '2 hours ago',
-                      caption:
-                          'Training session done. Good energy and clean movement today.',
-                      imageA: 'https://picsum.photos/id/1074/800/900',
-                      imageB: 'https://picsum.photos/id/219/800/900',
+                  ),
+                )
+              else if (_userPosts!.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Center(
+                    child: Text(
+                      'No posts yet.',
+                      style: TextStyle(color: Colors.grey),
                     ),
-                  ],
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 14),
+                  child: Column(
+                    children: _userPosts!.map((post) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _ProfilePostCard(post: post),
+                      );
+                    }).toList(),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          onNavigateTab?.call(2);
+          widget.onNavigateTab?.call(2);
           Navigator.of(context).pop();
         },
         backgroundColor: const Color(0xFFD97706),
@@ -262,7 +435,7 @@ class ProfileScreen extends StatelessWidget {
               label: 'Home',
               selected: true,
               onTap: () {
-                onNavigateTab?.call(0);
+                widget.onNavigateTab?.call(0);
                 Navigator.of(context).pop();
               },
             ),
@@ -270,7 +443,7 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.agriculture,
               label: 'My Farm',
               onTap: () {
-                onNavigateTab?.call(1);
+                widget.onNavigateTab?.call(1);
                 Navigator.of(context).pop();
               },
             ),
@@ -279,7 +452,7 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.groups,
               label: 'Clubs',
               onTap: () {
-                onNavigateTab?.call(3);
+                widget.onNavigateTab?.call(3);
                 Navigator.of(context).pop();
               },
             ),
@@ -287,7 +460,7 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.leaderboard,
               label: 'Rank',
               onTap: () {
-                onNavigateTab?.call(4);
+                widget.onNavigateTab?.call(4);
                 Navigator.of(context).pop();
               },
             ),
@@ -297,7 +470,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Column(
       children: [
         SizedBox(
@@ -306,10 +479,16 @@ class ProfileScreen extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.network(
-                'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=1200&auto=format&fit=crop',
-                fit: BoxFit.cover,
-              ),
+              if (_profile?.coverPhotoUrl != null &&
+                  _profile!.coverPhotoUrl!.isNotEmpty)
+                Image.network(_profile!.coverPhotoUrl!, fit: BoxFit.cover)
+              else
+                Container(
+                  color: Colors.white,
+                  child: Center(
+                    child: Image.asset('assets/images/logo.png', height: 80),
+                  ),
+                ),
             ],
           ),
         ),
@@ -330,11 +509,22 @@ class ProfileScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: Color(0xFFF5D18A),
                       ),
-                      child: const CircleAvatar(
-                        backgroundImage: NetworkImage(
-                          'https://images.unsplash.com/photo-1544168190-79c17527004f?q=80&w=600&auto=format&fit=crop',
-                        ),
-                      ),
+                      child:
+                          _profile?.avatarUrl != null &&
+                              _profile!.avatarUrl!.isNotEmpty
+                          ? CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                _profile!.avatarUrl!,
+                              ),
+                            )
+                          : const CircleAvatar(
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
+                            ),
                     ),
                     Positioned(
                       right: -2,
@@ -394,11 +584,21 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 26),
-                      child: _ActionBtn(
-                        icon: Icons.settings_outlined,
-                        filled: true,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 26),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProfileSettingsScreen(),
+                            ),
+                          );
+                        },
+                        child: const _ActionBtn(
+                          icon: Icons.settings_outlined,
+                          filled: true,
+                        ),
                       ),
                     ),
                   ],
@@ -477,21 +677,33 @@ class _TagChip extends StatelessWidget {
 }
 
 class _SocialTile extends StatelessWidget {
-  const _SocialTile(this.icon);
+  const _SocialTile(this.icon, {this.url});
 
   final IconData icon;
+  final String? url;
 
   @override
   Widget build(BuildContext context) {
+    final hasUrl = url != null && url!.isNotEmpty;
+
     return Container(
+      width: 48,
       height: 38,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: hasUrl
+            ? AppColors.accentGreen.withValues(alpha: 0.1)
+            : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(
+          color: hasUrl ? AppColors.accentGreen : const Color(0xFFE5E7EB),
+        ),
       ),
       alignment: Alignment.center,
-      child: Icon(icon, color: const Color(0xFF6B7280), size: 18),
+      child: Icon(
+        icon,
+        color: hasUrl ? AppColors.accentGreen : const Color(0xFFD1D5DB),
+        size: 18,
+      ),
     );
   }
 }
@@ -584,17 +796,9 @@ class _ProfileBottomItem extends StatelessWidget {
 }
 
 class _ProfilePostCard extends StatelessWidget {
-  const _ProfilePostCard({
-    required this.time,
-    required this.caption,
-    required this.imageA,
-    required this.imageB,
-  });
+  const _ProfilePostCard({required this.post});
 
-  final String time;
-  final String caption;
-  final String imageA;
-  final String imageB;
+  final FeedPost post;
 
   @override
   Widget build(BuildContext context) {
@@ -610,32 +814,39 @@ class _ProfilePostCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 16,
-                backgroundColor: Color(0xFFE7F5EA),
-                child: Text(
-                  'A',
-                  style: TextStyle(
-                    color: Color(0xFF2F6F44),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                backgroundColor: const Color(0xFFE7F5EA),
+                backgroundImage: post.userAvatar.isNotEmpty
+                    ? NetworkImage(post.userAvatar)
+                    : null,
+                child: post.userAvatar.isEmpty
+                    ? Text(
+                        post.userName.isNotEmpty
+                            ? post.userName[0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          color: Color(0xFF2F6F44),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Janrey Minamahal',
-                      style: TextStyle(
+                    Text(
+                      post.userName,
+                      style: const TextStyle(
                         color: Colors.black87,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
-                      time,
+                      post.timeAgo,
                       style: const TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 12,
@@ -647,33 +858,54 @@ class _ProfilePostCard extends StatelessWidget {
               const Icon(Icons.more_horiz, color: Color(0xFF9CA3AF)),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            caption,
-            style: const TextStyle(
-              color: Color(0xFF374151),
-              fontSize: 14,
-              height: 1.35,
+          if (post.postText.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              post.postText,
+              style: const TextStyle(
+                color: Color(0xFF374151),
+                fontSize: 14,
+                height: 1.35,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 170,
-            child: Row(
-              children: [
-                Expanded(child: _PostImage(url: imageA)),
-                const SizedBox(width: 6),
-                Expanded(child: _PostImage(url: imageB)),
-              ],
+          ],
+          if (post.imageUrls.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 170,
+              child: Row(
+                children: post.imageUrls.take(2).map((url) {
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right:
+                            url == post.imageUrls.take(2).last &&
+                                post.imageUrls.length > 1
+                            ? 0
+                            : 6,
+                      ),
+                      child: _PostImage(url: url),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 10),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _PostAction(icon: Icons.favorite_border, label: 'Like'),
-              _PostAction(icon: Icons.chat_bubble_outline, label: 'Comment'),
-              _PostAction(icon: Icons.share_outlined, label: 'Share'),
+              _PostAction(
+                icon: Icons.favorite_border,
+                label: post.likesCount > 0 ? '${post.likesCount}' : 'Like',
+              ),
+              _PostAction(
+                icon: Icons.chat_bubble_outline,
+                label: post.commentsCount > 0
+                    ? '${post.commentsCount}'
+                    : 'Comment',
+              ),
+              const _PostAction(icon: Icons.share_outlined, label: 'Share'),
             ],
           ),
         ],
