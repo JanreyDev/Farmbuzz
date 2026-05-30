@@ -316,57 +316,60 @@ class _PostCardState extends State<PostCard> {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: _openProfileFromPost,
-            behavior: HitTestBehavior.opaque,
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: const Color(0xFFE8F5E9),
-              backgroundImage: hasAvatar ? NetworkImage(proxiedAvatar) : null,
-              child: hasAvatar
-                  ? null
-                  : Text(
-                      _ownerInitial(),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1B5E20),
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _openProfileFromPost,
-            behavior: HitTestBehavior.opaque,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.userName,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                    color: Colors.black,
-                    decoration: TextDecoration.none,
+          // Combined avatar + name as one tappable area
+          Expanded(
+            child: GestureDetector(
+              onTap: _openProfileFromPost,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: const Color(0xFFE8F5E9),
+                    backgroundImage: hasAvatar ? NetworkImage(proxiedAvatar) : null,
+                    child: hasAvatar
+                        ? null
+                        : Text(
+                            _ownerInitial(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF1B5E20),
+                            ),
+                          ),
                   ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      '${widget.timeAgo} • ',
-                      style: GoogleFonts.inter(
-                        color: Colors.grey[600],
-                        fontSize: 11,
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.userName,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          color: Colors.black,
+                          decoration: TextDecoration.none,
+                        ),
                       ),
-                    ),
-                    Icon(Icons.public, size: 10, color: Colors.grey[600]),
-                  ],
-                ),
-              ],
+                      Row(
+                        children: [
+                          Text(
+                            '${widget.timeAgo} • ',
+                            style: GoogleFonts.inter(
+                              color: Colors.grey[600],
+                              fontSize: 11,
+                            ),
+                          ),
+                          Icon(Icons.public, size: 10, color: Colors.grey[600]),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          const Spacer(),
           IconButton(
             icon: const Icon(Icons.more_horiz, color: Colors.grey),
             onPressed: () {},
@@ -740,20 +743,27 @@ class _PostCardState extends State<PostCard> {
   }
 
   void _openProfileFromPost() {
-    final isOwner =
-        widget.userName.trim().toLowerCase() ==
-        AppSession.userName.trim().toLowerCase();
+    debugPrint('[PostCard] _openProfileFromPost called! userName=${widget.userName}, sessionUser=${AppSession.userName}');
+    try {
+      final isOwner =
+          widget.userName.trim().toLowerCase() ==
+          AppSession.userName.trim().toLowerCase();
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => isOwner
-            ? const ProfileScreen()
-            : PublicProfileScreen(
-                userName: widget.userName,
-                userAvatar: widget.userAvatar,
-              ),
-      ),
-    );
+      debugPrint('[PostCard] isOwner=$isOwner, navigating...');
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => isOwner
+              ? const ProfileScreen()
+              : PublicProfileScreen(
+                  userName: widget.userName,
+                  userAvatar: widget.userAvatar,
+                ),
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('[PostCard] Navigation error: $e\n$st');
+    }
   }
 
   Widget _buildReactionOverlay() {
