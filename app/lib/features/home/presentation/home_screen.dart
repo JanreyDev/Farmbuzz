@@ -1882,15 +1882,6 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
                         ),
                         const SizedBox(width: 8),
                         _MediaActionButton(
-                          onTap: _pickVideo,
-                          icon: const Icon(
-                            Icons.videocam_outlined,
-                            color: Color(0xFF10A64A),
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _MediaActionButton(
                           onTap: _openFeelingPicker,
                           icon: const Icon(
                             Icons.emoji_emotions_outlined,
@@ -2811,7 +2802,7 @@ class _CreateStoryOptionsSheet extends StatelessWidget {
   Future<void> _pickStoryMedia(BuildContext context) async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.media,
+        type: FileType.image,
         allowMultiple: true,
       );
       if (result == null || result.files.isEmpty || !context.mounted) return;
