@@ -1,5 +1,6 @@
 import 'package:farmbuzz/core/session/app_session.dart';
 import 'package:farmbuzz/core/theme/app_colors.dart';
+import 'package:farmbuzz/core/network/media_proxy.dart';
 import 'package:farmbuzz/features/home/data/post_api.dart';
 import 'package:farmbuzz/features/home/presentation/widgets/post_card.dart';
 import 'package:farmbuzz/features/profile/data/social_api.dart';
@@ -33,13 +34,17 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   int _followingCount = 0;
   List<Map<String, dynamic>> _posts = const [];
 
+  String _resolvedAvatar() {
+    final raw = widget.userAvatar.trim();
+    if (raw.isEmpty) return '';
+    return resolveMediaUrl(raw);
+  }
+
   bool _hasValidAvatarUrl(String value) {
     final trimmed = value.trim();
-    if (trimmed.isEmpty) {
-      return false;
-    }
+    if (trimmed.isEmpty) return false;
     final uri = Uri.tryParse(trimmed);
-    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+    return uri != null && uri.host.isNotEmpty && (uri.scheme == 'http' || uri.scheme == 'https');
   }
 
   String _joinedLabel() {
@@ -149,42 +154,58 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        color: const Color(0xFFF5F5F5),
-                        child: _hasValidAvatarUrl(widget.userAvatar)
-                            ? Image.network(widget.userAvatar, fit: BoxFit.cover)
-                            : Image.asset('assets/images/cover_photo.png', fit: BoxFit.cover),
-                      ),
-                      Positioned(
-                        left: 20,
-                        bottom: -40,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.grey[200],
-                            backgroundImage: _hasValidAvatarUrl(widget.userAvatar)
-                                ? NetworkImage(widget.userAvatar)
-                                : null,
-                            child: _hasValidAvatarUrl(widget.userAvatar)
-                                ? null
-                                : Text(
-                                    widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'U',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.black54,
-                                    ),
+                      Builder(builder: (_) {
+                        final avatarUrl = _resolvedAvatar();
+                        final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+                        return Container(
+                          height: 200,
+                          width: double.infinity,
+                          color: const Color(0xFFF5F5F5),
+                          child: hasAvatar
+                              ? Image.network(
+                                  avatarUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Image.asset(
+                                    'assets/images/cover_photo.png',
+                                    fit: BoxFit.cover,
                                   ),
+                                )
+                              : Image.asset('assets/images/cover_photo.png', fit: BoxFit.cover),
+                        );
+                      }),
+                      Builder(builder: (_) {
+                        final avatarUrl = _resolvedAvatar();
+                        final hasAvatar = _hasValidAvatarUrl(avatarUrl);
+                        return Positioned(
+                          left: 20,
+                          bottom: -40,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: Colors.grey[200],
+                              backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
+                              onBackgroundImageError: hasAvatar
+                                  ? (_, __) {}
+                                  : null,
+                              child: hasAvatar
+                                  ? null
+                                  : Text(
+                                      widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'U',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ],
                   ),
                   const SizedBox(height: 45),
