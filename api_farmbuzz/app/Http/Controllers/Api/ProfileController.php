@@ -30,6 +30,15 @@ class ProfileController extends Controller
                 'mobile_number' => $user->mobile_number,
                 'avatar_url' => $this->normalizePublicMediaUrl($user->avatar_url, $request),
                 'cover_photo_url' => $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
+                'years_breeding' => $user->years_breeding,
+                'bio' => $user->bio,
+                'address' => $user->address,
+                'bloodlines' => $user->bloodlines,
+                'social_fb' => $user->social_fb,
+                'social_ig' => $user->social_ig,
+                'social_tiktok' => $user->social_tiktok,
+                'social_yt' => $user->social_yt,
+                'social_web' => $user->social_web,
             ],
         ]);
     }
@@ -39,6 +48,15 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
             'name' => ['required', 'string', 'max:255'],
+            'years_breeding' => ['nullable', 'string', 'max:255'],
+            'bio' => ['nullable', 'string', 'max:1000'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'bloodlines' => ['nullable', 'string', 'max:255'],
+            'social_fb' => ['nullable', 'string', 'max:255'],
+            'social_ig' => ['nullable', 'string', 'max:255'],
+            'social_tiktok' => ['nullable', 'string', 'max:255'],
+            'social_yt' => ['nullable', 'string', 'max:255'],
+            'social_web' => ['nullable', 'string', 'max:255'],
         ]);
 
         $user = User::query()
@@ -49,6 +67,16 @@ class ProfileController extends Controller
         $newName = trim((string) $validated['name']);
 
         $user->name = $newName;
+        $user->years_breeding = $validated['years_breeding'] ?? null;
+        $user->bio = $validated['bio'] ?? null;
+        $user->address = $validated['address'] ?? null;
+        $user->bloodlines = $validated['bloodlines'] ?? null;
+        $user->social_fb = $validated['social_fb'] ?? null;
+        $user->social_ig = $validated['social_ig'] ?? null;
+        $user->social_tiktok = $validated['social_tiktok'] ?? null;
+        $user->social_yt = $validated['social_yt'] ?? null;
+        $user->social_web = $validated['social_web'] ?? null;
+        
         $user->save();
 
         if ($oldName !== $newName) {
@@ -68,6 +96,15 @@ class ProfileController extends Controller
                 'mobile_number' => $user->mobile_number,
                 'avatar_url' => $this->normalizePublicMediaUrl($user->avatar_url, $request),
                 'cover_photo_url' => $this->normalizePublicMediaUrl($user->cover_photo_url, $request),
+                'years_breeding' => $user->years_breeding,
+                'bio' => $user->bio,
+                'address' => $user->address,
+                'bloodlines' => $user->bloodlines,
+                'social_fb' => $user->social_fb,
+                'social_ig' => $user->social_ig,
+                'social_tiktok' => $user->social_tiktok,
+                'social_yt' => $user->social_yt,
+                'social_web' => $user->social_web,
             ],
         ]);
     }

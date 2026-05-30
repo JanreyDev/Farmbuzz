@@ -33,6 +33,15 @@ class User extends Authenticatable
         'password',
         'avatar_url',
         'cover_photo_url',
+        'years_breeding',
+        'bio',
+        'address',
+        'bloodlines',
+        'social_fb',
+        'social_ig',
+        'social_tiktok',
+        'social_yt',
+        'social_web',
     ];
 
     /**
