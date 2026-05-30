@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'conversation_screen.dart';
 import '../data/message_api.dart';
+import 'user_search_screen.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -82,6 +83,15 @@ class _MessagesScreenState extends State<MessagesScreen> {
           IconButton(
             onPressed: _load,
             icon: const Icon(Icons.refresh, color: Color(0xFF16A34A)),
+          ),
+          IconButton(
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const UserSearchScreen()),
+              );
+              _load();
+            },
+            icon: const Icon(Icons.edit_note, color: Color(0xFF16A34A)),
           ),
         ],
       ),

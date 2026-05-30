@@ -107,6 +107,19 @@ class MessageApi {
     throw Exception('Failed to fetch messages');
   }
 
+  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+    final uri = _buildUri(
+      '/users/search',
+    ).replace(queryParameters: {'q': query});
+    final response = await _client.get(uri);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final list = data['data'] as List?;
+      return (list ?? []).map((e) => e as Map<String, dynamic>).toList();
+    }
+    throw Exception('Failed to search users');
+  }
+
   Future<int> startConversation({
     required String mobileNumber,
     required String targetName,

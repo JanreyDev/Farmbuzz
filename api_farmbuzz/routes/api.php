@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\SocialController;
 use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\TeamController;
+use App\Http\Controllers\Api\UserController;
 
 Route::prefix('auth/register')->group(function (): void {
     Route::post('/start', [RegistrationController::class, 'start']);
@@ -82,6 +83,7 @@ Route::put('/clubs/{club}', [ClubController::class, 'update']);
 Route::get('/clubs/discover', [ClubController::class, 'discover']);
 Route::post('/clubs/upload-cover', [ClubController::class, 'uploadCover']);
 
+Route::get('/users/search', [UserController::class, 'search']);
 Route::get('/messages', [MessageController::class, 'index']);
 Route::post('/messages/start', [MessageController::class, 'startConversation']);
 Route::get('/messages/history', [MessageController::class, 'messages']);
