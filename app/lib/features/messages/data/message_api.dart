@@ -171,4 +171,19 @@ class MessageApi {
     }
     throw Exception('Failed to send message');
   }
+
+  Future<void> deleteConversation({
+    required String mobileNumber,
+    required int conversationId,
+  }) async {
+    final uri = _buildUri('/messages/conversation/$conversationId');
+    final response = await _client.delete(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'mobile_number': mobileNumber}),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to delete conversation');
+    }
+  }
 }

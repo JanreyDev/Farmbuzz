@@ -130,4 +130,24 @@ class MessageController extends Controller
             'time' => $message->created_at->toIso8601String(),
         ]]);
     }
+    public function destroy(Request $request, $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
+        ]);
+
+        $me = User::query()->where('mobile_number', $validated['mobile_number'])->firstOrFail();
+        $conversation = Conversation::query()->findOrFail($id);
+
+        if ($conversation->user_one_id !== $me->id && $conversation->user_two_id !== $me->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // The database should handle cascading deletion of messages if foreign keys are set up.
+        // Otherwise, we explicitly delete messages first.
+        Message::where('conversation_id', $conversation->id)->delete();
+        $conversation->delete();
+
+        return response()->json(['message' => 'Conversation deleted successfully.']);
+    }
 }

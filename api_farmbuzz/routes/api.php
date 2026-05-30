@@ -101,6 +101,7 @@ Route::get('/messages', [MessageController::class, 'index']);
 Route::post('/messages/start', [MessageController::class, 'startConversation']);
 Route::get('/messages/history', [MessageController::class, 'messages']);
 Route::post('/messages/send', [MessageController::class, 'send']);
+Route::delete('/messages/conversation/{id}', [MessageController::class, 'destroy']);
 
 Route::get('/counts', [NotificationController::class, 'counts']);
 Route::get('/notifications', [NotificationController::class, 'index']);
