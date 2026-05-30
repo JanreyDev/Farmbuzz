@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Club;
+use App\Models\ClubMember;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,8 +23,12 @@ class ClubController extends Controller
             ->where('mobile_number', $validated['mobile_number'])
             ->firstOrFail();
 
+        // Get clubs where user is the owner OR is a member
         $clubs = Club::query()
             ->where('user_id', $user->id)
+            ->orWhereHas('members', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
             ->latest()
             ->get();
 
@@ -149,7 +154,10 @@ class ClubController extends Controller
             ->latest();
 
         if ($excludeUserId !== null) {
-            $query->where('user_id', '!=', $excludeUserId);
+            $query->where('user_id', '!=', $excludeUserId)
+                  ->whereDoesntHave('members', function ($q) use ($excludeUserId) {
+                      $q->where('user_id', $excludeUserId);
+                  });
         }
 
         if (! empty($validated['category']) && $validated['category'] !== 'All') {
@@ -161,6 +169,37 @@ class ClubController extends Controller
         return response()->json([
             'data' => $clubs->map(fn (Club $club): array => $this->clubPayload($club, false))->values(),
         ]);
+    }
+
+    public function join(Request $request, Club $club): JsonResponse
+    {
+        $validated = $request->validate([
+            'mobile_number' => ['required', 'string', 'exists:users,mobile_number'],
+        ]);
+
+        $user = User::query()
+            ->where('mobile_number', $validated['mobile_number'])
+            ->firstOrFail();
+
+        // Cannot join if already owner
+        if ($club->user_id === $user->id) {
+            return response()->json(['message' => 'You are already the founder of this club.'], 400);
+        }
+
+        // Check if already a member
+        $existing = ClubMember::where('club_id', $club->id)->where('user_id', $user->id)->first();
+        if ($existing) {
+            return response()->json(['message' => 'You have already joined this club.'], 400);
+        }
+
+        ClubMember::create([
+            'club_id' => $club->id,
+            'user_id' => $user->id,
+        ]);
+
+        $club->increment('member_count');
+
+        return response()->json(['message' => 'Successfully joined club.']);
     }
 
     private function clubPayload(Club $club, bool $isOwner): array

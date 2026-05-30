@@ -102,6 +102,36 @@ class _ClubsScreenState extends State<ClubsScreen> {
     }
   }
 
+  Future<void> _joinClub(Map<String, dynamic> club) async {
+    try {
+      final mobile = await _getMobileNumber();
+      await _clubApi.joinClub(clubId: club['id'] as int, mobileNumber: mobile);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Successfully joined ${club['title']}!'),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+      _loadAll(); // Reload everything to move from Discover to My Clubs
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredMyClubs = _myClubs.where((club) {
@@ -341,6 +371,7 @@ class _ClubsScreenState extends State<ClubsScreen> {
                           location: club['region'] as String? ?? '',
                           isJoined: false,
                           imageUrl: (club['imageUrl'] as String?) ?? '',
+                          onJoin: () => _joinClub(club),
                         ),
                       ),
                     )).toList(),

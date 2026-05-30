@@ -9,6 +9,7 @@ class DiscoverClubItem extends StatelessWidget {
   final String location;
   final bool isJoined;
   final String imageUrl;
+  final VoidCallback? onJoin;
 
   const DiscoverClubItem({
     super.key,
@@ -18,6 +19,7 @@ class DiscoverClubItem extends StatelessWidget {
     required this.location,
     required this.imageUrl,
     this.isJoined = false,
+    this.onJoin,
   });
 
   @override
@@ -129,7 +131,7 @@ class DiscoverClubItem extends StatelessWidget {
                   width: double.infinity,
                   height: 32,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: isJoined ? null : onJoin,
                     style: TextButton.styleFrom(
                       backgroundColor: isJoined 
                           ? Colors.grey.shade100

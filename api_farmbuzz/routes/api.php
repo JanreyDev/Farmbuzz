@@ -93,6 +93,7 @@ Route::post('/clubs', [ClubController::class, 'store']);
 Route::put('/clubs/{club}', [ClubController::class, 'update']);
 Route::get('/clubs/discover', [ClubController::class, 'discover']);
 Route::post('/clubs/upload-cover', [ClubController::class, 'uploadCover']);
+Route::post('/clubs/{club}/join', [ClubController::class, 'join']);
 
 Route::get('/users/search', [UserController::class, 'search']);
 Route::get('/messages', [MessageController::class, 'index']);

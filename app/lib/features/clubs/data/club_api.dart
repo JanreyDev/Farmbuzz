@@ -164,6 +164,26 @@ class ClubApi {
     return [];
   }
 
+  Future<void> joinClub({
+    required int clubId,
+    required String mobileNumber,
+  }) async {
+    final bodyData = <String, dynamic>{
+      'mobile_number': mobileNumber,
+    };
+    final response = await _client.post(
+      _buildUri('/clubs/$clubId/join'),
+      headers: _jsonHeaders,
+      body: jsonEncode(bodyData),
+    );
+    final body = _decodeJson(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ClubApiException(
+        _extractMessage(body, fallback: 'Failed to join club.'),
+      );
+    }
+  }
+
   Map<String, dynamic> _decodeJson(String raw) {
     if (raw.trim().isEmpty) {
       return <String, dynamic>{};
