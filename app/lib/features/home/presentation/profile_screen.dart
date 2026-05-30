@@ -138,11 +138,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             _profile = profile;
           });
-          if (profile != null) {
-            _loadPosts(profile.name);
-          } else {
-            if (mounted) setState(() => _userPosts = []);
-          }
+          // Always load posts for this author, even if their profile is missing
+          _loadPosts(widget.viewUserName!.trim());
         }
       } else {
         final prefs = await SharedPreferences.getInstance();
@@ -209,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final name = _profile?.name ?? 'Unnamed User';
+    final name = _profile?.name ?? widget.viewUserName ?? 'Unnamed User';
     final hasLocation = _profile?.address?.isNotEmpty == true;
     final hasYearsBreeding = _profile?.yearsBreeding?.isNotEmpty == true;
 
