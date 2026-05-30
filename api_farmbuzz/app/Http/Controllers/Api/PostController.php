@@ -269,8 +269,8 @@ class PostController extends Controller
         );
 
         if ($reactionModel->wasRecentlyCreated) {
-            $targetUser = \App\Models\User::query()->where('name', $post->author_name)->first();
-            $reactorUser = \App\Models\User::query()->where('name', $validated['reactor_name'])->first();
+            $targetUser = \App\Models\User::query()->whereRaw('LOWER(name) = ?', [strtolower($post->author_name)])->first();
+            $reactorUser = \App\Models\User::query()->whereRaw('LOWER(name) = ?', [strtolower($validated['reactor_name'])])->first();
 
             if ($targetUser && $reactorUser && $targetUser->id !== $reactorUser->id) {
                 \App\Models\Notification::create([
@@ -351,8 +351,8 @@ class PostController extends Controller
             'published_at' => now(),
         ]);
 
-        $targetUser = \App\Models\User::query()->where('name', $post->author_name)->first();
-        $commenterUser = \App\Models\User::query()->where('name', $request->string('author_name')->toString())->first();
+        $targetUser = \App\Models\User::query()->whereRaw('LOWER(name) = ?', [strtolower($post->author_name)])->first();
+        $commenterUser = \App\Models\User::query()->whereRaw('LOWER(name) = ?', [strtolower($request->string('author_name')->toString())])->first();
 
         if ($targetUser && $commenterUser && $targetUser->id !== $commenterUser->id) {
             \App\Models\Notification::create([
