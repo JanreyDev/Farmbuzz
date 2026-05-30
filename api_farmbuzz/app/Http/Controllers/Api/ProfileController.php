@@ -40,6 +40,20 @@ class ProfileController extends Controller
                 'social_yt' => $user->social_yt,
                 'social_web' => $user->social_web,
                 'created_at' => $user->created_at,
+                'followers_count' => \App\Models\SocialConnection::query()
+                    ->where('target_user_id', $user->id)
+                    ->where('relation', 'following')
+                    ->count(),
+                'following_count' => \App\Models\SocialConnection::query()
+                    ->where('owner_user_id', $user->id)
+                    ->where('relation', 'following')
+                    ->count(),
+                'posts_count' => Post::query()
+                    ->where('author_name', $user->name)
+                    ->count(),
+                'likes_count' => (int) Post::query()
+                    ->where('author_name', $user->name)
+                    ->sum('likes_count'),
             ],
         ]);
     }
@@ -107,6 +121,20 @@ class ProfileController extends Controller
                 'social_yt' => $user->social_yt,
                 'social_web' => $user->social_web,
                 'created_at' => $user->created_at,
+                'followers_count' => \App\Models\SocialConnection::query()
+                    ->where('target_user_id', $user->id)
+                    ->where('relation', 'following')
+                    ->count(),
+                'following_count' => \App\Models\SocialConnection::query()
+                    ->where('owner_user_id', $user->id)
+                    ->where('relation', 'following')
+                    ->count(),
+                'posts_count' => Post::query()
+                    ->where('author_name', $user->name)
+                    ->count(),
+                'likes_count' => (int) Post::query()
+                    ->where('author_name', $user->name)
+                    ->sum('likes_count'),
             ],
         ]);
     }
