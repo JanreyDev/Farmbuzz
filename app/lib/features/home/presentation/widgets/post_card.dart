@@ -1642,7 +1642,7 @@ class _EditPostSheetState extends State<_EditPostSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update: \')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update: $e')));
         setState(() => _isSaving = false);
       }
     }
@@ -1715,7 +1715,7 @@ class _ReportPostSheetState extends State<_ReportPostSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to report: \')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to report: $e')));
         setState(() => _isReporting = false);
       }
     }
