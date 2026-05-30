@@ -281,6 +281,7 @@ class _BantayScreenState extends State<BantayScreen> {
                     child: TextField(
                       controller: _controller,
                       textCapitalization: TextCapitalization.sentences,
+                      style: const TextStyle(color: Colors.black87, fontSize: 14),
                       onSubmitted: (text) => _openChat(text),
                       decoration: const InputDecoration(
                         hintText: 'Ask Bantay anything about your farm...',
