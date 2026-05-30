@@ -1054,32 +1054,38 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
   }
 
   Widget _buildAchievementTile(_AchievementItem item) {
-    final month = item.date.month.toString().padLeft(2, '0');
-    final day = item.date.day.toString().padLeft(2, '0');
-    final year = item.date.year.toString();
-    final dateLabel = '$month/$day/$year';
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    final dateLabel = '${months[item.date.month - 1]} ${item.date.year}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF9),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFD7E7DB)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Icon Container
           Container(
-            margin: const EdgeInsets.only(top: 2),
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.accentGreen,
-              shape: BoxShape.circle,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7E6), // Light yellow/orange
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              LucideIcons.trophy,
+              color: Color(0xFFD97706), // Golden/Bronze
+              size: 20,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 14),
+          // Text Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1087,8 +1093,8 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                 Text(
                   item.title,
                   style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                     color: Colors.black87,
                   ),
                 ),
@@ -1096,18 +1102,39 @@ class _MyFarmEditScreenState extends State<MyFarmEditScreen> {
                   const SizedBox(height: 2),
                   Text(
                     item.detail,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
+                const SizedBox(height: 2),
+                Text(
+                  dateLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
               ],
             ),
           ),
-          Text(
-            dateLabel,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
+          // Delete Icon
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _achievements.remove(item);
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Icon(
+                LucideIcons.trash2,
+                color: Colors.red.shade400,
+                size: 18,
+              ),
             ),
           ),
         ],
