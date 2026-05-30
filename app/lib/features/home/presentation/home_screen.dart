@@ -869,15 +869,6 @@ class _HomeDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  _MenuItemTile(
-                    icon: LucideIcons.settings,
-                    title: 'Settings',
-                    subtitle: 'App and account preferences',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      _showBottomToast(context, 'Settings screen coming next.');
-                    },
-                  ),
                 ],
               ),
             ),
