@@ -26,13 +26,14 @@ class TeamController extends Controller
 
         $users = User::query()
             ->whereIn('id', $candidateIds)
-            ->get(['id', 'name', 'mobile_number']);
+            ->get(['id', 'name', 'mobile_number', 'avatar_url']);
 
         return response()->json([
             'data' => $users->map(fn (User $user): array => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'mobile_number' => $user->mobile_number,
+                'avatar_url' => $user->avatar_url,
             ])->values(),
         ]);
     }

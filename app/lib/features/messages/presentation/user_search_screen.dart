@@ -15,7 +15,9 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
   final MessageApi _api = MessageApi();
   final TextEditingController _controller = TextEditingController();
   List<Map<String, dynamic>> _results = [];
+  List<Map<String, dynamic>> _suggested = [];
   bool _isLoading = false;
+  bool _isLoadingSuggested = true;
   Timer? _debounce;
   String? _mobile;
 
@@ -30,6 +32,27 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
     _mobile =
         prefs.getString('auth_mobile_number') ??
         prefs.getString('mobile_number');
+    if (_mobile != null && _mobile!.isNotEmpty) {
+      _loadSuggested();
+    } else {
+      setState(() => _isLoadingSuggested = false);
+    }
+  }
+
+  Future<void> _loadSuggested() async {
+    try {
+      final list = await _api.fetchSuggestedUsers(_mobile!);
+      if (mounted) {
+        setState(() {
+          _suggested = list
+              .where((u) => u['mobile_number'] != _mobile)
+              .toList();
+          _isLoadingSuggested = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingSuggested = false);
+    }
   }
 
   @override
@@ -105,8 +128,64 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
     }
   }
 
+  Widget _buildUserTile(Map<String, dynamic> u) {
+    final name = (u['name'] as String?) ?? 'User';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+    final avatar = u['avatar_url'] as String?;
+    return InkWell(
+      onTap: () => _startChat(u),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: const Color(0xFFE5E7EB),
+              backgroundImage: (avatar != null && avatar.isNotEmpty)
+                  ? NetworkImage(avatar)
+                  : null,
+              child: (avatar == null || avatar.isEmpty)
+                  ? Text(
+                      initial,
+                      style: const TextStyle(
+                        color: Color(0xFF374151),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Tap to start chatting',
+                    style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Color(0xFFD1D5DB)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isSearching = _controller.text.trim().isNotEmpty;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -118,57 +197,108 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
           controller: _controller,
           onChanged: _onSearchChanged,
           autofocus: true,
-          style: const TextStyle(color: Colors.black87),
-          cursorColor: Colors.black87,
+          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          cursorColor: const Color(0xFF16A34A),
           decoration: const InputDecoration(
             hintText: 'Search for someone...',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.grey),
+            hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFF3F4F6), height: 1),
+        ),
       ),
-      body: _isLoading
+      body: isSearching
+          ? _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF16A34A)),
+                  )
+                : _results.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.search_off_rounded,
+                          size: 48,
+                          color: Color(0xFFD1D5DB),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "No users found for '${_controller.text}'",
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: _results.length,
+                    separatorBuilder: (_, _) => const Divider(
+                      height: 1,
+                      color: Color(0xFFF3F4F6),
+                      indent: 70,
+                    ),
+                    itemBuilder: (context, index) =>
+                        _buildUserTile(_results[index]),
+                  )
+          : _isLoadingSuggested
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF16A34A)),
             )
-          : _results.isEmpty && _controller.text.trim().isNotEmpty
-          ? const Center(
-              child: Text(
-                'No users found',
-                style: TextStyle(color: Colors.grey),
+          : _suggested.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.people_outline,
+                    size: 48,
+                    color: Color(0xFFD1D5DB),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Search for a user above\nto start a conversation',
+                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 15),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             )
-          : ListView.separated(
-              itemCount: _results.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final u = _results[index];
-                final initial = (u['name'] as String).isNotEmpty
-                    ? (u['name'] as String)[0].toUpperCase()
-                    : 'U';
-                final avatar = u['avatar_url'] as String?;
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: const Color(0xFFE5E7EB),
-                    backgroundImage: (avatar != null && avatar.isNotEmpty)
-                        ? NetworkImage(avatar)
-                        : null,
-                    child: (avatar == null || avatar.isEmpty)
-                        ? Text(
-                            initial,
-                            style: const TextStyle(color: Color(0xFF374151)),
-                          )
-                        : null,
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Suggested Contacts',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                  title: Text(
-                    u['name'],
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: _suggested.length,
+                    separatorBuilder: (_, _) => const Divider(
+                      height: 1,
+                      color: Color(0xFFF3F4F6),
+                      indent: 70,
+                    ),
+                    itemBuilder: (context, index) =>
+                        _buildUserTile(_suggested[index]),
                   ),
-                  onTap: () => _startChat(u),
-                );
-              },
+                ),
+              ],
             ),
     );
   }

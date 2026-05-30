@@ -107,6 +107,16 @@ class MessageApi {
     throw Exception('Failed to fetch messages');
   }
 
+    Future<List<Map<String, dynamic>>> fetchSuggestedUsers(String mobileNumber) async {
+    final uri = _buildUri('/team/invite-candidates').replace(queryParameters: {'mobile_number': mobileNumber});
+    final response = await _client.get(uri);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final list = data['data'] as List?;
+      return (list ?? []).map((e) => e as Map<String, dynamic>).toList();
+    }
+    return [];
+  }
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     final uri = _buildUri(
       '/users/search',
