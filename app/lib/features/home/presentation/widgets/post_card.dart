@@ -195,6 +195,7 @@ class PostCardState extends State<PostCard> {
       MaterialPageRoute(
         builder: (_) => ProfileScreen(
           viewUserName: myName == postAuthor ? null : widget.userName,
+          viewUserAvatar: widget.userAvatar,
         ),
       ),
     );

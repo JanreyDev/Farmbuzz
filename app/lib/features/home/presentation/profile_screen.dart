@@ -13,11 +13,18 @@ import '../../messages/presentation/conversation_screen.dart';
 import 'widgets/post_card.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key, this.onNavigateTab, this.viewUserName});
+  const ProfileScreen({
+    super.key,
+    this.onNavigateTab,
+    this.viewUserName,
+    this.viewUserAvatar,
+  });
 
   final ValueChanged<int>? onNavigateTab;
   /// When set, shows this user's profile instead of the logged-in user's.
   final String? viewUserName;
+  /// Fallback avatar if profile fails to load.
+  final String? viewUserAvatar;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -458,22 +465,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     children: [
                       _StatCell(
-                        value: _formatStat(_profile?.followersCount),
+                        value: _formatStat(_profile?.followersCount ?? 0),
                         label: 'Followers',
                       ),
                       const _StatDivider(),
                       _StatCell(
-                        value: _formatStat(_profile?.followingCount),
+                        value: _formatStat(_profile?.followingCount ?? 0),
                         label: 'Following',
                       ),
                       const _StatDivider(),
                       _StatCell(
-                        value: _formatStat(_profile?.postsCount),
+                        value: _formatStat(_profile?.postsCount ?? _userPosts?.length ?? 0),
                         label: 'Posts',
                       ),
                       const _StatDivider(),
                       _StatCell(
-                        value: _formatStat(_profile?.clubsCount),
+                        value: _formatStat(_profile?.clubsCount ?? 0),
                         label: 'Clubs',
                       ),
                     ],
@@ -652,21 +659,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: Color(0xFFF5D18A),
                       ),
                       child:
-                          _profile?.avatarUrl != null &&
-                              _profile!.avatarUrl!.isNotEmpty
-                          ? CircleAvatar(
-                              backgroundImage: NetworkImage(
-                                _profile!.avatarUrl!,
-                              ),
-                            )
-                          : const CircleAvatar(
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                Icons.person,
-                                size: 40,
-                                color: Colors.grey,
-                              ),
-                            ),
+                          (_profile?.avatarUrl != null && _profile!.avatarUrl!.isNotEmpty)
+                              ? CircleAvatar(
+                                  backgroundImage: NetworkImage(
+                                    _profile!.avatarUrl!,
+                                  ),
+                                )
+                              : (widget.viewUserAvatar != null && widget.viewUserAvatar!.isNotEmpty)
+                                  ? CircleAvatar(
+                                      backgroundImage: NetworkImage(widget.viewUserAvatar!),
+                                      onBackgroundImageError: (_, __) {},
+                                    )
+                                  : const CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 40,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
                     ),
                     // Camera icon only shown for owner
                     if (_isOwner)
