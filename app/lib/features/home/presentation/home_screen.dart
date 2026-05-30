@@ -966,6 +966,9 @@ class _NotificationsScreenState extends State<_NotificationsScreen> {
                           if (type == 'like') {
                             typeIcon = Icons.thumb_up_alt_rounded;
                             iconColor = const Color(0xFF16A34A);
+                          } else if (type == 'comment') {
+                            typeIcon = Icons.comment_rounded;
+                            iconColor = const Color(0xFFD97706);
                           } else if (type == 'follow') {
                             typeIcon = Icons.person_add_rounded;
                             iconColor = const Color(0xFF2563EB);
