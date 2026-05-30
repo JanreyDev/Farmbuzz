@@ -244,9 +244,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
+        title: Text(
+          _isOwner ? 'Profile' : (widget.viewUserName ?? 'Profile'),
+          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
@@ -531,7 +531,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: _isOwner ? FloatingActionButton(
         onPressed: () {
           widget.onNavigateTab?.call(2);
           Navigator.of(context).pop();
@@ -552,9 +552,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           child: const Icon(Icons.auto_awesome, color: Colors.white, size: 28),
         ),
-      ),
+      ) : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: _isOwner ? BottomAppBar(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         height: 70,
         color: Colors.white,
@@ -598,7 +598,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-      ),
+      ) : null,
     );
   }
 
