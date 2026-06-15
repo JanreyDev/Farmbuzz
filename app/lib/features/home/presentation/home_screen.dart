@@ -1395,7 +1395,15 @@ class _StatusComposer extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Icon(Icons.image, color: AppColors.accentGreen, size: 22),
+          GestureDetector(
+            onTap: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const _CreatePostSheet(openPhotoPicker: true),
+            ),
+            child: const Icon(Icons.image, color: AppColors.accentGreen, size: 22),
+          ),
         ],
       ),
     );
@@ -1403,13 +1411,21 @@ class _StatusComposer extends StatelessWidget {
 }
 
 class _CreatePostSheet extends StatefulWidget {
-  const _CreatePostSheet();
+  const _CreatePostSheet({this.openPhotoPicker = false});
+  final bool openPhotoPicker;
 
   @override
   State<_CreatePostSheet> createState() => _CreatePostSheetState();
 }
 
 class _CreatePostSheetState extends State<_CreatePostSheet> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.openPhotoPicker) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _pickImage());
+    }
+  }
   static const int _maxImageBytes = 20 * 1024 * 1024; // 20MB (matches backend)
   static const int _maxTotalImageBytes =
       18 * 1024 * 1024; // keep below server limits
@@ -1995,10 +2011,12 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
     setState(() => _isPosting = true);
     try {
       final prefs = await SharedPreferences.getInstance();
-      final name =
-          prefs.getString('auth_user_name') ??
-          prefs.getString('auth_mobile_number') ??
-          'FarmBuzz User';
+      final nameRaw = (prefs.getString('auth_user_name') ?? '').trim();
+      final name = nameRaw.isEmpty
+          ? (prefs.getString('auth_mobile_number') ?? '').trim().isEmpty
+              ? 'FarmBuzz User'
+              : (prefs.getString('auth_mobile_number') ?? '').trim()
+          : nameRaw;
       await _FeedStore.instance.create(
         authorName: name,
         content: _postController.text.trim(),
