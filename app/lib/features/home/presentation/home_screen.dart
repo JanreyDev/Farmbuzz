@@ -2025,14 +2025,19 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
         metaLocation: _selectedLocation,
       );
       if (!mounted) return;
+      // Capture parent navigator context BEFORE popping so the toast
+      // can be shown on the underlying screen's overlay (not the
+      // already-dismounted sheet context).
+      final parentContext = Navigator.of(context).context;
       Navigator.of(context).pop();
-      _showBottomToast(context, 'Post created.');
+      _showBottomToast(parentContext, 'Post created!');
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isPosting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
+    } finally {
+      if (mounted) setState(() => _isPosting = false);
     }
   }
 
