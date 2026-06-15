@@ -6,6 +6,31 @@ import 'package:http_parser/http_parser.dart';
 
 import '../../../core/network/api_config.dart';
 
+String _normalizeUrl(String url) {
+  if (url.trim().isEmpty) return url;
+  final trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/uploads/') || trimmed.startsWith('uploads/')) {
+    final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+    var base = ApiConfig.baseUrl;
+    if (base.endsWith('/api')) {
+      base = base.substring(0, base.length - 4);
+    } else if (base.endsWith('/api/')) {
+      base = base.substring(0, base.length - 5);
+    } else if (base.endsWith('/')) {
+      base = base.substring(0, base.length - 1);
+    }
+    return '$base$path';
+  }
+  return trimmed;
+}
+
+List<String> _normalizeUrls(List<String> urls) {
+  return urls.map((url) => _normalizeUrl(url)).toList();
+}
+
 class FeedImageUpload {
   FeedImageUpload({
     this.path,
@@ -57,20 +82,36 @@ class FeedPost {
     Map<String, dynamic>? parsedSharedPost;
     final rawShared = json['sharedPost'] ?? json['sharedPostData'] ?? json['shared_post'] ?? json['shared_post_data'];
     if (rawShared is Map<String, dynamic>) {
-      parsedSharedPost = rawShared;
+      parsedSharedPost = Map<String, dynamic>.from(rawShared);
     } else if (rawShared is String && rawShared.trim().isNotEmpty) {
       try {
         final decoded = jsonDecode(rawShared);
         if (decoded is Map<String, dynamic>) {
-          parsedSharedPost = decoded;
+          parsedSharedPost = Map<String, dynamic>.from(decoded);
         }
       } catch (_) {}
     }
 
+    if (parsedSharedPost != null) {
+      if (parsedSharedPost['userAvatar'] != null) {
+        parsedSharedPost['userAvatar'] = _normalizeUrl(parsedSharedPost['userAvatar'].toString());
+      }
+      if (parsedSharedPost['imageUrls'] != null) {
+        final list = parsedSharedPost['imageUrls'] as List?;
+        if (list != null) {
+          parsedSharedPost['imageUrls'] = list.map((e) => _normalizeUrl(e.toString())).toList();
+        }
+      }
+    }
+
+    final postImages = ((json['imageUrls'] as List?) ?? const [])
+        .whereType<String>()
+        .toList();
+
     return FeedPost(
       id: (json['id'] as num?)?.toInt() ?? 0,
       userName: (json['userName'] as String?) ?? 'FarmBuzz User',
-      userAvatar: (json['userAvatar'] as String?) ?? '',
+      userAvatar: _normalizeUrl((json['userAvatar'] as String?) ?? ''),
       timeAgo: (json['timeAgo'] as String?) ?? 'Just now',
       postText: (json['postText'] as String?) ?? '',
       metaEmoji: (json['metaEmoji'] as String?) ?? '',
@@ -82,9 +123,7 @@ class FeedPost {
           .whereType<String>()
           .toList(),
       userReaction: (json['userReaction'] as String?) ?? '',
-      imageUrls: ((json['imageUrls'] as List?) ?? const [])
-          .whereType<String>()
-          .toList(),
+      imageUrls: _normalizeUrls(postImages),
       sharedPost: parsedSharedPost,
     );
   }
@@ -109,7 +148,7 @@ class FeedComment {
     return FeedComment(
       id: (json['id'] as num?)?.toInt() ?? 0,
       name: (json['name'] as String?) ?? 'FarmBuzz User',
-      avatar: (json['avatar'] as String?) ?? '',
+      avatar: _normalizeUrl((json['avatar'] as String?) ?? ''),
       text: (json['text'] as String?) ?? '',
       time: (json['time'] as String?) ?? 'now',
     );

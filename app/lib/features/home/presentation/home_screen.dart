@@ -2206,22 +2206,22 @@ class _FeelingPickerSheetState extends State<_FeelingPickerSheet> {
   ];
 
   final Map<String, String> _emojiByFeeling = const {
-    'Loved': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â',
-    'In Love': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¥Ãƒâ€šÃ‚Â°',
-    'Blessed': 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“Ãƒâ€šÃ‚Â¨',
-    'Grateful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢Ãƒâ€šÃ‚Â',
-    'Thankful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â',
-    'Happy': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€¦Ã‚Â ',
-    'Cheerful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€šÃ‚Â',
-    'Excited': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â©',
-    'Celebrating': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¥Ãƒâ€šÃ‚Â³',
-    'Joyful': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾',
-    'Content': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€¦Ã¢â‚¬â„¢',
-    'Proud': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€šÃ‚Â',
-    'Accomplished': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ',
-    'Motivated': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Âª',
-    'Determined': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â§Ãƒâ€šÃ‚Â',
-    'Confident': 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¹Ã…â€œÃƒâ€¦Ã‚Â½',
+    'Loved': '💗',
+    'In Love': '🥰',
+    'Blessed': '✨',
+    'Grateful': '🙏',
+    'Thankful': '🤗',
+    'Happy': '😊',
+    'Cheerful': '😁',
+    'Excited': '🤩',
+    'Celebrating': '🥳',
+    'Joyful': '😄',
+    'Content': '😌',
+    'Proud': '😍',
+    'Accomplished': '🏆',
+    'Motivated': '💪',
+    'Determined': '🧐',
+    'Confident': '😎',
   };
 
   @override
@@ -2348,9 +2348,7 @@ class _FeelingPickerSheetState extends State<_FeelingPickerSheet> {
                       children: [
                         Expanded(
                           child: _FeelingItem(
-                            emoji:
-                                _emojiByFeeling[left] ??
-                                'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡',
+                            emoji: _emojiByFeeling[left] ?? '🙂',
                             label: left,
                             isSelected: widget.selectedFeeling == left,
                             onTap: () => Navigator.of(context).pop(left),
@@ -2361,9 +2359,7 @@ class _FeelingPickerSheetState extends State<_FeelingPickerSheet> {
                           child: right == null
                               ? const SizedBox.shrink()
                               : _FeelingItem(
-                                  emoji:
-                                      _emojiByFeeling[right] ??
-                                      'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡',
+                                  emoji: _emojiByFeeling[right] ?? '🙂',
                                   label: right,
                                   isSelected: widget.selectedFeeling == right,
                                   onTap: () => Navigator.of(context).pop(right),
@@ -2467,40 +2463,40 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
   final TextEditingController _searchController = TextEditingController();
 
   final List<({String city, String region})> _locations = const [
-    (city: 'Aborlan', region: 'Palawan ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· MIMAROPA Region'),
+    (city: 'Aborlan', region: 'Palawan • MIMAROPA Region'),
     (
       city: 'Abra De Ilog',
-      region: 'Occidental Mindoro ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· MIMAROPA Region',
+      region: 'Occidental Mindoro • MIMAROPA Region',
     ),
     (
       city: 'Abucay',
-      region: 'Bataan ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region III (Central Luzon)',
+      region: 'Bataan • Region III (Central Luzon)',
     ),
     (
       city: 'Abulug',
-      region: 'Cagayan ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region II (Cagayan Valley)',
+      region: 'Cagayan • Region II (Cagayan Valley)',
     ),
     (
       city: 'Abuyog',
-      region: 'Leyte ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region VIII (Eastern Visayas)',
+      region: 'Leyte • Region VIII (Eastern Visayas)',
     ),
     (
       city: 'Bacoor',
-      region: 'Cavite ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region IV-A (CALABARZON)',
+      region: 'Cavite • Region IV-A (CALABARZON)',
     ),
     (
       city: 'Cebu City',
-      region: 'Cebu ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region VII (Central Visayas)',
+      region: 'Cebu • Region VII (Central Visayas)',
     ),
     (
       city: 'Davao City',
-      region: 'Davao del Sur ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region XI (Davao Region)',
+      region: 'Davao del Sur • Region XI (Davao Region)',
     ),
     (
       city: 'Iloilo City',
-      region: 'Iloilo ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Region VI (Western Visayas)',
+      region: 'Iloilo • Region VI (Western Visayas)',
     ),
-    (city: 'Quezon City', region: 'Metro Manila ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· NCR'),
+    (city: 'Quezon City', region: 'Metro Manila • NCR'),
   ];
 
   @override
@@ -2609,7 +2605,7 @@ class _LocationPickerSheetState extends State<_LocationPickerSheet> {
                   itemBuilder: (context, index) {
                     final item = filtered[index];
                     final locationLabel =
-                        '${item.city} ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${item.region}';
+                        '${item.city} • ${item.region}';
                     final isSelected = widget.selectedLocation == locationLabel;
                     return Material(
                       color: isSelected
