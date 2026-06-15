@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/network/api_config.dart';
 
@@ -47,12 +48,33 @@ class ProfileModel {
   final int postsCount;
   final int clubsCount;
 
+  static String? _normalizeUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return url;
+    final trimmed = url.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/uploads/') || trimmed.startsWith('uploads/')) {
+      final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+      var base = ApiConfig.baseUrl;
+      if (base.endsWith('/api')) {
+        base = base.substring(0, base.length - 4);
+      } else if (base.endsWith('/api/')) {
+        base = base.substring(0, base.length - 5);
+      } else if (base.endsWith('/')) {
+        base = base.substring(0, base.length - 1);
+      }
+      return '$base$path';
+    }
+    return trimmed;
+  }
+
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     return ProfileModel(
       name: json['name'] as String? ?? '',
       mobileNumber: json['mobile_number'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
-      coverPhotoUrl: json['cover_photo_url'] as String?,
+      avatarUrl: _normalizeUrl(json['avatar_url'] as String?),
+      coverPhotoUrl: _normalizeUrl(json['cover_photo_url'] as String?),
       yearsBreeding: json['years_breeding'] as String?,
       bio: json['bio'] as String?,
       address: json['address'] as String?,
@@ -169,8 +191,8 @@ class ProfileApi {
 
   Future<void> uploadProfileMedia({
     required String mobileNumber,
-    File? avatar,
-    File? coverPhoto,
+    XFile? avatar,
+    XFile? coverPhoto,
   }) async {
     if (avatar == null && coverPhoto == null) return;
 
@@ -179,30 +201,34 @@ class ProfileApi {
     request.fields['mobile_number'] = mobileNumber;
 
     if (avatar != null) {
-      final ext = avatar.path.split('.').last.toLowerCase();
+      final bytes = await avatar.readAsBytes();
+      final ext = avatar.name.split('.').last.toLowerCase();
       var mediaType = MediaType('image', 'jpeg');
       if (ext == 'png') mediaType = MediaType('image', 'png');
       if (ext == 'webp') mediaType = MediaType('image', 'webp');
 
       request.files.add(
-        await http.MultipartFile.fromPath(
+        http.MultipartFile.fromBytes(
           'avatar',
-          avatar.path,
+          bytes,
+          filename: avatar.name,
           contentType: mediaType,
         ),
       );
     }
 
     if (coverPhoto != null) {
-      final ext = coverPhoto.path.split('.').last.toLowerCase();
+      final bytes = await coverPhoto.readAsBytes();
+      final ext = coverPhoto.name.split('.').last.toLowerCase();
       var mediaType = MediaType('image', 'jpeg');
       if (ext == 'png') mediaType = MediaType('image', 'png');
       if (ext == 'webp') mediaType = MediaType('image', 'webp');
 
       request.files.add(
-        await http.MultipartFile.fromPath(
+        http.MultipartFile.fromBytes(
           'cover_photo',
-          coverPhoto.path,
+          bytes,
+          filename: coverPhoto.name,
           contentType: mediaType,
         ),
       );

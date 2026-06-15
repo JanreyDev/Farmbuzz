@@ -338,23 +338,40 @@ class PostCardState extends State<PostCard> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: const Color(0xFFE8F5E9),
-                              backgroundImage: _hasUserAvatar
-                                  ? NetworkImage(widget.userAvatar)
-                                  : null,
-                              onBackgroundImageError: _hasUserAvatar ? (_, _) {} : null,
-                              child: _hasUserAvatar
-                                  ? null
-                                  : Text(
-                                      _initial(),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF1B5E20),
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFFE8F5E9),
+                              ),
+                              child: ClipOval(
+                                child: _hasUserAvatar
+                                    ? Image.network(
+                                        widget.userAvatar,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Center(
+                                          child: Text(
+                                            _initial(),
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF1B5E20),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          _initial(),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF1B5E20),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -666,15 +683,26 @@ class PostCardState extends State<PostCard> {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: authorAvatar.isNotEmpty
-                    ? NetworkImage(authorAvatar)
-                    : null,
-                child: authorAvatar.isEmpty
-                    ? Icon(Icons.person, size: 16, color: Colors.grey[600])
-                    : null,
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.grey[200],
+                ),
+                child: ClipOval(
+                  child: authorAvatar.isNotEmpty
+                      ? Image.network(
+                          authorAvatar,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Center(
+                            child: Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                        ),
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -1153,22 +1181,40 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             ),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: const Color(0xFF158D42),
-                  backgroundImage: _viewerAvatar != null && _viewerAvatar!.isNotEmpty
-                      ? NetworkImage(_viewerAvatar!)
-                      : null,
-                  child: _viewerAvatar == null || _viewerAvatar!.isEmpty
-                      ? const Text(
-                          'U',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF158D42),
+                  ),
+                  child: ClipOval(
+                    child: _viewerAvatar != null && _viewerAvatar!.isNotEmpty
+                        ? Image.network(
+                            _viewerAvatar!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => const Center(
+                              child: Text(
+                                'U',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          )
+                        : const Center(
+                            child: Text(
+                              'U',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        )
-                      : null,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1249,21 +1295,40 @@ class _CommentItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
-          radius: 17,
-          backgroundColor: const Color(0xFFE8F5E9),
-          backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
-          onBackgroundImageError: hasAvatar ? (_, _) {} : null,
-          child: hasAvatar
-              ? null
-              : Text(
-                  _initial(),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1B5E20),
+        Container(
+          width: 34,
+          height: 34,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Color(0xFFE8F5E9),
+          ),
+          child: ClipOval(
+            child: hasAvatar
+                ? Image.network(
+                    avatar,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Text(
+                        _initial(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1B5E20),
+                        ),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      _initial(),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1B5E20),
+                      ),
+                    ),
                   ),
-                ),
+          ),
         ),
         const SizedBox(width: 9),
         Expanded(
@@ -1548,23 +1613,42 @@ class _RepostSheetState extends State<_RepostSheet> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: const Color(0xFFE8F5E9),
-                  backgroundImage: widget.myAvatar.isNotEmpty
-                      ? NetworkImage(widget.myAvatar)
-                      : null,
-                  child: widget.myAvatar.isEmpty
-                      ? Text(
-                          widget.myName.isNotEmpty
-                              ? widget.myName.substring(0, 1).toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            color: Color(0xFF1B5E20),
-                            fontWeight: FontWeight.bold,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFE8F5E9),
+                  ),
+                  child: ClipOval(
+                    child: widget.myAvatar.isNotEmpty
+                        ? Image.network(
+                            widget.myAvatar,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Center(
+                              child: Text(
+                                widget.myName.isNotEmpty
+                                    ? widget.myName.substring(0, 1).toUpperCase()
+                                    : 'U',
+                                style: const TextStyle(
+                                  color: Color(0xFF1B5E20),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              widget.myName.isNotEmpty
+                                  ? widget.myName.substring(0, 1).toUpperCase()
+                                  : 'U',
+                              style: const TextStyle(
+                                color: Color(0xFF1B5E20),
+                                  fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                        )
-                      : null,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1597,15 +1681,26 @@ class _RepostSheetState extends State<_RepostSheet> {
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Colors.grey[300],
-                        backgroundImage: widget.originalPost.userAvatar.isNotEmpty
-                            ? NetworkImage(widget.originalPost.userAvatar)
-                            : null,
-                        child: widget.originalPost.userAvatar.isEmpty
-                            ? const Icon(Icons.person, size: 16, color: Colors.white)
-                            : null,
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[300],
+                        ),
+                        child: ClipOval(
+                          child: widget.originalPost.userAvatar.isNotEmpty
+                              ? Image.network(
+                                  widget.originalPost.userAvatar,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => const Center(
+                                    child: Icon(Icons.person, size: 16, color: Colors.white),
+                                  ),
+                                )
+                              : const Center(
+                                  child: Icon(Icons.person, size: 16, color: Colors.white),
+                                ),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(

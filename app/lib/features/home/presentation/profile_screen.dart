@@ -621,6 +621,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildAvatarFallback() {
+    final name = _profile?.name ?? widget.viewUserName ?? '';
+    final trimmed = name.trim();
+    final initial = trimmed.isNotEmpty ? trimmed[0].toUpperCase() : '';
+    
+    return Container(
+      color: Colors.white,
+      alignment: Alignment.center,
+      child: initial.isNotEmpty
+          ? Text(
+              initial,
+              style: const TextStyle(
+                color: Color(0xFF158D42),
+                fontWeight: FontWeight.bold,
+                fontSize: 28,
+              ),
+            )
+          : const Icon(
+              Icons.person,
+              size: 40,
+              color: Colors.grey,
+            ),
+    );
+  }
+
   Widget _buildHeader(BuildContext context) {
     return Column(
       children: [
@@ -661,26 +686,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         shape: BoxShape.circle,
                         color: Color(0xFFF5D18A),
                       ),
-                      child:
-                          (_profile?.avatarUrl != null && _profile!.avatarUrl!.isNotEmpty)
-                              ? CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                    _profile!.avatarUrl!,
-                                  ),
-                                )
-                              : (widget.viewUserAvatar != null && widget.viewUserAvatar!.isNotEmpty)
-                                  ? CircleAvatar(
-                                      backgroundImage: NetworkImage(widget.viewUserAvatar!),
-                                      onBackgroundImageError: (_, __) {},
-                                    )
-                                  : const CircleAvatar(
-                                      backgroundColor: Colors.white,
-                                      child: Icon(
-                                        Icons.person,
-                                        size: 40,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
+                      child: ClipOval(
+                        child: (_profile?.avatarUrl != null && _profile!.avatarUrl!.isNotEmpty)
+                            ? Image.network(
+                                _profile!.avatarUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => _buildAvatarFallback(),
+                              )
+                            : (widget.viewUserAvatar != null && widget.viewUserAvatar!.isNotEmpty)
+                                ? Image.network(
+                                    widget.viewUserAvatar!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => _buildAvatarFallback(),
+                                  )
+                                : _buildAvatarFallback(),
+                      ),
                     ),
                     // Camera icon only shown for owner
                     if (_isOwner)
@@ -753,13 +773,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Padding(
                         padding: const EdgeInsets.only(top: 26),
                         child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const ProfileSettingsScreen(),
                               ),
                             );
+                            if (result == true) {
+                              _loadProfileData();
+                            }
                           },
                           child: const _ActionBtn(
                             icon: Icons.settings_outlined,

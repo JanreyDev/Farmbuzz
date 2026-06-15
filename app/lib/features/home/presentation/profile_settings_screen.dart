@@ -1,10 +1,13 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../data/profile_api.dart';
+import 'home_screen.dart';
 
 class ProfileSettingsScreen extends StatefulWidget {
   const ProfileSettingsScreen({super.key});
@@ -34,8 +37,10 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   String? _avatarUrl;
   String? _coverPhotoUrl;
 
-  File? _selectedAvatar;
-  File? _selectedCoverPhoto;
+  XFile? _selectedAvatar;
+  XFile? _selectedCoverPhoto;
+  Uint8List? _avatarBytes;
+  Uint8List? _coverBytes;
 
   @override
   void initState() {
@@ -61,7 +66,9 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
       final localCover = prefs.getString('profile_cover_photo');
       if (localCover != null && localCover.isNotEmpty) {
-        _selectedCoverPhoto = File(localCover);
+        if (!kIsWeb) {
+          _selectedCoverPhoto = XFile(localCover);
+        }
       }
       _coverPhotoUrl = prefs.getString('profile_cover_photo_url');
       _avatarUrl = prefs.getString('profile_avatar_url');
@@ -118,11 +125,14 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
     try {
       final picked = await _picker.pickImage(source: ImageSource.gallery);
       if (picked != null) {
+        final bytes = await picked.readAsBytes();
         setState(() {
           if (isCover) {
-            _selectedCoverPhoto = File(picked.path);
+            _selectedCoverPhoto = picked;
+            _coverBytes = bytes;
           } else {
-            _selectedAvatar = File(picked.path);
+            _selectedAvatar = picked;
+            _avatarBytes = bytes;
           }
         });
       }
@@ -184,6 +194,27 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
         'profile_bloodlines',
         _bloodlinesController.text.trim(),
       );
+
+      // Fetch the updated profile to get the new avatar/cover URLs from server
+      final updatedProfile = await _profileApi.fetchProfile(mobileNumber: _mobileNumber!);
+      if (updatedProfile != null) {
+        await prefs.setString('auth_user_name', updatedProfile.name);
+        if (updatedProfile.avatarUrl != null && updatedProfile.avatarUrl!.isNotEmpty) {
+          await prefs.setString('auth_user_avatar', updatedProfile.avatarUrl!);
+          await prefs.setString('auth_user_avatar_url', updatedProfile.avatarUrl!);
+          await prefs.setString('auth_avatar', updatedProfile.avatarUrl!);
+          await prefs.setString('user_avatar', updatedProfile.avatarUrl!);
+          await prefs.setString('profile_avatar', updatedProfile.avatarUrl!);
+          await prefs.setString('profile_avatar_url', updatedProfile.avatarUrl!);
+        }
+        if (updatedProfile.coverPhotoUrl != null && updatedProfile.coverPhotoUrl!.isNotEmpty) {
+          await prefs.setString('profile_cover_photo', updatedProfile.coverPhotoUrl!);
+          await prefs.setString('profile_cover_photo_url', updatedProfile.coverPhotoUrl!);
+        }
+      }
+      
+      // Trigger global reload of the viewer profile store so UI reflects changes immediately
+      await ViewerProfileStore.instance.load();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -293,93 +324,41 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFFAF8F4),
                                         borderRadius: BorderRadius.circular(16),
-                                        image: _selectedCoverPhoto != null
-                                            ? DecorationImage(
-                                                image: FileImage(
-                                                  _selectedCoverPhoto!,
-                                                ),
-                                                fit: BoxFit.cover,
-                                              )
-                                            : (_coverPhotoUrl != null &&
-                                                      _coverPhotoUrl!.isNotEmpty
-                                                  ? DecorationImage(
-                                                      image: NetworkImage(
-                                                        _coverPhotoUrl!,
-                                                      ),
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                  : null),
                                       ),
-                                      child:
-                                          _selectedCoverPhoto == null &&
-                                              (_coverPhotoUrl == null ||
-                                                  _coverPhotoUrl!.isEmpty)
-                                          ? Stack(
-                                              children: [
-                                                const Center(
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        LucideIcons.image,
-                                                        size: 32,
-                                                        color: Color(
-                                                          0xFFC99843,
-                                                        ),
-                                                      ),
-                                                      SizedBox(height: 6),
-                                                      Text(
-                                                        'Cover Photo',
-                                                        style: TextStyle(
-                                                          fontSize: 13,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Color(
-                                                            0xFFC99843,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            _coverBytes != null
+                                                ? Image.memory(
+                                                    _coverBytes!,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : (_coverPhotoUrl != null && _coverPhotoUrl!.isNotEmpty
+                                                    ? Image.network(
+                                                        _coverPhotoUrl!,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context, error, stackTrace) =>
+                                                            _buildCoverPlaceholder(),
+                                                      )
+                                                    : _buildCoverPlaceholder()),
+                                            Positioned(
+                                              bottom: 12,
+                                              right: 12,
+                                              child: CircleAvatar(
+                                                radius: 18,
+                                                backgroundColor: Colors.white.withValues(alpha: 0.9),
+                                                child: const Icon(
+                                                  LucideIcons.camera,
+                                                  size: 16,
+                                                  color: Colors.black87,
                                                 ),
-                                                Positioned(
-                                                  bottom: 12,
-                                                  right: 12,
-                                                  child: CircleAvatar(
-                                                    radius: 18,
-                                                    backgroundColor: Colors
-                                                        .white
-                                                        .withValues(alpha: 0.9),
-                                                    child: const Icon(
-                                                      LucideIcons.camera,
-                                                      size: 16,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            )
-                                          : Stack(
-                                              children: [
-                                                Positioned(
-                                                  bottom: 12,
-                                                  right: 12,
-                                                  child: CircleAvatar(
-                                                    radius: 18,
-                                                    backgroundColor: Colors
-                                                        .white
-                                                        .withValues(alpha: 0.9),
-                                                    child: const Icon(
-                                                      LucideIcons.camera,
-                                                      size: 16,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
+                                              ),
                                             ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -412,53 +391,22 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
                                                   offset: const Offset(0, 4),
                                                 ),
                                               ],
-                                              image: _selectedAvatar != null
-                                                  ? DecorationImage(
-                                                      image: FileImage(
-                                                        _selectedAvatar!,
-                                                      ),
+                                            ),
+                                            child: ClipOval(
+                                              child: _avatarBytes != null
+                                                  ? Image.memory(
+                                                      _avatarBytes!,
                                                       fit: BoxFit.cover,
                                                     )
-                                                  : (_avatarUrl != null &&
-                                                            _avatarUrl!
-                                                                .isNotEmpty
-                                                        ? DecorationImage(
-                                                            image: NetworkImage(
-                                                              _avatarUrl!,
-                                                            ),
-                                                            fit: BoxFit.cover,
-                                                          )
-                                                        : null),
+                                                  : (_avatarUrl != null && _avatarUrl!.isNotEmpty
+                                                      ? Image.network(
+                                                          _avatarUrl!,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (context, error, stackTrace) =>
+                                                              _buildAvatarPlaceholder(),
+                                                        )
+                                                      : _buildAvatarPlaceholder()),
                                             ),
-                                            child:
-                                                _selectedAvatar == null &&
-                                                    (_avatarUrl == null ||
-                                                        _avatarUrl!.isEmpty)
-                                                ? const Center(
-                                                    child: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Icon(
-                                                          LucideIcons.user,
-                                                          size: 28,
-                                                          color: Colors.grey,
-                                                        ),
-                                                        SizedBox(height: 2),
-                                                        Text(
-                                                          'Portrait',
-                                                          style: TextStyle(
-                                                            fontSize: 10,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors.grey,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  )
-                                                : null,
                                           ),
                                           Positioned(
                                             bottom: 0,
@@ -740,5 +688,53 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
 
     if (width != null) return SizedBox(width: width, child: field);
     return field;
+  }
+
+  Widget _buildCoverPlaceholder() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.image,
+            size: 32,
+            color: Color(0xFFC99843),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Cover Photo',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFC99843),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarPlaceholder() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.user,
+            size: 28,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 2),
+          Text(
+            'Portrait',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

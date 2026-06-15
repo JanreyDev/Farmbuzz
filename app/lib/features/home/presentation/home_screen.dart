@@ -62,8 +62,8 @@ void _showBottomToast(BuildContext context, String message) {
   });
 }
 
-class _ViewerProfile {
-  const _ViewerProfile({required this.name, required this.avatarUrl});
+class ViewerProfile {
+  const ViewerProfile({required this.name, required this.avatarUrl});
 
   final String name;
   final String avatarUrl;
@@ -75,12 +75,12 @@ class _ViewerProfile {
   }
 }
 
-class _ViewerProfileStore {
-  _ViewerProfileStore._();
-  static final _ViewerProfileStore instance = _ViewerProfileStore._();
+class ViewerProfileStore {
+  ViewerProfileStore._();
+  static final ViewerProfileStore instance = ViewerProfileStore._();
 
-  final ValueNotifier<_ViewerProfile> profile = ValueNotifier<_ViewerProfile>(
-    const _ViewerProfile(name: '', avatarUrl: ''),
+  final ValueNotifier<ViewerProfile> profile = ValueNotifier<ViewerProfile>(
+    const ViewerProfile(name: '', avatarUrl: ''),
   );
 
   Future<void> load() async {
@@ -98,7 +98,7 @@ class _ViewerProfileStore {
       prefs.getString('profile_avatar'),
       prefs.getString('profile_photo_url'),
     ]);
-    profile.value = _ViewerProfile(name: name, avatarUrl: avatar);
+    profile.value = ViewerProfile(name: name, avatarUrl: avatar);
   }
 
   String _firstNonEmpty(List<String?> values) {
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _ViewerProfileStore.instance.load();
+    ViewerProfileStore.instance.load();
     _checkFarmStatus();
     _loadCounts();
   }
@@ -556,8 +556,8 @@ class _HomeHeader extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 4),
-            child: ValueListenableBuilder<_ViewerProfile>(
-              valueListenable: _ViewerProfileStore.instance.profile,
+            child: ValueListenableBuilder<ViewerProfile>(
+              valueListenable: ViewerProfileStore.instance.profile,
               builder: (context, viewer, _) {
                 final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
                 return GestureDetector(
@@ -569,25 +569,40 @@ class _HomeHeader extends StatelessWidget {
                       ),
                     );
                   },
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: const Color(0xFFE8F5E9),
-                    backgroundImage: hasAvatar
-                        ? NetworkImage(viewer.avatarUrl)
-                        : null,
-                    onBackgroundImageError: hasAvatar
-                        ? (exception, stackTrace) {}
-                        : null,
-                    child: hasAvatar
-                        ? null
-                        : Text(
-                            viewer.initial,
-                            style: const TextStyle(
-                              color: Color(0xFF2E7D32),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFFE8F5E9),
+                    ),
+                    child: ClipOval(
+                      child: hasAvatar
+                          ? Image.network(
+                              viewer.avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Center(
+                                child: Text(
+                                  viewer.initial,
+                                  style: const TextStyle(
+                                    color: Color(0xFF2E7D32),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                viewer.initial,
+                                style: const TextStyle(
+                                  color: Color(0xFF2E7D32),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ),
-                          ),
+                    ),
                   ),
                 );
               },
@@ -790,8 +805,8 @@ class _HomeDrawer extends StatelessWidget {
                   bottom: BorderSide(color: Colors.grey.shade200),
                 ),
               ),
-              child: ValueListenableBuilder<_ViewerProfile>(
-                valueListenable: _ViewerProfileStore.instance.profile,
+              child: ValueListenableBuilder<ViewerProfile>(
+                valueListenable: ViewerProfileStore.instance.profile,
                 builder: (context, viewer, _) {
                   final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
                   return Row(
@@ -1312,29 +1327,44 @@ class _StatusComposer extends StatelessWidget {
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
       child: Row(
         children: [
-          ValueListenableBuilder<_ViewerProfile>(
-            valueListenable: _ViewerProfileStore.instance.profile,
+          ValueListenableBuilder<ViewerProfile>(
+            valueListenable: ViewerProfileStore.instance.profile,
             builder: (context, viewer, _) {
               final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
-              return CircleAvatar(
-                radius: 22,
-                backgroundColor: const Color(0xFFE8F5E9),
-                backgroundImage: hasAvatar
-                    ? NetworkImage(viewer.avatarUrl)
-                    : null,
-                onBackgroundImageError: hasAvatar
-                    ? (exception, stackTrace) {}
-                    : null,
-                child: hasAvatar
-                    ? null
-                    : Text(
-                        viewer.initial,
-                        style: const TextStyle(
-                          color: Color(0xFF2E7D32),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
+              return Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFE8F5E9),
+                ),
+                child: ClipOval(
+                  child: hasAvatar
+                      ? Image.network(
+                          viewer.avatarUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Center(
+                            child: Text(
+                              viewer.initial,
+                              style: const TextStyle(
+                                color: Color(0xFF2E7D32),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            viewer.initial,
+                            style: const TextStyle(
+                              color: Color(0xFF2E7D32),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
                         ),
-                      ),
+                ),
               );
             },
           ),
@@ -1658,8 +1688,8 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ValueListenableBuilder<_ViewerProfile>(
-                        valueListenable: _ViewerProfileStore.instance.profile,
+                      ValueListenableBuilder<ViewerProfile>(
+                        valueListenable: ViewerProfileStore.instance.profile,
                         builder: (context, viewer, _) {
                           final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
                           return Row(
@@ -2736,8 +2766,8 @@ class _CreateStoryCard extends StatelessWidget {
           children: [
             Expanded(
               flex: 6,
-              child: ValueListenableBuilder<_ViewerProfile>(
-                valueListenable: _ViewerProfileStore.instance.profile,
+              child: ValueListenableBuilder<ViewerProfile>(
+                valueListenable: ViewerProfileStore.instance.profile,
                 builder: (context, viewer, _) {
                   final hasAvatar = viewer.avatarUrl.trim().isNotEmpty;
                   return Container(
@@ -3352,21 +3382,40 @@ class _StoryCard extends StatelessWidget {
                   color: AppColors.accentGreen,
                   shape: BoxShape.circle,
                 ),
-                child: CircleAvatar(
-                  radius: 12,
-                  backgroundColor: const Color(0xFFE8F5E9),
-                  backgroundImage: hasAvatar ? NetworkImage(avatarUrl) : null,
-                  onBackgroundImageError: hasAvatar ? (_, _) {} : null,
-                  child: hasAvatar
-                      ? null
-                      : Text(
-                          _initial(),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1B5E20),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFFE8F5E9),
+                  ),
+                  child: ClipOval(
+                    child: hasAvatar
+                        ? Image.network(
+                            avatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Center(
+                              child: Text(
+                                _initial(),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1B5E20),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Text(
+                              _initial(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1B5E20),
+                              ),
+                            ),
                           ),
-                        ),
+                  ),
                 ),
               ),
             ),
