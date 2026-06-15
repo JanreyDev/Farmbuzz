@@ -41,6 +41,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>FarmBuzz needs camera access so you can take and upload photos for your posts, farm gallery, and profile avatar.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FarmBuzz needs photo library access to allow you to select and upload your farm pictures, profile photos, and media attachments.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>FarmBuzz needs microphone access if you choose to record video attachments for posts.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
