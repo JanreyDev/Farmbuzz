@@ -185,13 +185,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           prefs.getString('auth_user_name') ??
           prefs.getString('auth_mobile_number') ??
           '';
-      final posts = await _feedApi.fetchPosts(
+      final fetched = await _feedApi.fetchPosts(
         reactorName: reactorName,
         authorName: authorName,
       );
       if (mounted) {
         setState(() {
-          _userPosts = posts;
+          _userPosts = fetched.posts;
         });
       }
     } catch (_) {

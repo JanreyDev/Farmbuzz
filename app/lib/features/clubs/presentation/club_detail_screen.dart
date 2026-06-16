@@ -347,8 +347,8 @@ class _ClubFeedState extends State<_ClubFeed> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final reactor = prefs.getString('auth_user_name') ?? prefs.getString('auth_mobile_number') ?? '';
-      final posts = await _api.fetchPosts(clubId: widget.clubId, reactorName: reactor);
-      if (mounted) setState(() { _posts = posts; _loading = false; });
+      final fetched = await _api.fetchPosts(clubId: widget.clubId, reactorName: reactor);
+      if (mounted) setState(() { _posts = fetched.posts; _loading = false; });
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
