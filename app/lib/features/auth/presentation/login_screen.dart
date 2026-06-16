@@ -6,6 +6,9 @@ import '../../../core/theme/app_colors.dart';
 import '../data/auth_api.dart';
 import 'create_account_card.dart';
 import '../../home/presentation/home_screen.dart';
+import 'terms_screen.dart';
+import 'privacy_screen.dart';
+import 'community_screen.dart';
 import 'widgets/action_button.dart';
 import 'widgets/mobile_input.dart';
 import 'widgets/numeric_keypad.dart';
@@ -921,27 +924,40 @@ class _FooterRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (final label in labels) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isLightMode
-                  ? const Color(0xFFFFFFFF).withValues(alpha: 0.35)
-                  : Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
+          GestureDetector(
+            onTap: () {
+              if (label == 'Terms') {
+                Navigator.of(context).push(TermsScreen.route());
+              } else if (label == 'Privacy') {
+                Navigator.of(context).push(PrivacyScreen.route());
+              } else if (label == 'Community') {
+                Navigator.of(context).push(CommunityScreen.route());
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
                 color: isLightMode
-                    ? const Color(0xFFBFC9C1)
-                    : Colors.white.withValues(alpha: 0.08),
+                    ? const Color(0xFFFFFFFF).withValues(alpha: 0.35)
+                    : Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: isLightMode
+                      ? const Color(0xFFBFC9C1)
+                      : Colors.white.withValues(alpha: 0.08),
+                ),
               ),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isLightMode
-                    ? const Color(0xFF516157)
-                    : Colors.white.withValues(alpha: 0.68),
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: (label == 'Terms' || label == 'Privacy' || label == 'Community')
+                      ? AppColors.accentGreen
+                      : (isLightMode
+                          ? const Color(0xFF516157)
+                          : Colors.white.withValues(alpha: 0.68)),
+                  fontSize: 11.5,
+                  fontWeight: (label == 'Terms' || label == 'Privacy' || label == 'Community') ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
             ),
           ),
