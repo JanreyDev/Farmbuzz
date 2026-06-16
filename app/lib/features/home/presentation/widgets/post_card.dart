@@ -591,7 +591,8 @@ class PostCardState extends State<PostCard> {
                         behavior: HitTestBehavior.opaque,
                         onTap: () async {
                           final prefs = await SharedPreferences.getInstance();
-                          final myName = (prefs.getString('auth_user_name') ?? '').trim();
+                          final nameRaw = (prefs.getString('auth_user_name') ?? '').trim();
+                          final myName = nameRaw.isEmpty ? 'FarmBuzz User' : nameRaw;
                           final myAvatar = prefs.getString('auth_user_avatar') ?? '';
                           if (!context.mounted) return;
                           
@@ -1022,6 +1023,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       final result = await widget.api.addComment(
         postId: widget.postId,
         authorName: authorName.trim().isEmpty ? 'FarmBuzz User' : authorName,
+        authorAvatar: _viewerAvatar,
         content: text,
       );
       if (!mounted) return;

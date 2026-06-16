@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../data/auth_api.dart';
@@ -247,6 +248,10 @@ class _CreateAccountCardState extends State<CreateAccountCard> {
       if (!mounted) {
         return;
       }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_mobile_number', '+63${widget.mobileController.text.trim()}');
+      await prefs.setString('auth_user_name', widget.nameController.text.trim());
+      
       setState(() => _isLoading = false);
       _showMessage('Account created successfully.');
       widget.onComplete();

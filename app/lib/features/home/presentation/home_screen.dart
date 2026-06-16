@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
@@ -121,16 +122,43 @@ class _FeedStore {
     <FeedPost>[],
   );
   bool loaded = false;
+  int currentPage = 1;
+  bool hasMore = true;
+  bool isLoadingMore = false;
+  final ValueNotifier<bool> loadingMoreNotifier = ValueNotifier<bool>(false);
 
   Future<void> load() async {
+    currentPage = 1;
+    hasMore = true;
     final prefs = await SharedPreferences.getInstance();
     final reactorName =
         prefs.getString('auth_user_name') ??
         prefs.getString('auth_mobile_number') ??
         '';
-    final fetched = await _api.fetchPosts(reactorName: reactorName);
-    posts.value = fetched;
+    final fetched = await _api.fetchPosts(reactorName: reactorName, page: currentPage);
+    posts.value = fetched.posts;
+    hasMore = fetched.hasMore;
     loaded = true;
+  }
+
+  Future<void> loadMore() async {
+    if (!hasMore || isLoadingMore) return;
+    isLoadingMore = true;
+    loadingMoreNotifier.value = true;
+    try {
+      currentPage++;
+      final prefs = await SharedPreferences.getInstance();
+      final reactorName =
+          prefs.getString('auth_user_name') ??
+          prefs.getString('auth_mobile_number') ??
+          '';
+      final fetched = await _api.fetchPosts(reactorName: reactorName, page: currentPage);
+      posts.value = [...posts.value, ...fetched.posts];
+      hasMore = fetched.hasMore;
+    } finally {
+      isLoadingMore = false;
+      loadingMoreNotifier.value = false;
+    }
   }
 
   Future<void> create({
@@ -139,6 +167,7 @@ class _FeedStore {
     required List<FeedImageUpload> images,
     String? metaFeeling,
     String? metaLocation,
+    String? authorAvatar,
   }) async {
     final created = await _api.createPost(
       authorName: authorName,
@@ -146,6 +175,7 @@ class _FeedStore {
       images: images,
       metaFeeling: metaFeeling,
       metaLocation: metaLocation,
+      authorAvatar: authorAvatar,
     );
     posts.value = <FeedPost>[created, ...posts.value];
   }
@@ -200,6 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final NotificationApi _notifApi = NotificationApi();
   int _unreadMessages = 0;
   int _unreadNotifications = 0;
+  final ScrollController _feedScrollController = ScrollController();
 
   @override
   void initState() {
@@ -207,6 +238,20 @@ class _HomeScreenState extends State<HomeScreen> {
     ViewerProfileStore.instance.load();
     _checkFarmStatus();
     _loadCounts();
+    _feedScrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_feedScrollController.position.pixels >=
+        _feedScrollController.position.maxScrollExtent - 200) {
+      _FeedStore.instance.loadMore();
+    }
+  }
+
+  @override
+  void dispose() {
+    _feedScrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCounts() async {
@@ -364,6 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _HomeHeader(unreadMessages: _unreadMessages, unreadNotifications: _unreadNotifications),
         Expanded(
           child: SingleChildScrollView(
+            controller: _feedScrollController,
             child: Column(
               children: [
                 const _StatusComposer(),
@@ -1478,13 +1524,21 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) return null;
 
+    // On Android, Directory.systemTemp (/tmp) is not accessible.
+    // Use path_provider's getTemporaryDirectory() instead.
     final ext = _extensionFromName(file.name);
-    final tempDir = Directory.systemTemp;
-    final tempPath =
-        '${tempDir.path}${Platform.pathSeparator}farmbuzz_${DateTime.now().microsecondsSinceEpoch}$ext';
-    final tempFile = File(tempPath);
-    await tempFile.writeAsBytes(bytes, flush: true);
-    return tempFile.path;
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final tempPath =
+          '${tempDir.path}${Platform.pathSeparator}farmbuzz_${DateTime.now().microsecondsSinceEpoch}$ext';
+      final tempFile = File(tempPath);
+      await tempFile.writeAsBytes(bytes, flush: true);
+      return tempFile.path;
+    } catch (_) {
+      // If we still can't write a temp file, return a sentinel so the
+      // caller knows to use bytes directly.
+      return '__bytes_only__';
+    }
   }
 
   Future<int> _currentTotalImageBytes() async {
@@ -1527,21 +1581,39 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
       var runningTotal = await _currentTotalImageBytes();
 
       for (final pickedFile in picked) {
-        final path = await _resolveUsableImagePath(pickedFile);
-        if (path == null) {
-          missingFileCount++;
-          continue;
-        }
-        if (!_isSupportedImagePath(path)) {
+        // Prioritize in-memory bytes (always available on Android via withData:true)
+        final inMemoryBytes = pickedFile.bytes;
+        final hasBytes = inMemoryBytes != null && inMemoryBytes.isNotEmpty;
+
+        // Validate file name / extension before anything else
+        final fileName = pickedFile.name;
+        final ext = _extensionFromName(fileName.isEmpty ? '.jpg' : fileName);
+        if (!_isSupportedImagePath('file$ext')) {
           invalidTypeCount++;
           continue;
         }
-        final file = File(path);
-        if (!await file.exists()) {
-          missingFileCount++;
-          continue;
+
+        // Determine size: prefer in-memory bytes, then disk file
+        int size = 0;
+        String? resolvedPath;
+
+        if (hasBytes) {
+          size = inMemoryBytes.length;
+        } else {
+          // Fall back to disk path
+          resolvedPath = await _resolveUsableImagePath(pickedFile);
+          if (resolvedPath == null || resolvedPath == '__bytes_only__') {
+            missingFileCount++;
+            continue;
+          }
+          final diskFile = File(resolvedPath);
+          if (!await diskFile.exists()) {
+            missingFileCount++;
+            continue;
+          }
+          size = await diskFile.length();
         }
-        final size = await file.length();
+
         if (size <= 0 || size > _maxImageBytes) {
           invalidSizeCount++;
           continue;
@@ -1551,19 +1623,22 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
           continue;
         }
         runningTotal += size;
-        valid.add(path);
-        final ext = _extensionFromName(
-          pickedFile.name.isEmpty ? path : pickedFile.name,
-        );
+
+        // For preview: use the resolved disk path, or fall back to a dummy label
+        final previewPath = resolvedPath ??
+            (hasBytes ? '__memory_${DateTime.now().microsecondsSinceEpoch}__' : null);
+        if (previewPath == null) {
+          missingFileCount++;
+          continue;
+        }
+        valid.add(previewPath);
         validUploads.add(
           FeedImageUpload(
-            path: path,
-            bytes: (pickedFile.bytes != null && pickedFile.bytes!.isNotEmpty)
-                ? pickedFile.bytes
-                : null,
-            fileName: pickedFile.name.isNotEmpty
-                ? pickedFile.name
-                : path.split(Platform.pathSeparator).last,
+            path: resolvedPath,
+            bytes: hasBytes ? inMemoryBytes : null,
+            fileName: fileName.isNotEmpty
+                ? fileName
+                : 'image${DateTime.now().microsecondsSinceEpoch}$ext',
             contentType: _mediaTypeForExt(ext),
           ),
         );
@@ -2019,18 +2094,18 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
           : nameRaw;
       await _FeedStore.instance.create(
         authorName: name,
+        authorAvatar: ViewerProfileStore.instance.profile.value.avatarUrl,
         content: _postController.text.trim(),
         images: _imageUploads,
         metaFeeling: _selectedFeeling,
         metaLocation: _selectedLocation,
       );
       if (!mounted) return;
-      // Capture parent navigator context BEFORE popping so the toast
-      // can be shown on the underlying screen's overlay (not the
-      // already-dismounted sheet context).
-      final parentContext = Navigator.of(context).context;
+      // Show toast BEFORE popping so the context is still mounted and can
+      // correctly locate the Overlay. The toast is inserted into the global
+      // overlay, so it will remain visible after the sheet is popped.
+      _showBottomToast(context, 'Post created!');
       Navigator.of(context).pop();
-      _showBottomToast(parentContext, 'Post created!');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2126,6 +2201,42 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
   }
 
   Widget _buildImageTile(String path, {double? height, double? width}) {
+    // For bytes-only images (Android content URIs with no writable temp path),
+    // the path is a sentinel like '__memory_...__'. Look up the bytes instead.
+    final index = _imagePaths.indexOf(path);
+    final upload = (index >= 0 && index < _imageUploads.length)
+        ? _imageUploads[index]
+        : null;
+    final isMemoryOnly = path.startsWith('__memory_');
+    final previewBytes = upload?.bytes;
+
+    Widget imageWidget;
+    if (isMemoryOnly && previewBytes != null && previewBytes.isNotEmpty) {
+      imageWidget = Image.memory(
+        Uint8List.fromList(previewBytes),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: const Color(0xFFE9EDF1),
+          alignment: Alignment.center,
+          child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+        ),
+      );
+    } else {
+      imageWidget = Image.file(
+        File(path),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: const Color(0xFFE9EDF1),
+          alignment: Alignment.center,
+          child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+        ),
+      );
+    }
+
     return SizedBox(
       height: height,
       width: width,
@@ -2133,31 +2244,18 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.file(
-              File(path),
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: const Color(0xFFE9EDF1),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
+            child: imageWidget,
           ),
           Positioned(
             top: 6,
             right: 6,
             child: GestureDetector(
               onTap: () => setState(() {
-                final index = _imagePaths.indexOf(path);
-                if (index >= 0) {
-                  _imagePaths.removeAt(index);
-                  if (index < _imageUploads.length) {
-                    _imageUploads.removeAt(index);
+                final idx = _imagePaths.indexOf(path);
+                if (idx >= 0) {
+                  _imagePaths.removeAt(idx);
+                  if (idx < _imageUploads.length) {
+                    _imageUploads.removeAt(idx);
                   }
                 }
               }),
@@ -3654,7 +3752,20 @@ class _PostsSectionState extends State<_PostsSection> {
               imageUrls: post.imageUrls,
               sharedPost: post.sharedPost,
             ),
-          const SizedBox(height: 20),
+          ValueListenableBuilder<bool>(
+            valueListenable: _FeedStore.instance.loadingMoreNotifier,
+            builder: (context, isLoadingMore, _) {
+              if (isLoadingMore) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: CircularProgressIndicator(color: AppColors.accentGreen),
+                  ),
+                );
+              }
+              return const SizedBox(height: 20);
+            },
+          ),
         ],
       ),
     );

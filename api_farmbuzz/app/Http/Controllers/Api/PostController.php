@@ -58,8 +58,7 @@ class PostController extends Controller
             ->with('reactions')
             ->withCount(['reactions', 'comments'])
             ->latest('published_at')
-            ->latest('id')
-            ->limit(50);
+            ->latest('id');
 
         if ($authorName !== '') {
             $query->where('author_name', $authorName);
@@ -71,8 +70,10 @@ class PostController extends Controller
             $query->whereNull('club_id');
         }
 
-        $posts = $query
-            ->get()
+        $paginator = $query->paginate(15);
+
+        $posts = $paginator
+            ->getCollection()
             ->map(function (Post $post) use ($reactorName): array {
                 $userReaction = null;
 
@@ -110,6 +111,9 @@ class PostController extends Controller
 
         return response()->json([
             'data' => $posts,
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'has_more' => $paginator->hasMorePages(),
         ]);
     }
 

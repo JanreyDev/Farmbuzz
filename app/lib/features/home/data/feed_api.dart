@@ -198,9 +198,11 @@ class FeedApi {
     return Uri.parse('$base$normalizedPath');
   }
 
-  Future<List<FeedPost>> fetchPosts({String? reactorName, int? clubId, String? authorName}) async {
+  Future<({List<FeedPost> posts, bool hasMore})> fetchPosts({String? reactorName, int? clubId, String? authorName, int page = 1}) async {
     var uri = _buildUri('/posts');
-    final queryParams = <String, String>{};
+    final queryParams = <String, String>{
+      'page': page.toString(),
+    };
     
     final normalizedReactor = reactorName?.trim() ?? '';
     if (normalizedReactor.isNotEmpty) {
@@ -231,12 +233,17 @@ class FeedApi {
     final decoded = jsonDecode(response.body);
     final data =
         (decoded is Map<String, dynamic> ? decoded['data'] : null) as List?;
-    if (data == null) return <FeedPost>[];
+    final hasMore =
+        (decoded is Map<String, dynamic> ? decoded['has_more'] : false) as bool? ?? false;
+        
+    if (data == null) return (posts: <FeedPost>[], hasMore: false);
 
-    return data
+    final posts = data
         .whereType<Map>()
         .map((e) => FeedPost.fromJson(Map<String, dynamic>.from(e)))
         .toList();
+        
+    return (posts: posts, hasMore: hasMore);
   }
 
   Future<FeedLikeResult> likePost({
@@ -424,7 +431,7 @@ class FeedApi {
   }) async {
     final request = http.MultipartRequest('POST', _buildUri('/posts'));
     request.headers['Accept'] = 'application/json';
-    request.fields['author_name'] = authorName;
+    request.fields['author_name'] = authorName.trim().isEmpty ? 'FarmBuzz User' : authorName.trim();
     request.fields['content'] = content;
     if (clubId != null) {
       request.fields['club_id'] = clubId.toString();
@@ -554,7 +561,7 @@ class FeedApi {
         'Content-Type': 'application/json',
       },
       body: jsonEncode({
-        'author_name': authorName,
+        'author_name': authorName.trim().isEmpty ? 'FarmBuzz User' : authorName.trim(),
         if (clubId != null) 'club_id': clubId,
         'author_avatar':
             (authorAvatar != null && authorAvatar.trim().isNotEmpty)

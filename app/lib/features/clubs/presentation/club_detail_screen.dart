@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:path_provider/path_provider.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -626,10 +629,15 @@ class _ClubCreatePostSheetState extends State<_ClubCreatePostSheet> {
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) return null;
     final ext = _extensionFromName(file.name);
-    final tempPath =
-        '${Directory.systemTemp.path}${Platform.pathSeparator}fb_${DateTime.now().microsecondsSinceEpoch}$ext';
-    await File(tempPath).writeAsBytes(bytes, flush: true);
-    return tempPath;
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final tempPath =
+          '${tempDir.path}${Platform.pathSeparator}fb_${DateTime.now().microsecondsSinceEpoch}$ext';
+      await File(tempPath).writeAsBytes(bytes, flush: true);
+      return tempPath;
+    } catch (_) {
+      return '__bytes_only__';
+    }
   }
 
   Future<int> _currentTotalBytes() async {
@@ -663,19 +671,40 @@ class _ClubCreatePostSheetState extends State<_ClubCreatePostSheet> {
       var runningTotal = await _currentTotalBytes();
 
       for (final pf in picked) {
-        final path = await _resolveUsableImagePath(pf);
-        if (path == null || !_isSupportedImagePath(path)) continue;
-        if (!await File(path).exists()) continue;
-        final size = await File(path).length();
+        // Prioritize in-memory bytes (always available on Android via withData:true)
+        final inMemoryBytes = pf.bytes;
+        final hasBytes = inMemoryBytes != null && inMemoryBytes.isNotEmpty;
+
+        final fileName = pf.name;
+        final ext = _extensionFromName(fileName.isEmpty ? '.jpg' : fileName);
+        if (!_isSupportedImagePath('file$ext')) continue;
+
+        int size = 0;
+        String? resolvedPath;
+
+        if (hasBytes) {
+          size = inMemoryBytes.length;
+        } else {
+          resolvedPath = await _resolveUsableImagePath(pf);
+          if (resolvedPath == null || resolvedPath == '__bytes_only__') continue;
+          if (!await File(resolvedPath).exists()) continue;
+          size = await File(resolvedPath).length();
+        }
+
         if (size <= 0 || size > _maxImageBytes) continue;
         if (runningTotal + size > _maxTotalImageBytes) continue;
         runningTotal += size;
-        valid.add(path);
-        final ext = _extensionFromName(pf.name.isEmpty ? path : pf.name);
+
+        final previewPath = resolvedPath ??
+            (hasBytes ? '__memory_${DateTime.now().microsecondsSinceEpoch}__' : null);
+        if (previewPath == null) continue;
+        valid.add(previewPath);
         validUploads.add(FeedImageUpload(
-          path: path,
-          bytes: (pf.bytes != null && pf.bytes!.isNotEmpty) ? pf.bytes : null,
-          fileName: pf.name.isNotEmpty ? pf.name : path.split(Platform.pathSeparator).last,
+          path: resolvedPath,
+          bytes: hasBytes ? inMemoryBytes : null,
+          fileName: fileName.isNotEmpty
+              ? fileName
+              : 'image${DateTime.now().microsecondsSinceEpoch}$ext',
           contentType: _mediaTypeForExt(ext),
         ));
       }
@@ -728,7 +757,7 @@ class _ClubCreatePostSheetState extends State<_ClubCreatePostSheet> {
     setState(() => _isPosting = true);
     try {
       final post = await _api.createPost(
-        authorName: widget.userName,
+        authorName: widget.userName.trim().isEmpty ? 'FarmBuzz User' : widget.userName.trim(),
         authorAvatar: widget.userAvatar,
         content: content,
         images: List.from(_imageUploads),
@@ -1079,6 +1108,40 @@ class _ClubCreatePostSheetState extends State<_ClubCreatePostSheet> {
   }
 
   Widget _buildImageTile(String path, {double? height, double? width}) {
+    final index = _imagePaths.indexOf(path);
+    final upload = (index >= 0 && index < _imageUploads.length)
+        ? _imageUploads[index]
+        : null;
+    final isMemoryOnly = path.startsWith('__memory_');
+    final previewBytes = upload?.bytes;
+
+    Widget imageWidget;
+    if (isMemoryOnly && previewBytes != null && previewBytes.isNotEmpty) {
+      imageWidget = Image.memory(
+        Uint8List.fromList(previewBytes),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: const Color(0xFFE9EDF1),
+          alignment: Alignment.center,
+          child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+        ),
+      );
+    } else {
+      imageWidget = Image.file(
+        File(path),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: const Color(0xFFE9EDF1),
+          alignment: Alignment.center,
+          child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
+        ),
+      );
+    }
+
     return SizedBox(
       height: height,
       width: width,
@@ -1086,27 +1149,17 @@ class _ClubCreatePostSheetState extends State<_ClubCreatePostSheet> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.file(
-              File(path),
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: const Color(0xFFE9EDF1),
-                alignment: Alignment.center,
-                child: const Icon(Icons.broken_image_outlined, color: Colors.grey),
-              ),
-            ),
+            child: imageWidget,
           ),
           Positioned(
             top: 6,
             right: 6,
             child: GestureDetector(
               onTap: () => setState(() {
-                final index = _imagePaths.indexOf(path);
-                if (index >= 0) {
-                  _imagePaths.removeAt(index);
-                  if (index < _imageUploads.length) _imageUploads.removeAt(index);
+                final idx = _imagePaths.indexOf(path);
+                if (idx >= 0) {
+                  _imagePaths.removeAt(idx);
+                  if (idx < _imageUploads.length) _imageUploads.removeAt(idx);
                 }
               }),
               child: Container(
