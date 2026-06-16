@@ -366,6 +366,44 @@ class FeedApi {
     }
   }
 
+  /// Block a user by name. Fires POST /users/block.
+  Future<void> blockUser({
+    required String blockerName,
+    required String blockedName,
+  }) async {
+    final response = await _client.post(
+      _buildUri('/users/block'),
+      headers: const {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'blocker_name': blockerName,
+        'blocked_name': blockedName,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to block user.');
+    }
+  }
+
+  /// Returns the list of names that [blockerName] has blocked.
+  Future<List<String>> getBlockedUsers({required String blockerName}) async {
+    final uri = _buildUri('/users/blocked')
+        .replace(queryParameters: {'blocker_name': blockerName});
+    final response = await _client.get(
+      uri,
+      headers: const {'Accept': 'application/json'},
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return <String>[];
+    }
+    final decoded = jsonDecode(response.body);
+    final data = (decoded is Map<String, dynamic> ? decoded['data'] : null) as List?;
+    if (data == null) return <String>[];
+    return data.whereType<String>().toList();
+  }
+
   Future<List<FeedComment>> fetchComments({required int postId}) async {
     final response = await _client.get(
       _buildUri('/posts/$postId/comments'),

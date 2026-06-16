@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\BlockedUser;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Post\StoreCommentRequest;
 use App\Http\Requests\Post\StorePostRequest;
@@ -14,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+
 
 class PostController extends Controller
 {
@@ -68,6 +70,16 @@ class PostController extends Controller
             $query->where('club_id', $clubId);
         } else {
             $query->whereNull('club_id');
+        }
+
+        // Exclude posts from users blocked by the caller
+        if ($reactorName !== '') {
+            $blockedNames = BlockedUser::where('blocker_name', $reactorName)
+                ->pluck('blocked_name')
+                ->all();
+            if (!empty($blockedNames)) {
+                $query->whereNotIn('author_name', $blockedNames);
+            }
         }
 
         $paginator = $query->paginate(15);

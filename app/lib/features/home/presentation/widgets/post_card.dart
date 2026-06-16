@@ -165,6 +165,63 @@ class PostCardState extends State<PostCard> {
     );
   }
 
+  void _showBlockDialog() {
+    final blockedName = widget.userName;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.block, color: Colors.red),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Block $blockedName?',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'You will no longer see posts from $blockedName in your feed. They won\'t be notified.',
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              // Hide immediately in the UI
+              if (mounted) setState(() => _isHidden = true);
+              // Persist to backend
+              try {
+                await _api.blockUser(
+                  blockerName: _myName,
+                  blockedName: blockedName,
+                );
+                if (mounted) {
+                  _showPostToast(context, '$blockedName has been blocked.');
+                }
+              } catch (_) {
+                // Post is already hidden locally — silently ignore network error
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Block'),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _initial() {
     final trimmed = widget.userName.trim();
     if (trimmed.isEmpty) {
@@ -474,6 +531,8 @@ class PostCardState extends State<PostCard> {
                           setState(() => _isHidden = true);
                         } else if (value == 'report') {
                           _showReportSheet();
+                        } else if (value == 'block') {
+                          _showBlockDialog();
                         }
                       },
                       itemBuilder: (context) {
@@ -494,11 +553,33 @@ class PostCardState extends State<PostCard> {
                           return [
                             const PopupMenuItem(
                               value: 'hide',
-                              child: Text('Hide Post'),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.visibility_off_outlined, size: 18, color: Colors.grey),
+                                  SizedBox(width: 10),
+                                  Text('Hide Post'),
+                                ],
+                              ),
                             ),
                             const PopupMenuItem(
                               value: 'report',
-                              child: Text('Report Post', style: TextStyle(color: Colors.orange)),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.flag_outlined, size: 18, color: Colors.orange),
+                                  SizedBox(width: 10),
+                                  Text('Report Post', style: TextStyle(color: Colors.orange)),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'block',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.block, size: 18, color: Colors.red),
+                                  SizedBox(width: 10),
+                                  Text('Block User', style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
                             ),
                           ];
                         }

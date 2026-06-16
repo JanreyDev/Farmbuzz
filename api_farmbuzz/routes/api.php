@@ -97,6 +97,10 @@ Route::post('/clubs/upload-cover', [ClubController::class, 'uploadCover']);
 Route::post('/clubs/{club}/join', [ClubController::class, 'join']);
 
 Route::get('/users/search', [UserController::class, 'search']);
+Route::get('/users/blocked', [UserController::class, 'blocked']);
+Route::post('/users/block', [UserController::class, 'block']);
+Route::delete('/users/block', [UserController::class, 'unblock']);
+
 Route::get('/messages', [MessageController::class, 'index']);
 Route::post('/messages/start', [MessageController::class, 'startConversation']);
 Route::get('/messages/history', [MessageController::class, 'messages']);
